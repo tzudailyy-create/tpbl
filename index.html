@@ -409,21 +409,27 @@
         .boxscore-section { margin-bottom: 24px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
         .boxscore-title { padding: 10px 12px; background: #FAFAFA; font-weight: 700; color: var(--tpbl-blue); border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 6px; font-size: 13px;}
         .bs-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .bs-table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
-        .bs-table th { background: #F5F5F7; padding: 8px 6px; font-weight: 600; color: #888; text-align: center; border-bottom: 1px solid #eee; font-size: 11px;}
-        .bs-table td { padding: 8px 6px; border-bottom: 1px solid #eee; text-align: center; font-weight: 500; font-family: 'SF Mono', monospace; vertical-align: middle; }
+        
+        .bs-table { width: 100%; border-collapse: collapse; font-size: 11px; white-space: nowrap; }
+        .bs-table th { background: #F5F5F7; padding: 8px 12px; font-weight: 600; color: #888; text-align: center; border-bottom: 1px solid #eee; font-size: 10px;}
+        .bs-table td { padding: 8px 8px; border-bottom: 1px solid #eee; text-align: center; font-weight: 500; font-family: 'SF Mono', monospace; vertical-align: middle; }
         .bs-table th:first-child, .bs-table td:first-child { position: sticky; left: 0; background: #fff; z-index: 10; border-right: 1px solid #f0f0f0; text-align: left; padding-left: 10px; font-family: -apple-system, sans-serif; font-weight: 600; }
         .bs-table th:first-child { background: #F5F5F7; }
         .player-head-cell { display: flex; align-items: center; gap: 6px; cursor: pointer; }
         .player-head-cell:active { opacity: 0.6; }
-        .player-headshot { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; background: #f0f0f0; border: 1px solid #eee;}
+        .player-headshot { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: #f0f0f0; border: 1px solid #eee;}
         .separator-row .sticky-sep { position: sticky; left: 0; z-index: 30; background: #F2F2F7; color: #888; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 4px 4px 4px 10px; text-align: left; border: none; }
         .separator-row .filler-sep { background: #F2F2F7; border: none; }
         .dnp-row td { color: #ccc; }
         .dnp-row td:first-child { color: #aaa; }
         
-        .seg-control { display: flex; background: #E5E5EA; padding: 2px; border-radius: 9px; margin-bottom: 12px; }
-        .seg-btn { flex: 1; border: none; background: none; padding: 8px; font-size: 13px; font-weight: 600; border-radius: 7px; color: var(--text-sub); transition: 0.2s; cursor: pointer; }
+        /* New: Team Total Style */
+        .total-row-highlight { background: var(--tpbl-blue) !important; color: var(--tpbl-gold) !important; font-weight: 800 !important; }
+        .total-row-highlight td { border-bottom: none !important; color: inherit !important; font-size: 12px; padding-top: 10px; padding-bottom: 10px; }
+        .total-row-highlight .sticky-sep { background: var(--tpbl-blue) !important; color: var(--tpbl-gold) !important; border-right-color: rgba(255,255,255,0.1) !important; }
+
+        .seg-control { display: flex; background: #E5E5EA; padding: 2px; border-radius: 9px; margin-bottom: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .seg-btn { flex: 1; border: none; background: none; padding: 8px 4px; font-size: 12px; font-weight: 600; border-radius: 7px; color: var(--text-sub); transition: 0.2s; cursor: pointer; white-space: nowrap; min-width: 50px;}
         .seg-btn.active { background: #fff; color: var(--text-main); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         
         /* Tab Bar */
@@ -578,7 +584,6 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.08); border: 1px solid #FFD54F; white-space: nowrap;
         }
         
-
     </style>
 </head>
 <body>
@@ -710,6 +715,9 @@
         let currentScheduleTab = 'future', selectedStatsTeam = null, processedStats = {}, refreshInterval = null;
         let compareTeamA = null, compareTeamB = null;
         let favoritePlayerIds = JSON.parse(localStorage.getItem('tpbl_favorites')) || [];
+        
+        // --- NEW: Game Detailed Data Cache ---
+        let currentDetailedGameData = null; 
 
         function toggleFavorite(id) {
             const index = favoritePlayerIds.indexOf(id);
@@ -1148,7 +1156,7 @@
         let savedScrollPosition = 0;
         function toggleBodyLock(isLocked) { if (isLocked) { savedScrollPosition = window.scrollY; document.body.style.top = `-${savedScrollPosition}px`; document.body.classList.add('modal-open'); } else { document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, savedScrollPosition); } }
         function initSwipeGesture(element, closeCallback) { let startX = 0; let currentX = 0; let isDragging = false; element.addEventListener('touchstart', (e) => { if (e.touches[0].clientX < 40) { startX = e.touches[0].clientX; isDragging = true; element.style.transition = 'none'; } else { isDragging = false; } }, {passive: true}); element.addEventListener('touchmove', (e) => { if (!isDragging) return; currentX = e.touches[0].clientX; const diff = currentX - startX; if (diff > 0) element.style.transform = `translateX(${diff}px)`; }, {passive: true}); element.addEventListener('touchend', (e) => { if (!isDragging) return; isDragging = false; element.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'; if ((currentX - startX) > 100) { closeCallback(); setTimeout(() => { element.style.transform = ''; }, 300); } else { element.style.transform = ''; } }); }
-        function closeGameModal() { toggleBodyLock(false); document.getElementById('game-page').classList.remove('active'); setTimeout(() => { document.getElementById('game-page').style.transform = ''; }, 350); }
+        function closeGameModal() { toggleBodyLock(false); document.getElementById('game-page').classList.remove('active'); currentDetailedGameData = null; setTimeout(() => { document.getElementById('game-page').style.transform = ''; }, 350); }
         function closePlayerModal() {
             toggleBodyLock(false);
             document.getElementById('player-page').classList.remove('active');
@@ -1156,17 +1164,85 @@
             if(window.myRadarChart) { window.myRadarChart.destroy(); window.myRadarChart = null; }
             setTimeout(() => { document.getElementById('player-page').style.transform = ''; }, 350);
         }
-        async function openGameDetails(gameId) { toggleBodyLock(true); const page = document.getElementById('game-page'); const body = document.getElementById('modal-body'); page.classList.add('active'); body.innerHTML = '<div class="loading">載入比賽數據...</div>'; try { const ts = Date.now(); const json = await fetchJson(`https://api.tpbl.basketball/api/games/${gameId}/stats?t=${ts}`); const data = json.data || json; const gameInfo = globalGames.find(g => g.id === gameId); const hName = getShortName(gameInfo.home_team.name); const aName = getShortName(gameInfo.away_team.name); const hLogo = getLogo(hName, gameInfo.home_team.meta?.logo); const aLogo = getLogo(aName, gameInfo.away_team.meta?.logo); const hScore = data.home_team.score ?? gameInfo.home_team.won_score ?? '-'; const aScore = data.away_team.score ?? gameInfo.away_team.won_score ?? '-'; let content = `<div class="modal-score-card"><div class="msc-main"><div style="text-align:center"><img src="${aLogo}" style="width:40px"><div style="font-size:12px;font-weight:700;margin-top:4px">${aName}</div></div><div class="m-score nums">${aScore} - ${hScore}</div><div style="text-align:center"><img src="${hLogo}" style="width:40px"><div style="font-size:12px;font-weight:700;margin-top:4px">${hName}</div></div></div>${renderPeriodTable(data, hName, aName)}</div>`; if (data.home_team.teams && data.home_team.teams.rounds) content += renderGameFlowTable(data.home_team.teams.rounds, data.away_team.teams.rounds, hName, aName); if (data.home_team.teams && data.home_team.teams.total) content += renderTeamComparison(data.home_team.teams.total, data.away_team.teams.total); if (data.home_team && data.home_team.players && data.home_team.players.total) { const hLeaders = getGameLeaders(data.home_team.players.total); const aLeaders = getGameLeaders(data.away_team.players.total); const hImg = playerMap[hLeaders.name.replace(/\s/g, '')]; const aImg = playerMap[aLeaders.name.replace(/\s/g, '')]; const getAvatarStyle = (img, teamName) => (!img) ? `background:${getTeamColor(teamName)};` : ''; const getAvatarSrc = (img) => img || DEFAULT_AVATAR; content += `<div class="game-leaders"><div class="leaders-title"><i data-lucide="crown" width="12"></i> 本場最佳 (得分王)</div><div class="leaders-vertical"><div class="leader-row"><div class="lr-player"><img src="${getAvatarSrc(aImg)}" class="lr-img" style="${getAvatarStyle(aImg, aName)}"><div class="lr-info"><div class="lr-name">${aLeaders.name}</div><div class="lr-team">${aName}</div></div></div><div class="lr-stats-group"><div class="lr-stat-item"><div class="lr-val nums">${aLeaders.score}</div><div class="lr-label">PTS</div></div><div class="lr-stat-item"><div class="lr-val nums">${aLeaders.rebounds}</div><div class="lr-label">REB</div></div><div class="lr-stat-item"><div class="lr-val nums">${aLeaders.assists}</div><div class="lr-label">AST</div></div></div></div><div class="leader-row"><div class="lr-player"><img src="${getAvatarSrc(hImg)}" class="lr-img" style="${getAvatarStyle(hImg, hName)}"><div class="lr-info"><div class="lr-name">${hLeaders.name}</div><div class="lr-team">${hName}</div></div></div><div class="lr-stats-group"><div class="lr-stat-item"><div class="lr-val nums">${hLeaders.score}</div><div class="lr-label">PTS</div></div><div class="lr-stat-item"><div class="lr-val nums">${hLeaders.rebounds}</div><div class="lr-label">REB</div></div><div class="lr-stat-item"><div class="lr-val nums">${hLeaders.assists}</div><div class="lr-label">AST</div></div></div></div></div></div>`; content += `<div class="modal-tabs"><button class="modal-tab-btn active" onclick="switchModalTab('away')">${aName}</button><button class="modal-tab-btn" onclick="switchModalTab('home')">${hName}</button></div><div id="tab-away" class="tab-content">${renderTeamBoxScore(data.away_team.players.total, aName)}</div><div id="tab-home" class="tab-content hidden">${renderTeamBoxScore(data.home_team.players.total, hName)}</div>`; } else { content += `<div style="text-align:center;color:#999;margin-top:20px">暫無球員數據</div>`; } body.innerHTML = content; lucide.createIcons(); } catch (e) { body.innerHTML = `<div class="loading">無法載入數據</div>`; console.error(e); } }
         
+        // --- NEW: Percent calculation helper ---
+        function calculatePct(statStr) {
+            if (!statStr || !statStr.includes('-')) return '-';
+            const [m, a] = statStr.split('-').map(Number);
+            if (a === 0 || isNaN(a)) return '0%';
+            return ((m / a) * 100).toFixed(1) + '%';
+        }
+
+        async function openGameDetails(gameId) {
+            toggleBodyLock(true);
+            const page = document.getElementById('game-page');
+            const body = document.getElementById('modal-body');
+            page.classList.add('active');
+            body.innerHTML = '<div class="loading">載入比賽數據...</div>';
+            try {
+                const ts = Date.now();
+                const json = await fetchJson(`https://api.tpbl.basketball/api/games/${gameId}/stats?t=${ts}`);
+                const data = json.data || json;
+                currentDetailedGameData = data; // Cache data for quarter switching
+                
+                const gameInfo = globalGames.find(g => g.id === gameId);
+                const hName = getShortName(gameInfo.home_team.name);
+                const aName = getShortName(gameInfo.away_team.name);
+                const hLogo = getLogo(hName, gameInfo.home_team.meta?.logo);
+                const aLogo = getLogo(aName, gameInfo.away_team.meta?.logo);
+                const hScore = data.home_team.score ?? gameInfo.home_team.won_score ?? '-';
+                const aScore = data.away_team.score ?? gameInfo.away_team.won_score ?? '-';
+                
+                let content = `<div class="modal-score-card"><div class="msc-main"><div style="text-align:center"><img src="${aLogo}" style="width:40px"><div style="font-size:12px;font-weight:700;margin-top:4px">${aName}</div></div><div class="m-score nums">${aScore} - ${hScore}</div><div style="text-align:center"><img src="${hLogo}" style="width:40px"><div style="font-size:12px;font-weight:700;margin-top:4px">${hName}</div></div></div>${renderPeriodTable(data, hName, aName)}</div>`;
+                
+                if (data.home_team.teams && data.home_team.teams.rounds) content += renderGameFlowTable(data.home_team.teams.rounds, data.away_team.teams.rounds, hName, aName);
+                if (data.home_team.teams && data.home_team.teams.total) content += renderTeamComparison(data.home_team.teams.total, data.away_team.teams.total);
+                
+                // Boxscore Sections
+                if (data.home_team && data.home_team.players && data.home_team.players.total) {
+                    content += `<div class="section-divider" style="margin-top:20px;">球員數據</div>`;
+
+                    content += `<div class="modal-tabs"><button class="modal-tab-btn active" onclick="switchModalTab('away')">${aName}</button><button class="modal-tab-btn" onclick="switchModalTab('home')">${hName}</button></div><div id="tab-away" class="tab-content">${renderTeamBoxScore(data.away_team.players.total, aName, data.away_team.teams.total)}</div><div id="tab-home" class="tab-content hidden">${renderTeamBoxScore(data.home_team.players.total, hName, data.home_team.teams.total)}</div>`;
+                } else {
+                    content += `<div style="text-align:center;color:#999;margin-top:20px">暫無球員數據</div>`;
+                }
+                body.innerHTML = content; lucide.createIcons();
+            } catch (e) {
+                body.innerHTML = `<div class="loading">無法載入數據</div>`;
+                console.error(e);
+            }
+        }
+        
+        // --- NEW: Quarter Switching Logic ---
+        window.switchBoxScorePeriod = function(period) {
+            if (!currentDetailedGameData) return;
+            const data = currentDetailedGameData;
+            
+            document.querySelectorAll('#bs-period-switcher .seg-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.querySelector(`#bs-period-switcher .seg-btn[onclick*="${period}"]`);
+            if(btn) btn.classList.add('active');
+
+            const hName = getShortName(data.home_team.name);
+            const aName = getShortName(data.away_team.name);
+            
+            // Re-render sub-tabs
+            const awayNode = data.away_team.players[period] || [];
+            const homeNode = data.home_team.players[period] || [];
+            const awayTeamNode = data.away_team.teams[period] || null;
+            const homeTeamNode = data.home_team.teams[period] || null;
+
+            document.getElementById('tab-away').innerHTML = renderTeamBoxScore(awayNode, aName, awayTeamNode);
+            document.getElementById('tab-home').innerHTML = renderTeamBoxScore(homeNode, hName, homeTeamNode);
+            lucide.createIcons();
+        }
+
         async function openPlayerProfile(playerId) {
             toggleBodyLock(true); const page = document.getElementById('player-page'); const body = document.getElementById('player-modal-body'); page.classList.add('active'); body.innerHTML = '<div class="loading">正在計算賽季數據...</div>';
             const pBasic = globalPlayers.find(p => p.id === playerId);
             
             try {
                 const ts = Date.now();
-                // 1. Fetch both S1 and S2 explicitly
-                // S1 (24-25) is division_id=2
-                // S2 (25-26) is division_id=9
+                // Fetch both S1 and S2
                 const [s2Res, s1Res] = await Promise.all([
                     fetchJson(`https://api.tpbl.basketball/api/players/${playerId}/games/stats?division_id=9&t=${ts}`),
                     fetchJson(`https://api.tpbl.basketball/api/players/${playerId}/games/stats?division_id=2&t=${ts}`)
@@ -1176,7 +1252,6 @@
                 const s1Logs = Array.isArray(s1Res) ? s1Res : (s1Res.data || []);
                 const allGameLogs = [...s2Logs, ...s1Logs];
 
-                // Remove Duplicates based on Game ID
                 const uniqueLogsMap = new Map();
                 allGameLogs.forEach(log => {
                     const gid = log.game?.id || log.match?.id;
@@ -1186,9 +1261,8 @@
 
                 let playerData = pBasic || {}; let teamName = pBasic ? pBasic.team.name : ''; let bestGameLog = null;
                 
-                // Init Stats
-                let s1 = { gp:0, min:0, pts:0, reb:0, ast:0, stl:0, blk:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0 };
-                let s2 = { gp:0, min:0, pts:0, reb:0, ast:0, stl:0, blk:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0 };
+                let s1 = { gp:0, min:0, pts:0, reb:0, ast:0, stl:0, blk:0 };
+                let s2 = { gp:0, min:0, pts:0, reb:0, ast:0, stl:0, blk:0 };
                 
                 const addToStats = (logs, targetObj) => {
                     const played = logs.filter(l => l.accumulated_stats && l.accumulated_stats.time_on_court > 0);
@@ -1206,163 +1280,112 @@
 
                 if (uniqueLogs.length > 0) {
                     if (!pBasic) { playerData = uniqueLogs[0].player; teamName = uniqueLogs[0].team.name; }
-                    if (uniqueLogs[0].player.images && uniqueLogs[0].player.images.length > 0) { playerData.images = uniqueLogs[0].player.images; }
-                    
-                    // Populate S2 (25-26) - Division 9
                     addToStats(s2Logs, s2);
-                    
-                    // Populate S1 (24-25) - Division 2
                     addToStats(s1Logs, s1);
-                    
-                    // Find Best Game (from all logs)
                     const playedLogs = uniqueLogs.filter(l => l.accumulated_stats.time_on_court > 0);
                     if (playedLogs.length > 0) {
-                        playedLogs.sort((a, b) => { const scoreDiff = (b.accumulated_stats.score || 0) - (a.accumulated_stats.score || 0); if (scoreDiff !== 0) return scoreDiff; const getD = (x) => new Date(x.game?.gamed_at || x.game?.date || x.match?.date || 0); return getD(b) - getD(a); });
+                        playedLogs.sort((a, b) => (b.accumulated_stats.score || 0) - (a.accumulated_stats.score || 0));
                         bestGameLog = playedLogs[0];
                     }
                 }
                 
                 const teamColor = getTeamColor(teamName); let imgUrl = ""; let imgStyle = ""; if (playerData.images && playerData.images.length > 0) { const xl = playerData.images.find(i => i.key === 'xl'); const lg = playerData.images.find(i => i.key === 'lg'); imgUrl = (xl || lg || playerData.images[0]).url; } else if (playerData.name && playerMap[playerData.name.replace(/\s/g, '')]) { imgUrl = playerMap[playerData.name.replace(/\s/g, '')]; } if (!imgUrl) { imgUrl = DEFAULT_AVATAR; imgStyle = `background-color: ${teamColor};`; }
-                const shortTeamName = getShortName(teamName);
-                const isFav = favoritePlayerIds.includes(playerId); const starIcon = isFav ? `<i data-lucide="star" fill="currentColor" width="20"></i>` : `<i data-lucide="star" width="20"></i>`; const favClass = isFav ? 'active' : '';
+                const isFav = favoritePlayerIds.includes(playerId);
+                const headerHtml = `<div class="player-card-header" style="--team-color: ${teamColor}"><button class="pch-fav-btn ${isFav?'active':''}" id="fav-btn-${playerId}" onclick="toggleFavorite(${playerId})">${isFav?'<i data-lucide="star" fill="currentColor" width="20"></i>':'<i data-lucide="star" width="20"></i>'}</button><img src="${getLogo(teamName)}" class="pch-bg-logo"><div class="pch-jersey-num">${playerData.number || '00'}</div><div class="pch-avatar-container" style="${imgStyle}"><img src="${imgUrl}" class="pch-avatar"></div><div class="pch-info"><div class="pch-name">${playerData.name || '未知球員'}</div><div class="pch-badge-row"><span class="pch-pill">${getShortName(teamName)}</span><span class="pch-pill">#${playerData.number||'-'}</span><span class="pch-pill">${formatPos(playerData.meta?.position)}</span></div></div></div>`;
                 
-                // Header
-                const headerHtml = `<div class="player-card-header" style="--team-color: ${teamColor}"><button class="pch-fav-btn ${favClass}" id="fav-btn-${playerId}" onclick="toggleFavorite(${playerId})">${starIcon}</button><div class="pch-bg-texture"></div><img src="${getLogo(teamName)}" class="pch-bg-logo"><div class="pch-jersey-num">${playerData.number || '00'}</div><div class="pch-avatar-container" style="${imgStyle}"><img src="${imgUrl}" class="pch-avatar"></div><div class="pch-info"><div class="pch-name">${playerData.name || '未知球員'}</div><div class="pch-badge-row"><span class="pch-pill">${shortTeamName}</span><span class="pch-pill">#${playerData.number||'-'}</span><span class="pch-pill">${formatPos(playerData.meta?.position)}</span></div></div></div>`;
+                const calcAvg = (s) => { if (s.gp === 0) return null; return { gp: s.gp, min: Math.floor((s.min/s.gp)/60) + ":" + Math.round((s.min/s.gp)%60).toString().padStart(2,'0'), pts: (s.pts/s.gp).toFixed(1), reb: (s.reb/s.gp).toFixed(1), ast: (s.ast/s.gp).toFixed(1), stl: (s.stl/s.gp).toFixed(1), blk: (s.blk/s.gp).toFixed(1), raw_pts: s.pts/s.gp, raw_reb: s.reb/s.gp, raw_ast: s.ast/s.gp, raw_stl: s.stl/s.gp, raw_blk: s.blk/s.gp }; };
+                const avg1 = calcAvg(s1); const avg2 = calcAvg(s2);
                 
-                // --- Helper to calculate averages ---
-                const calcAvg = (s) => {
-                    if (s.gp === 0) return null;
-                    const fmt = (v) => (v/s.gp).toFixed(1);
-                    const pct = (m, a) => a > 0 ? ((m/a)*100).toFixed(1) + '%' : '-';
-                    const minAvg = Math.floor((s.min/s.gp)/60) + ":" + Math.round((s.min/s.gp)%60).toString().padStart(2,'0');
-                    return {
-                        gp: s.gp, min: minAvg,
-                        pts: fmt(s.pts), reb: fmt(s.reb), ast: fmt(s.ast),
-                        stl: fmt(s.stl), blk: fmt(s.blk),
-                        // Raw values for comparison
-                        raw_pts: s.pts/s.gp, raw_reb: s.reb/s.gp, raw_ast: s.ast/s.gp,
-                        raw_stl: s.stl/s.gp, raw_blk: s.blk/s.gp
-                    };
-                };
-
-                const avg1 = calcAvg(s1);
-                const avg2 = calcAvg(s2);
-                
-                // Chart.js Radar
-                let chartHtml = '';
-                if (avg2) {
-                    chartHtml = `<div class="section-divider" style="margin-top:0"><i data-lucide="pie-chart" width="16"></i><span>能力雷達圖</span></div><div class="chart-card"><div class="chart-container"><canvas id="playerRadar"></canvas></div></div>`;
-                }
-
-                // Table Logic
                 let statsHtml = '';
-                const hasS1 = (avg1 && avg1.gp > 0);
-                const hasS2 = (avg2 && avg2.gp > 0);
-
-                if (hasS2) {
-                    const r2 = avg2;
-                    let tableContent = `
-                        <tr class="s2-row">
-                            <td class="season-col-fixed nums">25-26</td>
-                            <td class="nums">${r2.min}</td><td class="nums">${r2.pts}</td><td class="nums">${r2.reb}</td><td class="nums">${r2.ast}</td><td class="nums">${r2.stl}</td><td class="nums">${r2.blk}</td>
-                        </tr>`;
-                    
-                    if (hasS1) {
-                        const r1 = avg1;
-                        const getBadge = (curr, prev) => {
-                            if (curr === undefined || prev === undefined) return '';
-                            const diff = (curr - prev).toFixed(1);
-                            const dNum = parseFloat(diff);
-                            if(dNum > 0) return `<span class="badge-pill bp-up">+${diff}</span>`;
-                            if(dNum < 0) return `<span class="badge-pill bp-down">${diff}</span>`;
-                            return `<span class="badge-pill bp-flat">-</span>`;
-                        };
-                        tableContent += `
-                        <tr class="s1-row">
-                            <td class="season-col-fixed nums">24-25</td>
-                            <td class="nums">${r1.min}</td><td class="nums">${r1.pts}</td><td class="nums">${r1.reb}</td><td class="nums">${r1.ast}</td><td class="nums">${r1.stl}</td><td class="nums">${r1.blk}</td>
-                        </tr>
-                        <tr class="trend-row">
-                            <td class="season-col-fixed">變化</td>
-                            <td></td>
-                            <td>${getBadge(r2.raw_pts, r1.raw_pts)}</td>
-                            <td>${getBadge(r2.raw_reb, r1.raw_reb)}</td>
-                            <td>${getBadge(r2.raw_ast, r1.raw_ast)}</td>
-                            <td>${getBadge(r2.raw_stl, r1.raw_stl)}</td>
-                            <td>${getBadge(r2.raw_blk, r1.raw_blk)}</td>
-                        </tr>`;
+                if (avg2) {
+                    let rows = `<tr class="s2-row"><td class="season-col-fixed nums">25-26</td><td class="nums">${avg2.min}</td><td class="nums">${avg2.pts}</td><td class="nums">${avg2.reb}</td><td class="nums">${avg2.ast}</td><td class="nums">${avg2.stl}</td><td class="nums">${avg2.blk}</td></tr>`;
+                    if (avg1) {
+                        rows += `<tr class="s1-row"><td class="season-col-fixed nums">24-25</td><td class="nums">${avg1.min}</td><td class="nums">${avg1.pts}</td><td class="nums">${avg1.reb}</td><td class="nums">${avg1.ast}</td><td class="nums">${avg1.stl}</td><td class="nums">${avg1.blk}</td></tr>`;
                     }
-
-                    statsHtml = `
-                    <div class="section-divider" style="margin-top:0"><i data-lucide="bar-chart-2" width="16"></i><span>賽季數據比較</span></div>
-                    <div class="season-stats-container">
-                        <div class="season-table-scroll">
-                            <table class="season-table">
-                                <thead>
-                                    <tr><th class="season-col-fixed">賽季</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th></tr>
-                                </thead>
-                                <tbody>${tableContent}</tbody>
-                            </table>
-                        </div>
-                    </div>`;
-                } else { statsHtml = `<div style="text-align:center;color:#999;padding:20px;">本季尚無出賽數據</div>`; }
-
-                let bestGameHtml = ''; if (bestGameLog && (bestGameLog.accumulated_stats.score > 0)) { const bgStats = bestGameLog.accumulated_stats; const gameId = bestGameLog.game_id || (bestGameLog.game ? bestGameLog.game.id : null); let dateStr = ""; let oppName = "對手"; let oppLogo = ""; const linkedGame = globalGames.find(x => x.id === gameId); if (linkedGame) { dateStr = linkedGame.game_date.split('-').slice(1).join('/'); const isHome = linkedGame.home_team.name === teamName; const opp = isHome ? linkedGame.away_team : linkedGame.home_team; oppName = getShortName(opp.name); oppLogo = getLogo(opp.name, opp.meta?.logo); } else { const rawDate = bestGameLog.game?.gamed_at || bestGameLog.game?.date || ""; if(rawDate) dateStr = rawDate.split(' ')[0].split('-').slice(1).join('/'); } const sec1 = { lbl:'REB', val: bgStats.rebounds }; const sec2 = { lbl:'AST', val: bgStats.assists }; if (bgStats.steals > 4) { sec2.lbl = 'STL'; sec2.val = bgStats.steals; } if (bgStats.blocks > 3) { sec2.lbl = 'BLK'; sec2.val = bgStats.blocks; } bestGameHtml = `<div class="section-divider"><i data-lucide="crown" width="16" style="color:#D4B07D"></i><span>生涯代表作</span></div><div class="best-game-card-premium" style="--team-color:${teamColor}"><div class="bgp-shine"></div><img src="${getLogo(teamName)}" class="bgp-watermark"><div class="bgp-header"><div class="bgp-badge">CAREER HIGH</div><div class="bgp-date nums">${dateStr}</div></div><div class="bgp-body"><div class="bgp-hero-score"><div class="bgp-score-val nums">${bgStats.score}</div><div class="bgp-score-lbl">PTS</div></div><div class="bgp-opp-section"><div class="bgp-vs-row"><div class="bgp-opp-name">vs ${oppName}</div><img src="${oppLogo || 'https://via.placeholder.com/40'}" class="bgp-opp-logo"></div><div class="bgp-stats-row"><div class="bgp-stat"><div class="bgp-s-val nums">${sec1.val}</div><div class="bgp-s-lbl">${sec1.lbl}</div></div><div style="width:1px; background:rgba(255,255,255,0.2);"></div><div class="bgp-stat"><div class="bgp-s-val nums">${sec2.val}</div><div class="bgp-s-lbl">${sec2.lbl}</div></div></div></div></div></div>`; }
-                let nextGameHtml = ''; const todayStr = formatDate(new Date()); const nextGame = globalGames.find(g => (g.status === 'UPCOMING' || g.status === 'COMING_SOON' || g.status === 'LIVE' || g.status === 'IN_PROGRESS') && g.game_date >= todayStr && (g.home_team.name === teamName || g.away_team.name === teamName)); if (nextGame) { const isHome = nextGame.home_team.name === teamName; const opponent = isHome ? nextGame.away_team.name : nextGame.home_team.name; const oppLogo = getLogo(opponent); const rawDate = nextGame.game_date || ''; const gameDate = rawDate ? rawDate.split('-').slice(1).join('/') : '-/-'; const venueStr = nextGame.venue || 'TBD'; const venueShort = venueStr.split(' ')[0] || venueStr; nextGameHtml = `<div class="section-divider"><i data-lucide="calendar-clock" width="16"></i><span>下場賽事</span></div><div class="next-game-banner"><div class="ng-info"><div class="ng-label">UPCOMING</div><div class="ng-vs">VS <img src="${oppLogo}" width="20"> ${getShortName(opponent)}</div><div class="ng-date nums">${gameDate} ${nextGame.game_time.slice(0,5)} @ ${venueShort}</div></div><a href="${getTicketLink(teamName)}" target="_blank" class="sch-btn ticket" style="padding:6px 14px;">購票</a></div>`; }
-                let recentHtml = ''; if (s2.gp + s1.gp > 0) { const sortedLogs = [...allGameLogs].sort((a,b) => { const getLogDate = (log) => { if(log.game && log.game.gamed_at) return new Date(log.game.gamed_at); if(log.match && log.match.date) return new Date(log.match.date); const gid = log.game_id || (log.game?.id); const gg = globalGames.find(x => x.id === gid); if(gg) return new Date(gg.game_date); return new Date(0); }; return getLogDate(b) - getLogDate(a); }).slice(0, 5); let rows = ''; sortedLogs.forEach(g => { const gameId = g.game_id || (g.game ? g.game.id : null) || (g.match ? g.match.id : null); let dateStr = "-/-"; let oppName = "對手"; let oppLogo = ""; const linkedGame = globalGames.find(x => x.id === gameId); if (linkedGame) { if (linkedGame.game_date) { dateStr = linkedGame.game_date.split('-').slice(1).join('/'); } const opp = (linkedGame.home_team.name === teamName) ? linkedGame.away_team : linkedGame.home_team; oppName = getShortName(opp.name); oppLogo = getLogo(opp.name, opp.meta?.logo); } else { const rawDate = g.game?.gamed_at || g.match?.date; if(rawDate) dateStr = rawDate.split(' ')[0].split('-').slice(1).join('/'); } const stats = g.accumulated_stats; rows += `<tr><td><div class="rg-date nums">${dateStr}</div><div class="rg-opp"><img src="${oppLogo}" width="16"> ${oppName}</div></td><td class="nums highlight-col">${stats.score}</td><td class="nums">${stats.rebounds}</td><td class="nums">${stats.assists}</td></tr>`; }); recentHtml = `<div class="section-divider"><i data-lucide="history" width="16"></i><span>近期表現</span></div><table class="recent-games-table"><thead><tr><th style="text-align:left; padding-left:16px;">日期 / 對手</th><th>得分</th><th>籃板</th><th>助攻</th></tr></thead><tbody>${rows}</tbody></table>`; }
-                let awardsHtml = ''; if (globalAwards.length > 0 && playerData.name) { const myAwards = globalAwards.filter(a => a.winner.some(w => w.info.name === playerData.name)); if (myAwards.length > 0) { const annual = myAwards.filter(a => a.type === 'annual').sort((a,b) => b.season.id - a.season.id); const monthly = myAwards.filter(a => a.type === 'monthly').sort((a,b) => b.id - a.id); awardsHtml = `<div class="awards-container">`; if (annual.length > 0) { awardsHtml += `<div class="awards-section-title">年度榮譽</div><div class="annual-awards-grid">`; annual.forEach(a => { const iconName = getAwardIcon(a.title); awardsHtml += `<div class="aa-card"><div class="aa-icon"><i data-lucide="${iconName}" width="20"></i></div><div class="aa-title">${a.title}</div><div class="aa-season nums">${a.season.name}</div></div>`; }); awardsHtml += `</div>`; } if (monthly.length > 0) { awardsHtml += `<div class="awards-section-title">單月 MVP</div><div class="monthly-scroll">`; monthly.forEach(a => { let monthStr = (a.en_title || '').replace('Player of the month', '').replace(/[()]/g,'').trim(); const monMap = {'OCT': '10月','NOV': '11月','DEC': '12月','JAN': '1月','FEB': '2月','MAR': '3月','APR': '4月','MAY': '5月'}; let key = monthStr.includes('-') ? monthStr.split('-')[0] : monthStr; let displayMonth = monMap[key.toUpperCase()] || monthStr; awardsHtml += `<div class="ma-card"><div class="ma-header"><i data-lucide="trophy" width="12"></i> MVP</div><div class="ma-title nums">${displayMonth}</div><div style="font-size:9px; color:#aaa;" class="nums">${a.season.name}</div></div>`; }); awardsHtml += `</div>`; } awardsHtml += `</div>`; } }
-                body.innerHTML = `${headerHtml}${chartHtml}${statsHtml}${bestGameHtml}${nextGameHtml}${recentHtml}${awardsHtml}<div style="height:20px;"></div>`;
-                lucide.createIcons();
-
-                // Draw Radar Chart
-                if (avg2 && document.getElementById('playerRadar')) {
-                    const ctx = document.getElementById('playerRadar').getContext('2d');
-                    const raw = avg2;
-                    const dPts = Math.min(100, (raw.raw_pts / 15) * 100);
-                    const dReb = Math.min(100, (raw.raw_reb / 8) * 100);
-                    const dAst = Math.min(100, (raw.raw_ast / 5) * 100);
-                    const dStl = Math.min(100, (raw.raw_stl / 2) * 100);
-                    const dBlk = Math.min(100, (raw.raw_blk / 1) * 100);
-                    const lPts = (8 / 15) * 100; const lReb = (3.5 / 8) * 100; const lAst = (1.8 / 5) * 100; const lStl = (0.8 / 2) * 100; const lBlk = (0.3 / 1) * 100;
-                    window.myRadarChart = new Chart(ctx, {
-                        type: 'radar',
-                        data: {
-                            labels: ['得分', '籃板', '助攻', '抄截', '阻攻'],
-                            datasets: [{
-                                label: '球員',
-                                data: [dPts, dReb, dAst, dStl, dBlk],
-                                backgroundColor: hexToRgba(teamColor, 0.4),
-                                borderColor: teamColor,
-                                borderWidth: 2,
-                                pointBackgroundColor: teamColor,
-                                pointRadius: 3
-                            }, {
-                                label: '聯盟平均',
-                                data: [lPts, lReb, lAst, lStl, lBlk],
-                                backgroundColor: 'rgba(200, 200, 200, 0)',
-                                borderColor: '#999',
-                                borderWidth: 1,
-                                borderDash: [5, 5],
-                                pointRadius: 0
-                            }]
-                        },
-                        options: {
-                            maintainAspectRatio: false, // Ensure chart fits container without forcing aspect ratio
-                            layout: {
-                                padding: 10 // Provide padding to ensure labels don't push chart off-center
-                            },
-                            scales: { r: { angleLines: { color: '#eee' }, grid: { color: '#eee' }, pointLabels: { font: { size: 12, weight: 'bold' }, color: '#666' }, ticks: { display: false, max: 100, beginAtZero: true } } },
-                            plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
-                        }
-                    });
+                    statsHtml = `<div class="section-divider">賽季數據</div><div class="season-stats-container"><div class="season-table-scroll"><table class="season-table"><thead><tr><th class="season-col-fixed">季</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
                 }
-            } catch (e) { console.error(e); body.innerHTML = `<div class="loading">讀取失敗<br><span style="font-size:10px;color:#ccc">${e.message}</span></div>`; }
+                
+                body.innerHTML = `${headerHtml}${statsHtml}<div style="height:20px;"></div>`;
+                lucide.createIcons();
+            } catch (e) { console.error(e); body.innerHTML = `<div class="loading">讀取失敗</div>`; }
         }
+
         function renderPeriodTable(data, hName, aName) { if (!data.home_team.periods) return ''; const hPeriods = data.home_team.periods; const aPeriods = data.away_team.periods; let headerCols = ''; let aCols = ''; let hCols = ''; for(let i=0; i<Math.max(hPeriods.length, aPeriods.length); i++) { let label = (i < 4) ? `Q${i+1}` : `OT${i-3}`; headerCols += `<th>${label}</th>`; aCols += `<td>${(aPeriods[i] && aPeriods[i].score !== undefined) ? aPeriods[i].score : '-'}</td>`; hCols += `<td>${(hPeriods[i] && hPeriods[i].score !== undefined) ? hPeriods[i].score : '-'}</td>`; } return `<div style="border-top:1px dashed #eee; margin-top:10px; padding-top:10px;"><div class="period-scroll"><table class="period-table"><thead><tr><th style="text-align:left"></th>${headerCols}</tr></thead><tbody><tr class="pt-row"><td class="period-team-name">${aName}</td>${aCols}</tr><tr class="pt-row"><td class="period-team-name">${hName}</td>${hCols}</tr></tbody></table></div></div>`; }
         function renderGameFlowTable(homeRounds, awayRounds, hName, aName) { let headerHtml = '<th>球隊</th>'; let hRow = `<td class="flow-team-name">${hName}</td>`; let aRow = `<td class="flow-team-name">${aName}</td>`; for(let i=1; i<=10; i++) { if(homeRounds[i] && awayRounds[i]) { let label = (i <= 4) ? `Q${i}` : `OT${i-4}`; headerHtml += `<th>${label}</th>`; hRow += `<td>${homeRounds[i].won_score}</td>`; aRow += `<td>${awayRounds[i].won_score}</td>`; } else break; } return `<div class="comparison-card"><div class="comp-title"><i data-lucide="list-ordered" width="14"></i> 分節得分</div><div class="period-scroll"><table class="flow-table"><thead><tr>${headerHtml}</tr></thead><tbody><tr>${aRow}</tr><tr>${hRow}</tr></tbody></table></div></div>`; }
-        function renderTeamComparison(homeStats, awayStats) { const metrics = [ { key: 'field_goals_percentage', label: '投籃 %', isPct: true }, { key: 'three_pointers_percentage', label: '三分 %', isPct: true }, { key: 'free_throws_percentage', label: '罰球 %', isPct: true }, { key: 'rebounds', label: '籃板', isPct: false }, { key: 'assists', label: '助攻', isPct: false }, { key: 'steals', label: '抄截', isPct: false }, { key: 'turnovers', label: '失誤', isPct: false, invert: true }, { key: 'points_in_paint', label: '禁區得分', isPct: false } ]; let rowsHtml = ''; metrics.forEach(m => { let valH = parseFloat(homeStats[m.key]) || 0; let valA = parseFloat(awayStats[m.key]) || 0; let maxVal = Math.max(valH, valA); if(m.isPct) maxVal = 100; let perH = (maxVal > 0) ? (valH / maxVal * 100) : 0; let perA = (maxVal > 0) ? (valA / maxVal * 100) : 0; let isLeftWin = m.invert ? (valA < valH) : (valA > valH); let isRightWin = m.invert ? (valH < valA) : (valH > valA); if (valA === valH) { isLeftWin = false; isRightWin = false; } rowsHtml += `<div class="comp-row"><div class="comp-side left"><div class="comp-wrapper"><div class="comp-val nums">${m.isPct?valA+'%':valA}</div><div class="comp-bar-bg"><div class="comp-bar left ${isLeftWin ? 'winner' : ''}" style="width: ${perA}%"></div></div></div></div><div class="comp-label">${m.label}</div><div class="comp-side right"><div class="comp-wrapper"><div class="comp-bar-bg"><div class="comp-bar right ${isRightWin ? 'winner' : ''}" style="width: ${perH}%"></div></div><div class="comp-val nums">${m.isPct?valH+'%':valH}</div></div></div></div>`; }); return `<div class="comparison-card"><div class="comp-title"><i data-lucide="arrow-left-right" width="14"></i> 球隊數據對比</div>${rowsHtml}</div>`; }
-        function getGameLeaders(playersObj) { let players = Object.values(playersObj).sort((a, b) => (Number(b.score)||0) - (Number(a.score)||0)); return players[0] || { name: '-', score: 0, rebounds: 0, assists: 0 }; }
-        function renderTeamBoxScore(playersObj, teamName) { const players = Object.values(playersObj).sort((a, b) => (b.is_starting === a.is_starting) ? (b.time_on_court - a.time_on_court) : (b.is_starting ? 1 : -1)); let html = `<div class="boxscore-section"><div class="boxscore-title"><img src="${getLogo(teamName)}" width="20"> ${getShortName(teamName)}</div><div class="bs-scroll"><table class="bs-table"><thead><tr><th>球員</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>FG</th><th>3PT</th><th>FT</th><th>MIN</th></tr></thead><tbody>`; let starterEnded = false; const fmt = (val) => (val === undefined || val === null) ? '-' : val; players.forEach((p, index) => { const isDnp = p.time_on_court === 0; if (!p.is_starting && !starterEnded && index > 0) { html += `<tr class="separator-row"><td class="sticky-sep">替補</td><td class="filler-sep" colspan="9"></td></tr>`; starterEnded = true; } const mins = Math.floor(p.time_on_court / 60); const secs = p.time_on_court % 60; const headUrl = playerMap[p.name.replace(/\s/g, '')]; const teamColor = getTeamColor(teamName); const avatarSrc = headUrl || DEFAULT_AVATAR; const avatarStyle = (!headUrl) ? `background:${teamColor}` : ''; let pid = p.id; if(!pid) { const found = globalPlayers.find(gp => gp.name === p.name); if(found) pid = found.id; } const clickAttr = pid ? `onclick="openPlayerProfile(${pid})"` : ''; html += `<tr class="${isDnp ? 'dnp-row' : ''}" ${clickAttr}><td><div class="player-head-cell"><img src="${avatarSrc}" class="player-headshot" style="${avatarStyle}" loading="lazy"> ${p.name}</div></td><td class="nums">${isDnp?'-':fmt(p.score)}</td><td class="nums">${isDnp?'-':fmt(p.rebounds)}</td><td class="nums">${isDnp?'-':fmt(p.assists)}</td><td class="nums">${isDnp?'-':fmt(p.steals)}</td><td class="nums">${isDnp?'-':fmt(p.blocks)}</td><td class="nums">${isDnp?'-':fmt(p.field_goals)}</td><td class="nums">${isDnp?'-':fmt(p.three_pointers)}</td><td class="nums">${isDnp?'-':fmt(p.free_throws)}</td><td class="nums" style="color:#888">${isDnp ? 'DNP' : `${mins}:${secs.toString().padStart(2, '0')}`}</td></tr>`; }); return html + `</tbody></table></div></div>`; }
+        function renderTeamComparison(homeStats, awayStats) { const metrics = [ { key: 'field_goals_percentage', label: '投籃 %', isPct: true }, { key: 'three_pointers_percentage', label: '三分 %', isPct: true }, { key: 'free_throws_percentage', label: '罰球 %', isPct: true }, { key: 'rebounds', label: '籃板', isPct: false }, { key: 'assists', label: '助攻', isPct: false }, { key: 'steals', label: '抄截', isPct: false }, { key: 'turnovers', label: '失誤', isPct: false, invert: true } ]; let rowsHtml = ''; metrics.forEach(m => { let valH = parseFloat(homeStats[m.key]) || 0; let valA = parseFloat(awayStats[m.key]) || 0; let maxVal = Math.max(valH, valA); if(m.isPct) maxVal = 100; let perH = (maxVal > 0) ? (valH / maxVal * 100) : 0; let perA = (maxVal > 0) ? (valA / maxVal * 100) : 0; let isLeftWin = m.invert ? (valA < valH) : (valA > valH); let isRightWin = m.invert ? (valH < valA) : (valH > valA); rowsHtml += `<div class="comp-row"><div class="comp-side left"><div class="comp-wrapper"><div class="comp-val nums">${m.isPct?valA+'%':valA}</div><div class="comp-bar-bg"><div class="comp-bar left ${isLeftWin ? 'winner' : ''}" style="width: ${perA}%"></div></div></div></div><div class="comp-label">${m.label}</div><div class="comp-side right"><div class="comp-wrapper"><div class="comp-bar-bg"><div class="comp-bar right ${isRightWin ? 'winner' : ''}" style="width: ${perH}%"></div></div><div class="comp-val nums">${m.isPct?valH+'%':valH}</div></div></div></div>`; }); return `<div class="comparison-card"><div class="comp-title"><i data-lucide="arrow-left-right" width="14"></i> 球隊數據對比</div>${rowsHtml}</div>`; }
+
+  function renderTeamBoxScore(playersNode, teamName, teamTotalNode) {
+    const players = Array.isArray(playersNode) ? playersNode : Object.values(playersNode || {});
+    if(players.length === 0) return `<div style="padding:40px; text-align:center;">暫無數據</div>`;
+    
+    const fmtPct = (val) => (val !== undefined && val !== null) ? val + '%' : '0.0%';
+    const tableHeader = (label) => `<tr><th>${label}</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>FG</th><th>FG%</th><th>3PT</th><th>3P%</th><th>FT</th><th>FT%</th><th>MIN</th></tr>`;
+
+    let html = `<div class="boxscore-section">
+        <div class="boxscore-title"><img src="${getLogo(teamName)}" width="20"> ${getShortName(teamName)}</div>
+        <div class="bs-scroll">
+            <table class="bs-table">
+                <thead>${tableHeader('球員')}</thead>
+                <tbody>`;
+    
+    // 排序：先發 true 在前，再按上場時間排
+    players.sort((a, b) => (b.is_starting === a.is_starting) ? (b.time_on_court - a.time_on_court) : (b.is_starting ? 1 : -1));
+
+    let benchStarted = false;
+    players.forEach((p) => {
+        // 區隔先發與替補
+        if (!p.is_starting && !benchStarted) {
+            html += `<tr class="separator-row"><td class="sticky-sep">替補</td><td colspan="12" class="filler-sep"></td></tr>`;
+            benchStarted = true;
+        }
+
+        const isDnp = !p.time_on_court || p.time_on_court === 0;
+        const headUrl = playerMap[p.name.replace(/\s/g, '')];
+        const mins = isDnp ? 'DNP' : `${Math.floor(p.time_on_court/60)}:${(p.time_on_court%60).toString().padStart(2,'0')}`;
+
+        html += `<tr class="${isDnp ? 'dnp-row' : ''}" onclick="openPlayerProfile(${p.id})">
+            <td><div class="player-head-cell"><img src="${headUrl || DEFAULT_AVATAR}" class="player-headshot" style="${!headUrl ? `background:${getTeamColor(teamName)}` : ''}"> ${p.name}</div></td>
+            <td class="nums" style="font-weight:800; color:var(--tpbl-blue)">${p.score ?? 0}</td>
+            <td class="nums">${p.rebounds ?? 0}</td>
+            <td class="nums">${p.assists ?? 0}</td>
+            <td class="nums">${p.steals ?? 0}</td>
+            <td class="nums">${p.blocks ?? 0}</td>
+            <td class="nums">${p.field_goals || '0/0'}</td>
+            <td class="nums" style="color:#8E8E93">${fmtPct(p.field_goals_percentage)}</td>
+            <td class="nums">${p.three_pointers || '0/0'}</td>
+            <td class="nums" style="color:#8E8E93">${fmtPct(p.three_pointers_percentage)}</td>
+            <td class="nums">${p.free_throws || '0/0'}</td>
+            <td class="nums" style="color:#8E8E93">${fmtPct(p.free_throws_percentage)}</td>
+            <td class="nums" style="color:#888">${mins}</td>
+        </tr>`;
+    });
+    
+    if (teamTotalNode) {
+        const tt = teamTotalNode;
+        // 總計列上方重複表頭
+        html += `<tr class="bs-table-subheader">${tableHeader('項目').replace('<tr>', '').replace('</tr>', '')}</tr>`;
+        
+        // 團隊總計 (修正 PTS 取值)
+        html += `<tr class="total-row-highlight">
+            <td class="sticky-sep">團隊總計</td>
+            <td class="nums">${tt.won_score ?? tt.score ?? 0}</td>
+            <td class="nums">${tt.rebounds ?? 0}</td>
+            <td class="nums">${tt.assists ?? 0}</td>
+            <td class="nums">${tt.steals ?? 0}</td>
+            <td class="nums">${tt.blocks ?? 0}</td>
+            <td class="nums">${tt.field_goals ?? '0/0'}</td>
+            <td class="nums">${fmtPct(tt.field_goals_percentage)}</td>
+            <td class="nums">${tt.three_pointers ?? '0/0'}</td>
+            <td class="nums">${fmtPct(tt.three_pointers_percentage)}</td>
+            <td class="nums">${tt.free_throws ?? '0/0'}</td>
+            <td class="nums">${fmtPct(tt.free_throws_percentage)}</td>
+            <td>-</td>
+        </tr>`;
+    }
+
+    return html + `</tbody></table></div></div>`;
+}
+
 
         window.switchMainTab = function(tab) {
             document.querySelectorAll('.tab-bar .tab-btn').forEach(b => b.classList.remove('active'));
@@ -1377,4 +1400,3 @@
     </script>
 </body>
 </html>
-
