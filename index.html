@@ -308,24 +308,173 @@
         .sgc-val { font-size: 18px; font-weight: 800; color: var(--tpbl-blue); font-family: 'SF Mono', monospace; line-height: 1.2; }
         .sgc-label { font-size: 10px; color: #8E8E93; font-weight: 600; text-transform: uppercase; margin-top: 2px; }
 
-        .best-game-card-premium { position: relative; background: #1C1C1E; border-radius: 20px; overflow: hidden; color: #fff; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); border-left: 6px solid var(--team-color); margin-bottom: 24px; display: flex; flex-direction: column; min-height: 180px; justify-content: space-between; }
-        .best-game-card-premium::after { content: ''; position: absolute; top: 0; right: 0; width: 60%; height: 100%; background: linear-gradient(270deg, var(--team-color), transparent); opacity: 0.15; pointer-events: none; z-index: 0; }
-        .bgp-header { display: flex; justify-content: space-between; align-items: center; z-index: 2; margin-bottom: 16px; }
-        .bgp-badge { display: inline-flex; align-items: center; gap: 4px; background: #3A3A3C; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; border: 1px solid rgba(255,255,255,0.1); }
-        .bgp-date { font-family: 'SF Mono', monospace; font-size: 12px; opacity: 0.6; font-weight: 600; }
-        .bgp-body { display: flex; justify-content: space-between; align-items: flex-end; z-index: 2; position: relative;}
-        .bgp-hero-score { line-height: 0.8; display: flex; flex-direction: column; gap: 12px; justify-content: flex-end; }
-        .bgp-score-val { font-size: 72px; font-weight: 900; letter-spacing: -3px; background: linear-gradient(to bottom, #fff 30%, #999 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); line-height: 0.8; }
-        .bgp-score-lbl { font-size: 16px; font-weight: 700; margin-left: 4px; color: var(--team-color); letter-spacing: 2px; text-transform: uppercase; }
-        .bgp-opp-section { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-        .bgp-vs-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px;}
-        .bgp-opp-logo { width: 36px; height: 36px; background: #fff; border-radius: 50%; padding: 3px; object-fit: contain; }
-        .bgp-opp-name { font-size: 16px; font-weight: 700; color: #E5E5EA; }
-        .bgp-stats-row { display: flex; gap: 12px; margin-top: 8px; background: rgba(255,255,255,0.08); padding: 8px 14px; border-radius: 12px; backdrop-filter: blur(4px); }
-        .bgp-stat { display: flex; flex-direction: column; align-items: center; }
-        .bgp-s-val { font-size: 18px; font-weight: 700; font-family: 'SF Mono', monospace; color: #fff; }
-        .bgp-s-lbl { font-size: 10px; font-weight: 600; color: #8E8E93; margin-top: 2px; }
-        .bgp-watermark { position: absolute; right: -20px; bottom: -40px; width: 180px; height: 180px; opacity: 0.05; filter: grayscale(1); transform: rotate(-10deg); pointer-events: none; z-index: 0; }
+        /* 生涯代表作卡片 - 頂級重構版 */
+        .best-game-card-premium {
+            position: relative;
+            background: #1C1C1E; /* 深灰黑色 */
+            border-radius: 28px;
+            padding: 24px;
+            color: #fff;
+            margin-bottom: 24px;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            /* 質感漸層背景 */
+            background: linear-gradient(145deg, #2c2c2e 0%, #1c1c1e 100%);
+        }
+
+        /* 卡片背景浮水印 */
+        .bgp-watermark {
+            position: absolute;
+            right: -20px;
+            bottom: -30px;
+            width: 220px;
+            height: 220px;
+            opacity: 0.05;
+            filter: grayscale(1);
+            transform: rotate(-15deg);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .bgp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .bgp-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            text-transform: uppercase;
+        }
+
+        .bgp-date {
+            font-family: 'SF Mono', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            color: #8E8E93;
+        }
+
+        .bgp-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            position: relative;
+            z-index: 2;
+        }
+
+        .bgp-score-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .bgp-score-val {
+            font-size: 80px;
+            font-weight: 900;
+            line-height: 0.9;
+            letter-spacing: -3px;
+            /* 加入一點發光效果 */
+            text-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        .bgp-score-lbl {
+            font-size: 15px;
+            font-weight: 800;
+            color: #8E8E93;
+            margin-top: 8px;
+            margin-left: 4px;
+            letter-spacing: 2px;
+        }
+
+        .bgp-right-side {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 16px;
+        }
+
+        .bgp-vs-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bgp-vs-txt {
+            font-size: 18px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .bgp-vs-txt span {
+            font-size: 13px;
+            opacity: 0.6;
+            margin-right: 4px;
+            font-weight: 600;
+        }
+
+        .bgp-opp-logo {
+            width: 44px;
+            height: 44px;
+            background: #fff;
+            border-radius: 50%;
+            padding: 3px;
+            object-fit: contain;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        /* 玻璃擬態數據盒 */
+        .bgp-stats-sub-box {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 16px;
+            display: flex;
+            padding: 12px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .bgp-s-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 40px;
+        }
+
+        .bgp-s-val {
+            font-size: 22px;
+            font-weight: 800;
+            font-family: 'SF Mono', monospace;
+            color: #fff;
+        }
+
+        .bgp-s-lbl {
+            font-size: 9px;
+            font-weight: 700;
+            color: #8E8E93;
+            margin-top: 2px;
+            text-transform: uppercase;
+        }
+
+        .bgp-s-divider {
+            width: 1px;
+            background: rgba(255, 255, 255, 0.15);
+            height: 28px;
+            margin: 0 15px;
+            align-self: center;
+        }
 
         /* Recent Games Table */
         .recent-games-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; margin-bottom: 24px; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.02); }
@@ -346,14 +495,20 @@
         /* Awards */
         .awards-container { margin-top: 16px; }
         .awards-section-title { font-size: 13px; font-weight: 700; color: #8E8E93; margin-bottom: 8px; padding-left: 4px; text-transform: uppercase; letter-spacing: 0.5px;}
-        .annual-awards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-        .aa-card { background: linear-gradient(135deg, #FFFDF5, #fff); border: 1px solid #EAD8B6; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; box-shadow: 0 2px 6px rgba(212, 176, 125, 0.1); }
-        .aa-icon { color: #D4B07D; background: rgba(212, 176, 125, 0.15); padding: 6px; border-radius: 50%; margin-bottom: 2px; }
-        .aa-title { font-size: 11px; font-weight: 700; color: #A05E28; line-height: 1.2; }
-        .aa-season { font-size: 9px; color: #C09A68; font-weight: 600; background: rgba(212, 176, 125, 0.1); padding: 2px 5px; border-radius: 4px; }
-        .monthly-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 4px 4px 12px 4px; margin: 0 -4px; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
-        .monthly-scroll::-webkit-scrollbar { display: none; }
-        .ma-card { flex: 0 0 auto; width: 120px; background: #fff; border-radius: 12px; padding: 10px; border: 1px solid #eee; box-shadow: 0 2px 6px rgba(0,0,0,0.03); display: flex; flex-direction: column; align-items: center; gap: 4px; scroll-snap-align: start; }
+        .annual-awards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .aa-card {
+            background: #fff; border: 1px solid #EAD8B6; border-radius: 12px;
+            padding: 16px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;
+        }
+        .aa-icon { color: #D4B07D; background: rgba(212,176,125,0.1); padding: 10px; border-radius: 50%; }
+        .aa-title { font-size: 13px; font-weight: 800; color: #A05E28; }
+        .aa-season { font-size: 10px; color: #C09A68; background: #FFFDF5; padding: 2px 8px; border-radius: 4px; }
+        /* 橫向單月 MVP */
+        .monthly-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .ma-card {
+            flex: 0 0 120px; background: #fff; border-radius: 12px; padding: 12px;
+            text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
         .ma-header { display: flex; align-items: center; gap: 4px; font-size: 9px; color: #888; font-weight: 600; text-transform: uppercase; }
         .ma-title { font-size: 12px; font-weight: 800; color: var(--tpbl-blue); }
 
@@ -554,14 +709,13 @@
         .trend-row td { background: #fff; padding-top: 8px; padding-bottom: 8px; }
         .trend-row .season-col-fixed { font-size: 10px; color: #ccc !important; text-transform: uppercase; letter-spacing: 1px; }
         
-        /* Pill Badges */
+        /* 賽季數據趨勢 Badge */
         .badge-pill {
             display: inline-flex; align-items: center; justify-content: center;
-            border-radius: 6px; padding: 3px 8px;
-            font-size: 11px; font-weight: 800;
+            border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 800;
         }
-        .bp-up { background: rgba(255, 59, 48, 0.1); color: #FF3B30; } /* Red */
-        .bp-down { background: rgba(52, 199, 89, 0.1); color: #34C759; } /* Green */
+        .bp-up { background: rgba(255, 59, 48, 0.1); color: #FF3B30; }
+        .bp-down { background: rgba(52, 199, 89, 0.1); color: #34C759; }
         .bp-flat { display: none; }
         
         /* Chart Container */
@@ -583,7 +737,37 @@
             font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 3px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.08); border: 1px solid #FFD54F; white-space: nowrap;
         }
-        
+        /* --- 數據排行榜 專業版樣式 --- */
+        .stats-list-card {
+            background: #fff; border-radius: 16px; padding: 4px 0; margin-top: 8px;  margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.01);
+        }
+        .rank-row {
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            border-bottom: 0.5px solid #f2f2f7; transition: background 0.2s;
+        }
+        .rank-row:active { background: #f9f9f9; }
+        .rank-row:last-child { border-bottom: none; }
+
+        /* 排名數字：統一字體，無特殊色 */
+        .rank-index {
+            width: 20px; font-size: 13px; font-weight: 800; color: #8E8E93;
+            font-family: 'SF Mono', monospace; text-align: center;
+        }
+
+        /* 頭像與球隊徽章 */
+        .rank-photo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #f8f8fa; border: 1px solid #eee; }
+        .rank-logo-sm { width: 18px; height: 18px; object-fit: contain; }
+
+        .rank-main-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .rank-name-txt { font-size: 14px; font-weight: 700; color: var(--text-main); }
+        .rank-meta-txt { font-size: 11px; color: var(--text-sub); font-weight: 500; display: flex; align-items: center; gap: 4px; }
+
+        /* 數據數值：統一深藍色與 Mono 字體 */
+        .rank-val-txt {
+            font-family: 'SF Mono', monospace; font-weight: 800; font-size: 17px;
+            color: var(--tpbl-blue); text-align: right; min-width: 50px;
+        }
     </style>
 </head>
 <body>
@@ -647,6 +831,7 @@
     <nav class="tab-bar">
         <button class="tab-btn active" onclick="switchMainTab('home')"><i data-lucide="layout-grid" width="22"></i>看板</button>
         <button class="tab-btn" onclick="switchMainTab('teams')"><i data-lucide="shield" width="22"></i>球隊</button>
+        <button class="tab-btn" onclick="switchMainTab('stats')"><i data-lucide="bar-chart-3" width="22"></i>數據</button>
         <button class="tab-btn" onclick="switchMainTab('schedule')"><i data-lucide="calendar-days" width="22"></i>賽程</button>
     </nav>
 
@@ -717,7 +902,7 @@
         let favoritePlayerIds = JSON.parse(localStorage.getItem('tpbl_favorites')) || [];
         
         // --- NEW: Game Detailed Data Cache ---
-        let currentDetailedGameData = null; 
+        let currentDetailedGameData = null;
 
         function toggleFavorite(id) {
             const index = favoritePlayerIds.indexOf(id);
@@ -740,7 +925,11 @@
                 refreshInterval = setInterval(async () => { await fetchData(); updateHomeUI(); }, 15000);
             } catch (e) { hideSplashScreen(); document.getElementById('app-container').innerHTML = `<div class="error-msg"><i data-lucide="wifi-off" width="32"></i><br><br>暫時無法連接資料庫<br><span style="font-size:12px; opacity:0.7">請重新整理頁面</span><br><button class="retry-btn" onclick="location.reload()">重新載入</button></div>`; lucide.createIcons(); }
         }
-
+        
+        //排行榜api
+        let globalTopPlayers = null, globalTopTeams = null;
+        const API_TOP_PLAYERS = 'https://api.tpbl.basketball/api/games/stats/top-players?division_id=9';
+        const API_TOP_TEAMS = 'https://api.tpbl.basketball/api/games/stats/top-teams?division_id=9';
         async function fetchData() {
             if (globalPlayers.length === 0) { try { const pJson = await fetchJson(API_PLAYERS); globalPlayers = pJson.data || pJson; globalPlayers.forEach(p => { let imgUrl = ""; if(p.images && p.images.length > 0) { const sm = p.images.find(i => i.key === 'sm'); const md = p.images.find(i => i.key === 'md'); imgUrl = sm ? sm.url : (md ? md.url : p.images[0].url); } playerMap[p.name.replace(/\s/g, '')] = imgUrl; }); } catch(e) {} }
             const [gamesRes, gamesS1Res, standingsRes, statsRes, votesS1, votesS2, votesAnnS1, votesAnnS2] = await Promise.allSettled([
@@ -761,6 +950,14 @@
             if (standingsRes.status === 'fulfilled') globalStandings = standingsRes.value.data || standingsRes.value;
             if (statsRes.status === 'fulfilled') { globalTeamStats = statsRes.value.data || statsRes.value; processStatsData(); }
             let awards = []; [votesS1, votesS2, votesAnnS1, votesAnnS2].forEach(p => { if (p.status === 'fulfilled' && p.value.result) awards = awards.concat(p.value.result); }); globalAwards = awards;
+            //排行榜數據
+            
+            const [tpRes, ttRes] = await Promise.allSettled([
+                    fetchJson('https://api.tpbl.basketball/api/games/stats/top-players?division_id=9'),
+                    fetchJson('https://api.tpbl.basketball/api/games/stats/top-teams?division_id=9')
+                ]);
+                if (tpRes.status === 'fulfilled') globalTopPlayers = tpRes.value.data || tpRes.value;
+                if (ttRes.status === 'fulfilled') globalTopTeams = ttRes.value.data || ttRes.value;
         }
 
         function processStatsData() {
@@ -1285,79 +1482,155 @@ wrapper.innerHTML += `
             document.getElementById('tab-home').innerHTML = renderTeamBoxScore(homeNode, hName, homeTeamNode);
             lucide.createIcons();
         }
+        // 修正對手判斷邏輯：確保顯示的是「非自己」的隊伍
+        function getOpponentInfo(game, myTeamName) {
+            if (!game) return { name: "對手", logo: "https://via.placeholder.com/30" };
+            // 如果主隊名稱包含球員隊名，對手就是客隊
+            const isHome = game.home_team.name.includes(myTeamName);
+            const opp = isHome ? game.away_team : game.home_team;
+            return {
+                name: getShortName(opp.name),
+                logo: getLogo(opp.name, opp.meta?.logo)
+            };
+        }
 
         async function openPlayerProfile(playerId) {
-            toggleBodyLock(true); const page = document.getElementById('player-page'); const body = document.getElementById('player-modal-body'); page.classList.add('active'); body.innerHTML = '<div class="loading">正在計算賽季數據...</div>';
+            toggleBodyLock(true);
+            const page = document.getElementById('player-page');
+            const body = document.getElementById('player-modal-body');
+            page.classList.add('active');
+            body.innerHTML = '<div class="loading">正在計算數據...</div>';
+
             const pBasic = globalPlayers.find(p => p.id === playerId);
-            
+
             try {
                 const ts = Date.now();
-                // Fetch both S1 and S2
+                // 同時抓取 S2 (division 9) 與 S1 (division 2) 數據
                 const [s2Res, s1Res] = await Promise.all([
                     fetchJson(`https://api.tpbl.basketball/api/players/${playerId}/games/stats?division_id=9&t=${ts}`),
                     fetchJson(`https://api.tpbl.basketball/api/players/${playerId}/games/stats?division_id=2&t=${ts}`)
                 ]);
-                
+
                 const s2Logs = Array.isArray(s2Res) ? s2Res : (s2Res.data || []);
                 const s1Logs = Array.isArray(s1Res) ? s1Res : (s1Res.data || []);
-                const allGameLogs = [...s2Logs, ...s1Logs];
+                const allLogs = [...s2Logs, ...s1Logs];
 
+                // 建立唯一比賽 Map 防止重複
                 const uniqueLogsMap = new Map();
-                allGameLogs.forEach(log => {
-                    const gid = log.game?.id || log.match?.id;
-                    if(gid && !uniqueLogsMap.has(gid)) { uniqueLogsMap.set(gid, log); }
+                allLogs.forEach(log => {
+                    const gid = log.game?.id || log.match?.id || log.game_id;
+                    if (gid && !uniqueLogsMap.has(gid)) uniqueLogsMap.set(gid, log);
                 });
                 const uniqueLogs = Array.from(uniqueLogsMap.values());
 
-                let playerData = pBasic || {}; let teamName = pBasic ? pBasic.team.name : ''; let bestGameLog = null;
-                
-                let s1 = { gp:0, min:0, pts:0, reb:0, ast:0, stl:0, blk:0 };
-                let s2 = { gp:0, min:0, pts:0, reb:0, ast:0, stl:0, blk:0 };
-                
-                const addToStats = (logs, targetObj) => {
-                    const played = logs.filter(l => l.accumulated_stats && l.accumulated_stats.time_on_court > 0);
-                    played.forEach(log => {
-                        const acc = log.accumulated_stats;
-                        targetObj.gp++;
-                        targetObj.min += (acc.time_on_court || 0);
-                        targetObj.pts += (acc.score || 0);
-                        targetObj.reb += (acc.rebounds || 0);
-                        targetObj.ast += (acc.assists || 0);
-                        targetObj.stl += (acc.steals || 0);
-                        targetObj.blk += (acc.blocks || 0);
+                // 基礎資料定義
+                let playerData = pBasic || (uniqueLogs.length > 0 ? uniqueLogs[0].player : {});
+                let teamName = pBasic ? pBasic.team.name : (uniqueLogs.length > 0 ? uniqueLogs[0].team.name : '');
+                let teamColor = getTeamColor(teamName);
+
+                // --- 統計數據計算 ---
+                let s1 = { gp: 0, min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0 };
+                let s2 = { gp: 0, min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0 };
+
+                const processStats = (logs, obj) => {
+                    logs.filter(l => l.accumulated_stats?.time_on_court > 0).forEach(l => {
+                        const acc = l.accumulated_stats;
+                        obj.gp++; obj.min += acc.time_on_court; obj.pts += acc.score;
+                        obj.reb += acc.rebounds; obj.ast += acc.assists;
+                        obj.stl += acc.steals; obj.blk += acc.blocks;
                     });
                 };
+                processStats(s2Logs, s2);
+                processStats(s1Logs, s1);
 
-                if (uniqueLogs.length > 0) {
-                    if (!pBasic) { playerData = uniqueLogs[0].player; teamName = uniqueLogs[0].team.name; }
-                    addToStats(s2Logs, s2);
-                    addToStats(s1Logs, s1);
-                    const playedLogs = uniqueLogs.filter(l => l.accumulated_stats.time_on_court > 0);
-                    if (playedLogs.length > 0) {
-                        playedLogs.sort((a, b) => (b.accumulated_stats.score || 0) - (a.accumulated_stats.score || 0));
-                        bestGameLog = playedLogs[0];
-                    }
-                }
-                
-                const teamColor = getTeamColor(teamName); let imgUrl = ""; let imgStyle = ""; if (playerData.images && playerData.images.length > 0) { const xl = playerData.images.find(i => i.key === 'xl'); const lg = playerData.images.find(i => i.key === 'lg'); imgUrl = (xl || lg || playerData.images[0]).url; } else if (playerData.name && playerMap[playerData.name.replace(/\s/g, '')]) { imgUrl = playerMap[playerData.name.replace(/\s/g, '')]; } if (!imgUrl) { imgUrl = DEFAULT_AVATAR; imgStyle = `background-color: ${teamColor};`; }
+                const calcAvg = (s) => {
+                    if (s.gp === 0) return null;
+                    const f = (v) => (v / s.gp).toFixed(1);
+                    return {
+                        gp: s.gp, pts: f(s.pts), reb: f(s.reb), ast: f(s.ast), stl: f(s.stl), blk: f(s.blk),
+                        min: Math.floor((s.min / s.gp) / 60) + ":" + Math.round((s.min / s.gp) % 60).toString().padStart(2, '0'),
+                        raw: { pts: s.pts / s.gp, reb: s.reb / s.gp, ast: s.ast / s.gp, stl: s.stl / s.gp, blk: s.blk / s.gp }
+                    };
+                };
+                const avg2 = calcAvg(s2);
+                const avg1 = calcAvg(s1);
+
+                // 1. Header
+                let imgUrl = playerData.images?.find(i => i.key === 'lg')?.url || playerMap[playerData.name.replace(/\s/g, '')] || DEFAULT_AVATAR;
                 const isFav = favoritePlayerIds.includes(playerId);
-                const headerHtml = `<div class="player-card-header" style="--team-color: ${teamColor}"><button class="pch-fav-btn ${isFav?'active':''}" id="fav-btn-${playerId}" onclick="toggleFavorite(${playerId})">${isFav?'<i data-lucide="star" fill="currentColor" width="20"></i>':'<i data-lucide="star" width="20"></i>'}</button><img src="${getLogo(teamName)}" class="pch-bg-logo"><div class="pch-jersey-num">${playerData.number || '00'}</div><div class="pch-avatar-container" style="${imgStyle}"><img src="${imgUrl}" class="pch-avatar"></div><div class="pch-info"><div class="pch-name">${playerData.name || '未知球員'}</div><div class="pch-badge-row"><span class="pch-pill">${getShortName(teamName)}</span><span class="pch-pill">#${playerData.number||'-'}</span><span class="pch-pill">${formatPos(playerData.meta?.position)}</span></div></div></div>`;
-                
-                const calcAvg = (s) => { if (s.gp === 0) return null; return { gp: s.gp, min: Math.floor((s.min/s.gp)/60) + ":" + Math.round((s.min/s.gp)%60).toString().padStart(2,'0'), pts: (s.pts/s.gp).toFixed(1), reb: (s.reb/s.gp).toFixed(1), ast: (s.ast/s.gp).toFixed(1), stl: (s.stl/s.gp).toFixed(1), blk: (s.blk/s.gp).toFixed(1), raw_pts: s.pts/s.gp, raw_reb: s.reb/s.gp, raw_ast: s.ast/s.gp, raw_stl: s.stl/s.gp, raw_blk: s.blk/s.gp }; };
-                const avg1 = calcAvg(s1); const avg2 = calcAvg(s2);
-                
+                const headerHtml = `<div class="player-card-header" style="--team-color: ${teamColor}"><button class="pch-fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${playerId})"><i data-lucide="star" ${isFav ? 'fill="currentColor"' : ''} width="20"></i></button><img src="${getLogo(teamName)}" class="pch-bg-logo"><div class="pch-jersey-num">${playerData.number || '00'}</div><div class="pch-avatar-container"><img src="${imgUrl}" class="pch-avatar"></div><div class="pch-info"><div class="pch-name">${playerData.name}</div><div class="pch-badge-row"><span class="pch-pill">${getShortName(teamName)}</span><span class="pch-pill">#${playerData.number}</span><span class="pch-pill">${formatPos(playerData.meta?.position)}</span></div></div></div>`;
+
+                // 2. 雷達圖
+                let chartHtml = avg2 ? `<div class="section-divider"><i data-lucide="pie-chart" width="16"></i> 能力雷達圖</div><div class="chart-card"><div class="chart-container"><canvas id="playerRadar"></canvas></div></div>` : '';
+
+                // 3. 賽季數據比較 (趨勢變化)
                 let statsHtml = '';
                 if (avg2) {
-                    let rows = `<tr class="s2-row"><td class="season-col-fixed nums">25-26</td><td class="nums">${avg2.min}</td><td class="nums">${avg2.pts}</td><td class="nums">${avg2.reb}</td><td class="nums">${avg2.ast}</td><td class="nums">${avg2.stl}</td><td class="nums">${avg2.blk}</td></tr>`;
-                    if (avg1) {
-                        rows += `<tr class="s1-row"><td class="season-col-fixed nums">24-25</td><td class="nums">${avg1.min}</td><td class="nums">${avg1.pts}</td><td class="nums">${avg1.reb}</td><td class="nums">${avg1.ast}</td><td class="nums">${avg1.stl}</td><td class="nums">${avg1.blk}</td></tr>`;
-                    }
-                    statsHtml = `<div class="section-divider">賽季數據</div><div class="season-stats-container"><div class="season-table-scroll"><table class="season-table"><thead><tr><th class="season-col-fixed">季</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+                    const getBadge = (curr, prev) => {
+                        const diff = (curr - prev).toFixed(1);
+                        return parseFloat(diff) > 0 ? `<span class="badge-pill bp-up">+${diff}</span>` : (parseFloat(diff) < 0 ? `<span class="badge-pill bp-down">${diff}</span>` : '-');
+                    };
+                    let trendRow = avg1 ? `<tr class="trend-row"><td class="season-col-fixed">變化</td><td></td><td>${getBadge(avg2.raw.pts, avg1.raw.pts)}</td><td>${getBadge(avg2.raw.reb, avg1.raw.reb)}</td><td>${getBadge(avg2.raw.ast, avg1.raw.ast)}</td><td>${getBadge(avg2.raw.stl, avg1.raw.stl)}</td><td>${getBadge(avg2.raw.blk, avg1.raw.blk)}</td></tr>` : '';
+                    statsHtml = `<div class="section-divider"><i data-lucide="bar-chart-2" width="16"></i> 賽季數據比較</div><div class="season-stats-container"><div class="season-table-scroll"><table class="season-table"><thead><tr><th class="season-col-fixed">賽季</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th></tr></thead><tbody><tr class="s2-row"><td class="season-col-fixed nums">25-26</td><td>${avg2.min}</td><td>${avg2.pts}</td><td>${avg2.reb}</td><td>${avg2.ast}</td><td>${avg2.stl}</td><td>${avg2.blk}</td></tr>${avg1 ? `<tr class="s1-row"><td class="season-col-fixed nums">24-25</td><td>${avg1.min}</td><td>${avg1.pts}</td><td>${avg1.reb}</td><td>${avg1.ast}</td><td>${avg1.stl}</td><td>${avg1.blk}</td></tr>` : ''}${trendRow}</tbody></table></div></div>`;
                 }
-                
-                body.innerHTML = `${headerHtml}${statsHtml}<div style="height:20px;"></div>`;
+
+                // 4. 生涯代表作 (修正 VS 邏輯)
+                let bestGameHtml = '';
+                const playedList = uniqueLogs.filter(l => l.accumulated_stats?.score > 0).sort((a, b) => b.accumulated_stats.score - a.accumulated_stats.score);
+                if (playedList.length > 0) {
+                    const bg = playedList[0];
+                    const gid = bg.game_id || bg.game?.id;
+                    const linked = globalGames.find(x => x.id === gid);
+                    const opp = getOpponentInfo(linked, teamName);
+                    const date = linked ? linked.game_date.split('-').slice(1).join('/') : "00/00";
+                    bestGameHtml = `<div class="section-divider"><i data-lucide="crown" width="16"></i> 生涯代表作</div><div class="best-game-card-premium"><div class="bgp-header"><span class="bgp-badge">CAREER HIGH</span><span class="bgp-date nums">${date}</span></div><div class="bgp-body"><div class="bgp-score-group"><div class="bgp-score-val nums">${bg.accumulated_stats.score}</div><div class="bgp-score-lbl">PTS</div></div><div class="bgp-right-side"><div class="bgp-vs-row"><span style="font-size:14px; opacity:0.7;">VS</span> <span>${opp.name}</span><img src="${opp.logo}" class="bgp-opp-logo"></div><div class="bgp-stats-sub-box"><div class="bgp-s-item"><span>${bg.accumulated_stats.rebounds}</span><span class="bgp-s-lbl">REB</span></div><div class="bgp-s-divider"></div><div class="bgp-s-item"><span>${bg.accumulated_stats.assists}</span><span class="bgp-s-lbl">AST</span></div></div></div></div></div>`;
+                }
+
+                // 5. 近期表現 (修正 VS 邏輯)
+                let recentHtml = '';
+                if (uniqueLogs.length > 0) {
+                    const sorted = [...uniqueLogs].sort((a, b) => new Date(b.game?.gamed_at || 0) - new Date(a.game?.gamed_at || 0)).slice(0, 5);
+                    let rows = sorted.map(g => {
+                        const gid = g.game_id || g.game?.id;
+                        const linked = globalGames.find(x => x.id === gid);
+                        const opp = getOpponentInfo(linked, teamName);
+                        const date = linked ? linked.game_date.split('-').slice(1).join('/') : "-/-";
+                        return `<tr><td><div class="rg-date nums">${date}</div><div class="rg-opp"><img src="${opp.logo}" width="16"> ${opp.name}</div></td><td class="nums highlight-col">${g.accumulated_stats.score}</td><td>${g.accumulated_stats.rebounds}</td><td>${g.accumulated_stats.assists}</td></tr>`;
+                    }).join('');
+                    recentHtml = `<div class="section-divider"><i data-lucide="history" width="16"></i> 近期表現</div><table class="recent-games-table"><thead><tr><th>日期 / 對手</th><th>得分</th><th>籃板</th><th>助攻</th></tr></thead><tbody>${rows}</tbody></table>`;
+                }
+
+                // 6. 賽季獎項
+                let awardsHtml = '';
+                const myAwards = globalAwards.filter(a => a.winner?.some(w => w.info.name === playerData.name));
+                if (myAwards.length > 0) {
+                    const annual = myAwards.filter(a => a.type === 'annual');
+                    const monthly = myAwards.filter(a => a.type === 'monthly');
+                    awardsHtml = `<div class="awards-container">` + (annual.length ? `<div class="awards-section-title">年度榮譽</div><div class="annual-awards-grid">` + annual.map(a => `<div class="aa-card"><div class="aa-icon"><i data-lucide="${getAwardIcon(a.title)}" width="20"></i></div><div class="aa-title">${a.title}</div><div class="aa-season nums">${a.season.name}</div></div>`).join('') + `</div>` : '') + (monthly.length ? `<div class="awards-section-title">單月 MVP</div><div class="monthly-scroll">` + monthly.map(a => `<div class="ma-card"><div class="ma-header"><i data-lucide="trophy" width="12"></i> MVP</div><div class="ma-title">${a.en_title.split('(')[1]?.replace(')', '') || 'MVP'}</div><div class="nums" style="font-size:9px; color:#aaa">${a.season.name}</div></div>`).join('') + `</div>` : '') + `</div>`;
+                }
+
+                body.innerHTML = `${headerHtml}${chartHtml}${statsHtml}${bestGameHtml}${recentHtml}${awardsHtml}<div style="height:40px;"></div>`;
                 lucide.createIcons();
-            } catch (e) { console.error(e); body.innerHTML = `<div class="loading">讀取失敗</div>`; }
+
+                // 繪製雷達圖
+                if (avg2 && document.getElementById('playerRadar')) {
+                    const ctx = document.getElementById('playerRadar').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'radar',
+                        data: {
+                            labels: ['得分', '籃板', '助攻', '抄截', '阻攻'],
+                            datasets: [{
+                                data: [Math.min(100,(avg2.raw.pts/20)*100), Math.min(100,(avg2.raw.reb/10)*100), Math.min(100,(avg2.raw.ast/8)*100), Math.min(100,(avg2.raw.stl/3)*100), Math.min(100,(avg2.raw.blk/2)*100)],
+                                backgroundColor: hexToRgba(teamColor, 0.4), borderColor: teamColor, borderWidth: 2, pointRadius: 0
+                            }]
+                        },
+                        options: { scales: { r: { suggestMin: 0, suggestMax: 100, ticks: { display: false } } }, plugins: { legend: { display: false } } }
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+                body.innerHTML = `<div class="loading">讀取失敗 <br><small>${e.message}</small></div>`;
+            }
         }
 
         function renderPeriodTable(data, hName, aName) { if (!data.home_team.periods) return ''; const hPeriods = data.home_team.periods; const aPeriods = data.away_team.periods; let headerCols = ''; let aCols = ''; let hCols = ''; for(let i=0; i<Math.max(hPeriods.length, aPeriods.length); i++) { let label = (i < 4) ? `Q${i+1}` : `OT${i-3}`; headerCols += `<th>${label}</th>`; aCols += `<td>${(aPeriods[i] && aPeriods[i].score !== undefined) ? aPeriods[i].score : '-'}</td>`; hCols += `<td>${(hPeriods[i] && hPeriods[i].score !== undefined) ? hPeriods[i].score : '-'}</td>`; } return `<div style="border-top:1px dashed #eee; margin-top:10px; padding-top:10px;"><div class="period-scroll"><table class="period-table"><thead><tr><th style="text-align:left"></th>${headerCols}</tr></thead><tbody><tr class="pt-row"><td class="period-team-name">${aName}</td>${aCols}</tr><tr class="pt-row"><td class="period-team-name">${hName}</td>${hCols}</tr></tbody></table></div></div>`; }
@@ -1439,10 +1712,123 @@ wrapper.innerHTML += `
 
         window.switchMainTab = function(tab) {
             document.querySelectorAll('.tab-bar .tab-btn').forEach(b => b.classList.remove('active'));
-            if(tab === 'home') { document.querySelectorAll('.tab-bar .tab-btn')[0].classList.add('active'); renderHome(); }
-            else if (tab === 'teams') { document.querySelectorAll('.tab-bar .tab-btn')[1].classList.add('active'); renderTeams(); }
-            else { document.querySelectorAll('.tab-bar .tab-btn')[2].classList.add('active'); renderSchedule(); }
+            // 根據標籤順序設定 active
+            const btnMap = { 'home': 0, 'teams': 1, 'stats': 2, 'schedule': 3 };
+            document.querySelectorAll('.tab-bar .tab-btn')[btnMap[tab]].classList.add('active');
+
+            if(tab === 'home') renderHome();
+            else if (tab === 'teams') renderTeams();
+            else if (tab === 'stats') renderStats(); // 呼叫新函數
+            else renderSchedule();
         };
+        let statsMode = 'players';
+
+        function renderStats() {
+            const container = document.getElementById('app-container');
+            container.innerHTML = '';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'container';
+
+            // 1. 頂部切換
+            wrapper.innerHTML = `
+                <div class="section-header" style="margin-top:0"><div class="section-title">數據排行榜</div></div>
+                <div class="seg-control" style="margin-bottom:24px;">
+                    <button class="seg-btn ${statsMode === 'players' ? 'active' : ''}" onclick="toggleStatsPage('players')">個人排名</button>
+                    <button class="seg-btn ${statsMode === 'teams' ? 'active' : ''}" onclick="toggleStatsPage('teams')">團隊排名</button>
+                </div>
+            `;
+
+            if (statsMode === 'players' && globalTopPlayers) {
+                // 定義個人數據類別 (補齊抄截與阻攻)
+                const pCats = [
+                    { key: 'score_per_match', label: '場均得分', icon: 'zap' },
+                    { key: 'rebounds_per_match', label: '場均籃板', icon: 'circle' },
+                    { key: 'assists_per_match', label: '場均助攻', icon: 'send' },
+                    { key: 'steals_per_match', label: '場均抄截', icon: 'hand' },
+                    { key: 'blocks_per_match', label: '場均阻攻', icon: 'shield' }
+                ];
+
+                pCats.forEach(cat => {
+                    const list = globalTopPlayers[cat.key] || [];
+                    if (list.length === 0) return;
+
+                    wrapper.innerHTML += `<div class="section-title"><i data-lucide="${cat.icon}" width="18"></i> ${cat.label}</div>`;
+                    const card = document.createElement('div');
+                    card.className = 'stats-list-card';
+
+                    list.slice(0, 5).forEach((item, idx) => {
+                        const p = item.player;
+                        const avatar = p.images?.find(i => i.key === 'sm')?.url || p.images?.[0]?.url || DEFAULT_AVATAR;
+                        card.innerHTML += `
+                            <div class="rank-row" onclick="openPlayerProfile(${p.id})">
+                                <div class="rank-index">${idx + 1}</div>
+                                <img src="${avatar}" class="rank-photo">
+                                <div class="rank-main-info">
+                                    <div class="rank-name-txt">${p.name}</div>
+                                    <div class="rank-meta-txt"><img src="${getLogo(p.team.name)}" class="rank-logo-sm"> ${getShortName(p.team.name)} · #${p.number}</div>
+                                </div>
+                                <div class="rank-val-txt nums">${item.value.toFixed(1)}</div>
+                            </div>`;
+                    });
+                    wrapper.appendChild(card);
+                });
+            } else if (statsMode === 'teams' && globalTopTeams) {
+                // 定義團隊數據類別 (移除長條圖，改用列表)
+                const tCats = [
+                    { key: 'won_score_per_match', label: '團隊場均得分', icon: 'target' },
+                    { key: 'three_pointers_percentage', label: '三分命中率', icon: 'percent', isPct: true },
+                    { key: 'assists_per_match', label: '團隊場均助攻', icon: 'send' },
+                    { key: 'rebounds_per_match', label: '團隊場均籃板', icon: 'circle' }
+                ];
+
+                tCats.forEach(cat => {
+                    const list = globalTopTeams[cat.key] || [];
+                    if (list.length === 0) return;
+
+                    wrapper.innerHTML += `<div class="section-title"><i data-lucide="${cat.icon}" width="18"></i> ${cat.label}</div>`;
+                    const card = document.createElement('div');
+                    card.className = 'stats-list-card';
+
+                    list.slice(0, 5).forEach((item, idx) => {
+                        const t = item.team;
+                        const val = cat.isPct ? (item.value * 100).toFixed(1) + '%' : item.value.toFixed(1);
+                        card.innerHTML += `
+                            <div class="rank-row" onclick="selectTeam('${getShortName(t.name)}'); switchMainTab('teams');">
+                                <div class="rank-index">${idx + 1}</div>
+                                <img src="${getLogo(t.name)}" class="rank-photo" style="object-fit:contain; padding:4px;">
+                                <div class="rank-main-info">
+                                    <div class="rank-name-txt">${t.name}</div>
+                                    <div class="rank-meta-txt">${getShortName(t.name)}</div>
+                                </div>
+                                <div class="rank-val-txt nums">${val}</div>
+                            </div>`;
+                    });
+                    wrapper.appendChild(card);
+                });
+            }
+
+            container.appendChild(wrapper);
+            lucide.createIcons();
+        }
+
+        window.toggleStatsPage = function(mode) {
+            statsMode = mode;
+            renderStats();
+        };
+
+        // 更新 switchMainTab，加入 stats 判斷
+        const oldSwitchMainTab = window.switchMainTab;
+        window.switchMainTab = function(tab) {
+            document.querySelectorAll('.tab-bar .tab-btn').forEach(b => b.classList.remove('active'));
+            const btnMap = { 'home': 0, 'teams': 1, 'stats': 2, 'schedule': 3 };
+            if (btnMap[tab] !== undefined) document.querySelectorAll('.tab-bar .tab-btn')[btnMap[tab]].classList.add('active');
+
+            if (tab === 'stats') renderStats();
+            else if (tab === 'home') renderHome();
+            else if (tab === 'teams') renderTeams();
+            else renderSchedule();
+        };
+        //以上新增團隊數據
         window.switchScheduleTab = function(tab) { currentScheduleTab = tab; renderSchedule(); };
         window.switchModalTab = function(tab) { document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active')); document.querySelector(`.modal-tab-btn[onclick*="${tab}"]`).classList.add('active'); document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden')); document.getElementById(`tab-${tab}`).classList.remove('hidden'); }
 
@@ -1450,3 +1836,4 @@ wrapper.innerHTML += `
     </script>
 </body>
 </html>
+
