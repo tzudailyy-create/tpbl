@@ -848,13 +848,63 @@
                 wrapper.innerHTML += `<div class="section-header" style="margin-top:20px;"><div class="section-title">本月最佳球員</div></div><div class="mvp-card"><div class="mvp-info"><div class="mvp-label">PLAYER OF THE MONTH</div><div class="mvp-month">(${monthTitle})</div><div class="mvp-players-row">${pItems}</div></div><i data-lucide="trophy" width="60" height="60" style="opacity:0.2; color:#D4B07D;"></i></div>`;
             }
 
-            // Standings
-            wrapper.innerHTML += `<div class="section-header" style="margin-top:20px;"><div class="section-title">聯盟戰績</div></div>`;
-            let tbody = '';
-            const sList = Array.isArray(globalStandings) ? globalStandings : (globalStandings.data || []);
-            sList.forEach((t, i) => { const rank = t.rank || (i+1); const pct = (t.score_won_matches + t.score_lost_matches) > 0 ? ((t.score_won_matches/(t.score_won_matches + t.score_lost_matches))*100).toFixed(1) + '%' : '0.0%'; tbody += `<tr><td style="font-weight:700; color:#888;" class="nums">${rank}</td><td><div class="st-team"><img src="${getLogo(t.team.name, t.team.meta?.logo)}" style="width:20px;">${getShortName(t.team.name)}</div></td><td class="nums">${t.score_won_matches}</td><td class="nums">${t.score_lost_matches}</td><td><span class="win-pct nums">${pct}</span></td></tr>`; });
-            wrapper.innerHTML += `<div class="st-card"><table class="st-table"><thead><tr><th>#</th><th>球隊</th><th>勝</th><th>敗</th><th>勝率</th></tr></thead><tbody>${tbody}</tbody></table></div>`;
+       // --- 找到 renderHome 函數中 Standings 的區塊 ---
+wrapper.innerHTML += `<div class="section-header" style="margin-top:20px;"><div class="section-title">聯盟戰績</div></div>`;
 
+const sList = Array.isArray(globalStandings) ? globalStandings : (globalStandings.data || []);
+let tbody = '';
+
+sList.forEach((t, i) => {
+    const rank = t.rank || (i + 1);
+    const won = t.score_won_matches || 0;
+    const lost = t.score_lost_matches || 0;
+    
+    // 計算勝率
+    const pct = (won + lost) > 0 ? ((won / (won + lost)) * 100).toFixed(1) + '%' : '0.0%';
+    
+    // 直接抓取 API 提供的勝差與近況
+    const gb = (t.games_behind === 0 || t.games_behind === "0") ? '-' : t.games_behind;
+    const streak = t.streaks || '-';
+
+    // 根據 W 或 L 設定近況顏色
+    let streakColor = 'inherit';
+    if (streak.startsWith('W')) streakColor = 'var(--live-red)';
+    else if (streak.startsWith('L')) streakColor = 'var(--trend-down)';
+
+    tbody += `
+        <tr>
+            <td style="font-weight:700; color:#888;" class="nums">${rank}</td>
+            <td>
+                <div class="st-team">
+                    <img src="${getLogo(t.team.name, t.team.meta?.logo)}" style="width:20px;">
+                    ${getShortName(t.team.name)}
+                </div>
+            </td>
+            <td class="nums">${won}</td>
+            <td class="nums">${lost}</td>
+            <td class="nums" style="color:#666">${gb}</td>
+            <td><span class="win-pct nums">${pct}</span></td>
+            <td class="nums" style="font-weight:700; font-size:11px; color:${streakColor}">${streak}</td>
+        </tr>`;
+});
+
+wrapper.innerHTML += `
+    <div class="st-card">
+        <table class="st-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>球隊</th>
+                    <th>勝</th>
+                    <th>敗</th>
+                    <th>勝差</th>
+                    <th>勝率</th>
+                    <th>近況</th>
+                </tr>
+            </thead>
+            <tbody>${tbody}</tbody>
+        </table>
+    </div>`;
             // --- Highlights Section (NEW) ---
             renderHighlights(wrapper);
 
