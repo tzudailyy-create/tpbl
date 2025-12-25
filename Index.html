@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TPBL App</title>
+    
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/tC7n88C1/favicon.png">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/tC7n88C1/favicon.png">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0F2848">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --tpbl-blue: #0F2848;
+            --tpbl-gold: #D4B07D;
+            --bg-color: #F2F2F7;
+            --card-bg: #FFFFFF;
+            --text-main: #1C1C1E;
+            --text-sub: #8E8E93;
+            --live-red: #FF3B30;
+            --trend-up: #FF3B30; /* 紅漲 */
+            --trend-down: #34C759; /* 綠跌 */
+            --bar-gray: #E5E5EA;
+            --card-radius: 16px;
+            --btn-radius: 8px;
+            --page-padding: 24px;
+            --header-height: 56px;
+        }
+
+        html { background-color: var(--tpbl-blue); }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", "Heiti TC", "SF Pro Text", "Helvetica Neue", sans-serif;
+            background-color: var(--bg-color);
+            margin: 0; padding: 0;
+            color: var(--text-main);
+            padding-bottom: 100px;
+            padding-top: calc(var(--header-height) + env(safe-area-inset-top) + 10px);
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none;
+            overflow-x: hidden;
+        }
+        
+        body.modal-open { overflow: hidden; position: fixed; width: 100%; }
+        .nums { font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+
+        /* --- Splash Screen --- */
+        #splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--tpbl-blue); z-index: 99999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.5s ease-out, visibility 0.5s;
+        }
+        #splash-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .splash-logo { font-style: italic; font-weight: 900; font-size: 48px; color: #fff; letter-spacing: -1px; display: flex; align-items: center; gap: 8px; animation: breathe 2s infinite ease-in-out; }
+        .splash-star { width: 12px; height: 12px; background: var(--tpbl-gold); clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+        .splash-spinner { margin-top: 30px; width: 30px; height: 30px; border: 3px solid rgba(255, 255, 255, 0.2); border-radius: 50%; border-top-color: var(--tpbl-gold); animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.9; } }
+
+        /* --- Header --- */
+        header.main-header {
+            background: var(--tpbl-blue); color: #fff; height: var(--header-height);
+            padding: 0 var(--page-padding); padding-top: env(safe-area-inset-top);
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .header-left { position: absolute; left: var(--page-padding); }
+        .brand-logo-center { font-style: italic; font-weight: 800; font-size: 24px; letter-spacing: -0.5px; display: flex; align-items: center; gap: 6px; position: absolute; left: 50%; transform: translateX(-50%); }
+        .header-right { position: absolute; right: var(--page-padding); display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; }
+        .brand-star { width: 10px; height: 10px; background: var(--tpbl-gold); clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+        .season-badge { font-size: 11px; font-weight: 600; color: var(--tpbl-blue); background: var(--tpbl-gold); padding: 3px 8px; border-radius: 6px; }
+        .live-indicator { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; opacity: 0; transition: opacity 0.3s;}
+        .live-indicator.active { opacity: 1; animation: pulse-green 1.5s infinite; }
+        @keyframes pulse-green { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        /* --- Sub-Page --- */
+        .sub-page {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color); z-index: 2000;
+            transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+            display: flex; flex-direction: column; box-shadow: -10px 0 20px rgba(0,0,0,0.1);
+        }
+        .sub-page.active { transform: translateX(0); }
+        .nav-bar {
+            background: var(--tpbl-blue); height: var(--header-height);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 8px; padding-top: env(safe-area-inset-top);
+            flex-shrink: 0; position: relative; z-index: 10; color: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .nav-left, .nav-right { width: 60px; display: flex; align-items: center; height: 100%; }
+        .nav-back-btn { background: none; border: none; display: flex; align-items: center; gap: 4px; color: #fff; font-size: 16px; font-weight: 500; cursor: pointer; padding: 0 8px; height: 100%; }
+        .nav-title { flex: 1; text-align: center; font-size: 17px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sub-page-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px var(--page-padding) 40px var(--page-padding); }
+
+        /* --- Components --- */
+        .container { padding: var(--page-padding); max-width: 600px; margin: 0 auto; min-height: 80vh; }
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin: 24px 0 12px 0; color: var(--tpbl-blue); }
+        .section-title { font-size: 18px; font-weight: 800; display: flex; align-items: center; letter-spacing: -0.5px; }
+        .section-date { font-size: 13px; color: var(--text-sub); font-weight: 500; }
+        .section-divider { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text-sub); margin: 24px 0 12px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .smart-board-wrapper { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; gap: 16px; padding: 4px var(--page-padding) 20px var(--page-padding); margin: 0 calc(var(--page-padding) * -1); scrollbar-width: none; }
+        .smart-board-wrapper::-webkit-scrollbar { display: none; }
+        .match-card { background: var(--card-bg); border-radius: var(--card-radius); box-shadow: 0 6px 16px rgba(0,0,0,0.06); overflow: hidden; display: flex; flex-direction: column; min-width: calc(100vw - (var(--page-padding) * 2)); max-width: 500px; scroll-snap-align: center; position: relative; }
+        .match-status-bar { background: #FAFAFA; padding: 10px 16px; font-size: 11px; font-weight: 600; color: var(--text-sub); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; }
+        .venue-info { display: flex; align-items: center; gap: 4px; cursor: pointer; transition: opacity 0.2s; }
+        .venue-info:active { opacity: 0.6; }
+        .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
+        .badge.live { background: var(--live-red); color: white; display: flex; align-items: center; gap: 4px; animation: pulse 2s infinite; }
+        .badge.final { background: #E5E5EA; color: #636366; }
+        .badge.date { background: rgba(15, 40, 72, 0.08); color: var(--tpbl-blue); }
+        .match-content { padding: 16px 12px; display: flex; align-items: center; justify-content: space-between; }
+        .team-col { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 6px; min-width: 0; }
+        .team-logo-lg { width: 60px; height: 60px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); }
+        .team-name { font-size: 14px; font-weight: 700; color: var(--text-main); text-align: center; white-space: nowrap; width: 100%; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+        .team-col.loser .team-name { color: var(--text-sub); }
+        .team-col.loser .team-logo-lg { opacity: 0.6; filter: grayscale(0.8); }
+        .score-col { text-align: center; min-width: 80px; display: flex; flex-direction: column; align-items: center; gap: 2px;}
+        .score-val { font-size: 36px; font-weight: 800; color: var(--tpbl-blue); line-height: 1; font-family: 'SF Mono', monospace; letter-spacing: -2px; transition: color 0.2s; }
+        .score-val.updated { color: var(--live-red); animation: score-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .live-timer { font-size: 11px; color: var(--live-red); font-weight: 700; font-family: 'SF Mono', monospace; background: rgba(255, 59, 48, 0.1); padding: 2px 6px; border-radius: 8px; margin-bottom: 2px;}
+        .score-vs { font-size: 20px; font-weight: 800; color: var(--tpbl-gold); margin-bottom: 0; font-style: italic; }
+        .game-time-big { font-size: 20px; font-weight: 700; color: var(--tpbl-blue); font-family: 'SF Mono', monospace; }
+        .match-actions { padding: 0 16px 16px 16px; margin-top: 0; z-index: 10; position: relative;}
+        .action-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 12px 0; border-radius: 12px; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s; cursor: pointer; }
+        .btn-live { background: var(--live-red); color: white; box-shadow: 0 4px 10px rgba(255, 59, 48, 0.3); }
+        .btn-highlight { background: #F2F2F7; color: var(--text-sub); }
+        .btn-ticket { background: var(--tpbl-blue); color: white; }
+        .action-btn:active { transform: scale(0.97); }
+        .carousel-dots { display: flex; justify-content: center; gap: 6px; margin-top: -8px; margin-bottom: 24px; }
+        .dot { width: 5px; height: 5px; background: #D1D1D6; border-radius: 50%; transition: all 0.3s ease; }
+        .dot.active { background: var(--tpbl-blue); width: 12px; border-radius: 10px; }
+
+        /* MVP Section */
+        .mvp-section { margin: 10px 0; display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
+        .mvp-card { background: linear-gradient(135deg, #1a1a1a, #2c2c2e); border-radius: 14px; padding: 16px; color: #fff; flex: 0 0 100%; scroll-snap-align: center; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .mvp-card::before { content:''; position: absolute; top:-50%; left:-50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(212,176,125,0.15) 0%, rgba(0,0,0,0) 70%); pointer-events: none;}
+        .mvp-info { z-index: 2; flex: 1; }
+        .mvp-label { color: var(--tpbl-gold); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .mvp-month { font-size: 16px; font-weight: 800; margin-bottom: 8px; line-height: 1.2; }
+        .mvp-players-row { display: flex; gap: 12px; margin-top: 6px; }
+        .mvp-p-item { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.1); padding: 4px 10px 4px 4px; border-radius: 30px; backdrop-filter: blur(5px); }
+        .mvp-p-img { width: 32px; height: 32px; border-radius: 50%; background: #fff; object-fit: cover; border: 2px solid var(--tpbl-gold); object-position: top center; }
+        .mvp-p-text { display: flex; flex-direction: column; }
+        .mvp-p-name { font-size: 11px; font-weight: 700; }
+        .mvp-p-team { font-size: 9px; opacity: 0.8; }
+
+        .st-card { background: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.02); }
+        .st-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .st-table th { background: #FAFAFA; color: var(--text-sub); font-weight: 600; padding: 10px 8px; text-align: center; font-size: 11px; }
+        .st-table td { padding: 12px 6px; border-bottom: 1px solid #eee; text-align: center; font-weight: 500; }
+        .st-team { text-align: left; display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text-main); }
+        .win-pct { color: var(--tpbl-blue); font-weight: 700; background: rgba(15, 40, 72, 0.05); padding: 2px 5px; border-radius: 4px; }
+
+        /* Schedule */
+        .sch-container { display: flex; flex-direction: column; gap: 12px; padding-bottom: 16px; }
+        .sch-card { background: #fff; border-radius: 12px; padding: 0; display: flex; flex-direction: column; gap: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: none; position: relative; overflow: hidden; transition: transform 0.1s; }
+        .sch-card:active { transform: scale(0.98); }
+        .sch-card-main { padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+        .sch-date-col { display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #f0f0f0; padding-right: 12px; min-height: 40px; min-width: 45px;}
+        .sch-date-main { font-size: 17px; font-weight: 800; color: var(--tpbl-blue); line-height: 1; margin-bottom: 2px; }
+        .sch-date-sub { font-size: 10px; font-weight: 700; color: #C7C7CC; text-transform: uppercase; }
+        .sch-time { font-size: 11px; font-weight: 600; color: var(--text-main); margin-top: 4px; font-family: 'SF Mono', monospace; }
+        .sch-matchup { display: flex; flex-direction: column; gap: 8px; justify-content: center; flex: 1; }
+        .sch-team-row { display: flex; align-items: center; justify-content: space-between; height: 24px; }
+        .sch-team-info { display: flex; align-items: center; gap: 8px; }
+        .sch-team-logo { width: 28px; height: 28px; object-fit: contain; }
+        .sch-team-name { font-size: 15px; font-weight: 700; color: var(--text-main); }
+        .sch-team-score { font-size: 16px; font-weight: 700; color: var(--text-main); font-family: 'SF Mono', monospace; width: 30px; text-align: right; }
+        .sch-team-score.win { color: var(--tpbl-blue); font-weight: 900; }
+        .sch-team-score.lose { color: #C7C7CC; opacity: 0.8; }
+        .sch-team-name.lose { color: #8E8E93; }
+        .sch-card-footer { background: #FAFAFA; border-top: 1px solid #F0F0F0; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .sch-venue { font-size: 11px; color: #8E8E93; display: flex; align-items: center; gap: 4px; font-weight: 500; cursor: pointer; transition: opacity 0.2s;}
+        .sch-venue:active { opacity: 0.6; color: var(--tpbl-blue); }
+        .sch-btn { padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 4px; transition: 0.2s; white-space: nowrap; cursor: pointer;}
+        .sch-btn.stats { background: #fff; border: 1px solid #E5E5EA; color: var(--text-sub); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .sch-btn.live { background: #ffebeb; color: var(--live-red); border: 1px solid rgba(255, 59, 48, 0.2); animation: pulse 2s infinite; }
+        .sch-btn.ticket { background: var(--tpbl-blue); color: white; box-shadow: 0 2px 6px rgba(15, 40, 72, 0.2); }
+        .sch-btn.predict { background: var(--tpbl-blue); color: var(--tpbl-gold); border: 1px solid var(--tpbl-gold); box-shadow: 0 2px 6px rgba(15, 40, 72, 0.3); }
+        .sch-btn.predict:active { transform: scale(0.95); opacity: 0.9; }
+
+        /* Teams */
+        .team-selector { display: flex; overflow-x: auto; gap: 12px; padding: 4px var(--page-padding) 12px var(--page-padding); margin: 0 calc(var(--page-padding) * -1) 12px calc(var(--page-padding) * -1); scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .team-selector::-webkit-scrollbar { display: none; }
+        .ts-item { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 56px; scroll-snap-align: center; opacity: 0.4; transition: 0.3s; cursor: pointer; }
+        .ts-item.active { opacity: 1; transform: scale(1.05); }
+        .ts-ring { width: 50px; height: 50px; border-radius: 50%; padding: 2px; border: 2px solid transparent; display: flex; justify-content: center; align-items: center; background: #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        .ts-item.active .ts-ring { border-color: var(--tpbl-blue); }
+        .ts-logo { width: 40px; height: 40px; object-fit: contain; flex-shrink: 0; }
+        .ts-name { font-size: 11px; font-weight: 700; color: var(--text-main); white-space: nowrap; }
+        .team-dashboard { animation: fadeIn 0.3s ease-out; }
+        .td-header-card { background-color: var(--team-color); border-radius: 16px; padding: 20px; display: flex; align-items: center; justify-content: space-between; color: #FFFFFF; margin-bottom: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); position: relative; overflow: hidden; background-image: linear-gradient(120deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%); }
+        .td-header-bg-icon { position: absolute; right: -20px; bottom: -20px; width: 140px; height: 140px; opacity: 0.15; transform: rotate(-10deg); pointer-events: none; }
+        .td-info-col { z-index: 2; text-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+        .td-name-lg { font-size: 24px; font-weight: 800; line-height: 1.2; margin-bottom: 4px; color: #fff; }
+        .td-record { font-size: 13px; font-weight: 600; opacity: 0.95; font-family: 'SF Mono', monospace; display: flex; gap: 8px; align-items: center;}
+        .td-rank-badge { background: rgba(0, 0, 0, 0.25); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; backdrop-filter: blur(4px); }
+        
+        /* Team Banner Style (NEW) */
+        .team-banner-img {
+            width: 100%;
+            height: auto;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            display: block;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            object-fit: cover;
+            min-height: 100px;
+            background-color: #f0f0f0;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Team Awards (New) */
+        .team-awards-section { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; margin-top: 4px;}
+        .ta-badge {
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%);
+            color: #B48010; padding: 3px 8px; border-radius: 12px;
+            font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 3px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08); border: 1px solid #FFD54F;
+        }
+
+        .stats-grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .stat-box { background: #fff; padding: 12px; border-radius: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: center; gap: 2px; border: 1px solid rgba(0,0,0,0.02); }
+        .sb-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .sb-label { font-size: 12px; font-weight: 600; color: var(--text-sub); display: flex; align-items: center; gap: 3px; }
+        .sb-value { font-size: 22px; font-weight: 800; color: var(--tpbl-blue); font-family: 'SF Mono', monospace; line-height: 1.2; }
+        .rank-tag { font-size: 10px; font-weight: 700; padding: 1px 4px; border-radius: 4px; background: rgba(15, 40, 72, 0.06); color: var(--tpbl-blue); align-self: flex-start; margin-top: 1px; }
+        .rank-tag.top-1 { background: #FFFCF5; color: #A05E28; border: 1px solid #D4B07D; }
+        .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; }
+        .roster-card { background: #fff; border-radius: 14px; padding: 12px 6px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 2px 6px rgba(0,0,0,0.03); position: relative; overflow: hidden; border: 1px solid rgba(0,0,0,0.02); cursor: pointer; transition: 0.2s;}
+        .roster-card:active { transform: scale(0.96); }
+        .rc-img-box { width: 64px; height: 64px; margin-bottom: 6px; position: relative; display: flex; justify-content: center; align-items: flex-end; border-radius: 50%; overflow: hidden; background: #f5f5f7; border: 2px solid rgba(0,0,0,0.03); }
+        .rc-img { width: 100%; height: 100%; object-fit: cover; object-position: top center;}
+        .rc-num { position: absolute; top: 4px; right: 4px; background: var(--team-color, var(--tpbl-blue)); color: #fff; font-size: 9px; font-weight: 700; padding: 2px 4px; border-radius: 4px; font-family: 'SF Mono', monospace;}
+        .rc-name { font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 1px; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .rc-pos { font-size: 11px; color: var(--text-sub); font-weight: 500; }
+        .rc-meta { font-size: 10px; color: #aaa; margin-top: 1px; font-family: 'SF Mono', monospace;}
+
+        /* --- UPDATED PLAYER CARD HEADER (Visual Fix) --- */
+        .player-card-header {
+            position: relative;
+            background:
+                linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.9) 100%),
+                radial-gradient(circle at top right, var(--team-color), #1a1a1a),
+                url("data:image/svg+xml,%3Csvg width='4' height='4' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 3h1v1H1V3zm2-2h1v1H3V1z' fill='%23ffffff' fill-opacity='0.05'/%3E%3C/svg%3E");
+            background-blend-mode: normal, overlay, normal;
+            border-radius: 24px;
+            overflow: hidden;
+            color: #fff;
+            padding: 30px 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .pch-bg-logo {
+            position: absolute; top: -30px; right: -50px; width: 300px; height: 300px;
+            opacity: 0.12; filter: grayscale(1); transform: rotate(-15deg);
+            z-index: 0; pointer-events: none;
+        }
+        .pch-avatar-container {
+            width: 100px; height: 100px;
+            border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.9);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+            background: #fff;
+            overflow: hidden;
+            display: flex; justify-content: center; align-items: flex-end;
+            z-index: 2; margin-bottom: 12px;
+            position: relative;
+        }
+        .pch-avatar { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+        .pch-info { z-index: 2; text-align: center; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+        .pch-name { font-size: 32px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 8px; color: #fff; }
+        .pch-badge-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; }
+        .pch-pill {
+            background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px);
+            padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+            font-size: 13px; font-weight: 700; color: #fff;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            display: flex; align-items: center; gap: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .pch-jersey-num {
+            font-family: 'SF Mono', monospace; font-size: 140px; font-weight: 900;
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-10deg);
+            opacity: 0.08; color: #fff; z-index: 0; letter-spacing: -4px;
+            pointer-events: none;
+        }
+        
+        .stats-grid-card { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #E5E5EA; border: 1px solid #E5E5EA; border-radius: 16px; overflow: hidden; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .sgc-item { background: #fff; padding: 14px 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .sgc-val { font-size: 18px; font-weight: 800; color: var(--tpbl-blue); font-family: 'SF Mono', monospace; line-height: 1.2; }
+        .sgc-label { font-size: 10px; color: #8E8E93; font-weight: 600; text-transform: uppercase; margin-top: 2px; }
+
+        .best-game-card-premium { position: relative; background: #1C1C1E; border-radius: 20px; overflow: hidden; color: #fff; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); border-left: 6px solid var(--team-color); margin-bottom: 24px; display: flex; flex-direction: column; min-height: 180px; justify-content: space-between; }
+        .best-game-card-premium::after { content: ''; position: absolute; top: 0; right: 0; width: 60%; height: 100%; background: linear-gradient(270deg, var(--team-color), transparent); opacity: 0.15; pointer-events: none; z-index: 0; }
+        .bgp-header { display: flex; justify-content: space-between; align-items: center; z-index: 2; margin-bottom: 16px; }
+        .bgp-badge { display: inline-flex; align-items: center; gap: 4px; background: #3A3A3C; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; border: 1px solid rgba(255,255,255,0.1); }
+        .bgp-date { font-family: 'SF Mono', monospace; font-size: 12px; opacity: 0.6; font-weight: 600; }
+        .bgp-body { display: flex; justify-content: space-between; align-items: flex-end; z-index: 2; position: relative;}
+        .bgp-hero-score { line-height: 0.8; display: flex; flex-direction: column; gap: 12px; justify-content: flex-end; }
+        .bgp-score-val { font-size: 72px; font-weight: 900; letter-spacing: -3px; background: linear-gradient(to bottom, #fff 30%, #999 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); line-height: 0.8; }
+        .bgp-score-lbl { font-size: 16px; font-weight: 700; margin-left: 4px; color: var(--team-color); letter-spacing: 2px; text-transform: uppercase; }
+        .bgp-opp-section { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .bgp-vs-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px;}
+        .bgp-opp-logo { width: 36px; height: 36px; background: #fff; border-radius: 50%; padding: 3px; object-fit: contain; }
+        .bgp-opp-name { font-size: 16px; font-weight: 700; color: #E5E5EA; }
+        .bgp-stats-row { display: flex; gap: 12px; margin-top: 8px; background: rgba(255,255,255,0.08); padding: 8px 14px; border-radius: 12px; backdrop-filter: blur(4px); }
+        .bgp-stat { display: flex; flex-direction: column; align-items: center; }
+        .bgp-s-val { font-size: 18px; font-weight: 700; font-family: 'SF Mono', monospace; color: #fff; }
+        .bgp-s-lbl { font-size: 10px; font-weight: 600; color: #8E8E93; margin-top: 2px; }
+        .bgp-watermark { position: absolute; right: -20px; bottom: -40px; width: 180px; height: 180px; opacity: 0.05; filter: grayscale(1); transform: rotate(-10deg); pointer-events: none; z-index: 0; }
+
+        /* Recent Games Table */
+        .recent-games-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; margin-bottom: 24px; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.02); }
+        .recent-games-table th { background: #FAFAFA; padding: 12px 8px; color: #8E8E93; font-weight: 600; text-align: center; font-size: 10px; border-bottom: 1px solid #E5E5EA; text-transform: uppercase; }
+        .recent-games-table td { padding: 14px 8px; text-align: center; border-bottom: 1px solid #F2F2F7; font-family: 'SF Mono', monospace; font-weight: 600; color: var(--text-main); font-size: 13px; }
+        .recent-games-table tr:last-child td { border-bottom: none; }
+        .recent-games-table td:first-child { text-align: left; padding-left: 16px; font-family: -apple-system, sans-serif; font-weight: 600; display: flex; flex-direction: column; gap: 2px; justify-content: center; }
+        .recent-games-table td.highlight-col { color: var(--tpbl-blue); font-weight: 800; background: rgba(15, 40, 72, 0.02); }
+        .rg-date { font-size: 10px; color: #aaa; font-weight: 500; font-family: 'SF Mono', monospace; }
+        .rg-opp { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+
+        .next-game-banner { background: #fff; border-radius: 16px; padding: 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.02); margin-bottom: 24px; }
+        .ng-info { display: flex; flex-direction: column; gap: 4px; }
+        .ng-label { font-size: 10px; font-weight: 700; color: var(--live-red); text-transform: uppercase; letter-spacing: 0.5px; background: rgba(255, 59, 48, 0.08); align-self: flex-start; padding: 2px 6px; border-radius: 4px; }
+        .ng-vs { font-size: 15px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
+        .ng-date { font-size: 12px; color: #8E8E93; font-weight: 500; font-family: 'SF Mono', monospace; }
+
+        /* Awards */
+        .awards-container { margin-top: 16px; }
+        .awards-section-title { font-size: 13px; font-weight: 700; color: #8E8E93; margin-bottom: 8px; padding-left: 4px; text-transform: uppercase; letter-spacing: 0.5px;}
+        .annual-awards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+        .aa-card { background: linear-gradient(135deg, #FFFDF5, #fff); border: 1px solid #EAD8B6; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; box-shadow: 0 2px 6px rgba(212, 176, 125, 0.1); }
+        .aa-icon { color: #D4B07D; background: rgba(212, 176, 125, 0.15); padding: 6px; border-radius: 50%; margin-bottom: 2px; }
+        .aa-title { font-size: 11px; font-weight: 700; color: #A05E28; line-height: 1.2; }
+        .aa-season { font-size: 9px; color: #C09A68; font-weight: 600; background: rgba(212, 176, 125, 0.1); padding: 2px 5px; border-radius: 4px; }
+        .monthly-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 4px 4px 12px 4px; margin: 0 -4px; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
+        .monthly-scroll::-webkit-scrollbar { display: none; }
+        .ma-card { flex: 0 0 auto; width: 120px; background: #fff; border-radius: 12px; padding: 10px; border: 1px solid #eee; box-shadow: 0 2px 6px rgba(0,0,0,0.03); display: flex; flex-direction: column; align-items: center; gap: 4px; scroll-snap-align: start; }
+        .ma-header { display: flex; align-items: center; gap: 4px; font-size: 9px; color: #888; font-weight: 600; text-transform: uppercase; }
+        .ma-title { font-size: 12px; font-weight: 800; color: var(--tpbl-blue); }
+
+        /* Game Detail Components */
+        .game-leaders { background: #fff; border-radius: 14px; padding: 14px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+        .leaders-title { font-size: 13px; font-weight: 700; color: var(--tpbl-blue); margin-bottom: 10px; display: flex; align-items: center; gap: 4px; }
+        .leaders-vertical { display: flex; flex-direction: column; gap: 10px; }
+        .leader-row { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #f0f0f0; padding-bottom: 8px; }
+        .leader-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .lr-player { display: flex; align-items: center; gap: 8px; flex: 1.5; }
+        .lr-img { width: 44px; height: 44px; border-radius: 50%; background: #f5f5f7; object-fit: cover; border: 1px solid #eee; object-position: top center;}
+        .lr-info { display: flex; flex-direction: column; }
+        .lr-name { font-size: 14px; font-weight: 700; color: var(--text-main); }
+        .lr-team { font-size: 11px; color: #8E8E93; font-weight: 500; }
+        .lr-stats-group { display: flex; gap: 10px; text-align: center; }
+        .lr-stat-item { display: flex; flex-direction: column; align-items: center; min-width: 24px; }
+        .lr-val { font-size: 16px; font-weight: 800; color: var(--tpbl-blue); font-family: 'SF Mono', monospace; line-height: 1.1; }
+        .lr-label { font-size: 9px; color: #aaa; font-weight: 600; margin-top: 1px; }
+        .period-scroll { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+        .period-table { width: 100%; min-width: 300px; margin-bottom: 0; border-collapse: separate; border-spacing: 0; font-size: 12px; white-space: nowrap; }
+        .period-table th { color: #8E8E93; font-weight: 500; padding: 6px 10px; text-align: center; border-bottom: 1px solid #F0F0F0; font-size: 11px;}
+        .period-table td { padding: 6px 10px; text-align: center; font-weight: 700; color: var(--tpbl-blue); font-family: 'SF Mono', monospace; border-bottom: 1px solid #F0F0F0;}
+        .period-team-name { text-align: left !important; font-weight: 600; color: var(--text-main) !important; font-family: -apple-system, sans-serif !important; min-width: 60px; position: sticky; left: 0; background: #fff; z-index: 5; border-right: 1px solid #f0f0f0; }
+        .comparison-card { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+        .comp-title { font-size: 13px; font-weight: 700; color: var(--tpbl-blue); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .comp-row { display: flex; align-items: center; margin-bottom: 8px; height: 20px; }
+        .comp-label { flex: 0 0 70px; text-align: center; font-size: 10px; color: #888; font-weight: 600; order: 2; }
+        .comp-side { flex: 1; display: flex; align-items: center; height: 100%; position: relative; overflow: hidden; }
+        .comp-side.left { justify-content: flex-end; order: 1; margin-right: 6px; }
+        .comp-side.right { justify-content: flex-start; order: 3; margin-left: 6px; }
+        .comp-wrapper { display: flex; align-items: center; width: 100%; }
+        .comp-side.left .comp-wrapper { justify-content: flex-end; }
+        .comp-side.right .comp-wrapper { justify-content: flex-start; }
+        .comp-bar-bg { flex: 1; height: 5px; background: #F2F2F7; border-radius: 3px; position: relative; max-width: 100%; }
+        .comp-bar { height: 100%; border-radius: 3px; transition: width 0.5s ease; position: absolute; top: 0; }
+        .comp-bar.left { right: 0; background-color: var(--bar-gray); }
+        .comp-bar.right { left: 0; background-color: var(--bar-gray); }
+        .comp-bar.left.winner { background-color: var(--tpbl-blue); }
+        .comp-bar.right.winner { background-color: var(--tpbl-blue); }
+        .comp-val { font-size: 11px; font-weight: 700; font-family: 'SF Mono', monospace; flex-shrink: 0; color: #333; }
+        .comp-side.left .comp-val { margin-right: 6px; }
+        .comp-side.right .comp-val { margin-left: 6px; }
+        .flow-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+        .flow-table th { color: #8E8E93; font-weight: 500; padding: 6px 4px; text-align: center; border-bottom: 1px solid #eee; font-size: 10px; }
+        .flow-table td { padding: 8px 4px; text-align: center; font-weight: 700; color: var(--text-main); border-bottom: 1px solid #eee; font-family: 'SF Mono', monospace; }
+        .flow-team-name { text-align: left !important; padding-left: 8px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text-sub); width: 80px; white-space: nowrap;}
+        .modal-tabs { display: flex; background: #E5E5EA; padding: 2px; border-radius: 9px; margin-bottom: 12px; }
+        .modal-tab-btn { flex: 1; border: none; background: none; padding: 8px; font-size: 13px; font-weight: 600; border-radius: 7px; color: var(--text-sub); transition: 0.2s; cursor: pointer; }
+        .modal-tab-btn.active { background: #fff; color: var(--text-main); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .modal-score-card { background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .msc-main { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .m-score { font-size: 32px; font-weight: 800; color: var(--tpbl-blue); }
+        .boxscore-section { margin-bottom: 24px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+        .boxscore-title { padding: 10px 12px; background: #FAFAFA; font-weight: 700; color: var(--tpbl-blue); border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 6px; font-size: 13px;}
+        .bs-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .bs-table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+        .bs-table th { background: #F5F5F7; padding: 8px 6px; font-weight: 600; color: #888; text-align: center; border-bottom: 1px solid #eee; font-size: 11px;}
+        .bs-table td { padding: 8px 6px; border-bottom: 1px solid #eee; text-align: center; font-weight: 500; font-family: 'SF Mono', monospace; vertical-align: middle; }
+        .bs-table th:first-child, .bs-table td:first-child { position: sticky; left: 0; background: #fff; z-index: 10; border-right: 1px solid #f0f0f0; text-align: left; padding-left: 10px; font-family: -apple-system, sans-serif; font-weight: 600; }
+        .bs-table th:first-child { background: #F5F5F7; }
+        .player-head-cell { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .player-head-cell:active { opacity: 0.6; }
+        .player-headshot { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; background: #f0f0f0; border: 1px solid #eee;}
+        .separator-row .sticky-sep { position: sticky; left: 0; z-index: 30; background: #F2F2F7; color: #888; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 4px 4px 4px 10px; text-align: left; border: none; }
+        .separator-row .filler-sep { background: #F2F2F7; border: none; }
+        .dnp-row td { color: #ccc; }
+        .dnp-row td:first-child { color: #aaa; }
+        
+        .seg-control { display: flex; background: #E5E5EA; padding: 2px; border-radius: 9px; margin-bottom: 12px; }
+        .seg-btn { flex: 1; border: none; background: none; padding: 8px; font-size: 13px; font-weight: 600; border-radius: 7px; color: var(--text-sub); transition: 0.2s; cursor: pointer; }
+        .seg-btn.active { background: #fff; color: var(--text-main); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        
+        /* Tab Bar */
+        .tab-bar { position: fixed; bottom: 0; width: 100%; background: rgba(255,255,255,0.92); border-top: 0.5px solid rgba(0,0,0,0.1); padding-bottom: env(safe-area-inset-bottom); display: flex; justify-content: space-around; backdrop-filter: blur(20px); z-index: 90; }
+        .tab-btn { background: none; border: none; padding: 10px 0 6px 0; width: 33%; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #C7C7CC; font-size: 10px; font-weight: 500; }
+        .tab-btn.active { color: var(--tpbl-blue); font-weight: 600; }
+        
+        /* Compare Page Selectors */
+        .compare-selectors { display: flex; gap: 12px; margin-bottom: 20px; background: #fff; padding: 16px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .cs-col { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+        .cs-label { font-size: 11px; font-weight: 600; color: #8E8E93; text-align: center; }
+        .cs-select {
+            width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #E5E5EA;
+            font-size: 13px; font-weight: 600; color: var(--tpbl-blue); background: #F9F9F9;
+            text-align: center; appearance: none; -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 8px center;
+        }
+
+        .hidden { display: none !important; }
+        .loading { text-align: center; padding: 60px 20px; color: #999; font-size: 12px; }
+        .error-msg { text-align: center; padding: 40px 20px; color: #FF3B30; font-weight: 500; font-size: 13px; }
+        .retry-btn { margin-top: 12px; padding: 6px 14px; background: #fff; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; color: #555; font-size: 12px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Favorites */
+        .pch-fav-btn {
+            position: absolute; top: 16px; right: 16px;
+            background: rgba(255,255,255,0.2); backdrop-filter: blur(5px);
+            border: none; border-radius: 50%; width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #fff; z-index: 10;
+            transition: all 0.2s;
+        }
+        .pch-fav-btn:active { transform: scale(0.9); }
+        .pch-fav-btn.active { background: #fff; color: #FFCC00; box-shadow: 0 0 10px rgba(255, 204, 0, 0.5); }
+        
+        .fav-list { display: flex; gap: 12px; overflow-x: auto; padding: 4px 4px 12px 4px; margin: 0 -4px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+        .fav-list::-webkit-scrollbar { display: none; }
+        .fav-item { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; width: 64px; cursor: pointer; scroll-snap-align: start; }
+        .fav-avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--tpbl-blue); padding: 2px; background: #fff; }
+        .fav-name { font-size: 11px; font-weight: 600; margin-top: 4px; text-align: center; white-space: nowrap; width: 100%; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
+
+        /* AI Prediction Modal */
+        .ai-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            z-index: 9999; display: flex; justify-content: center; align-items: center;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s;
+        }
+        .ai-modal-overlay.active { opacity: 1; visibility: visible; }
+        .ai-modal-content {
+            background: #fff; width: 85%; max-width: 320px; border-radius: 20px;
+            padding: 24px; text-align: center; position: relative;
+            transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .ai-modal-overlay.active .ai-modal-content { transform: scale(1); }
+        .ai-close-btn {
+            position: absolute; top: 12px; right: 12px; background: #f2f2f7; border: none;
+            width: 28px; height: 28px; border-radius: 50%; color: #888;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
+        }
+        .ai-loading-icon { color: var(--tpbl-gold); animation: pulse-ring 1.5s infinite; margin-bottom: 16px; }
+        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(212, 176, 125, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(212, 176, 125, 0); } 100% { box-shadow: 0 0 0 0 rgba(212, 176, 125, 0); } }
+        .ai-result-title { font-size: 14px; font-weight: 700; color: #8E8E93; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .ai-winner-name { font-size: 24px; font-weight: 900; color: var(--tpbl-blue); margin-bottom: 4px; }
+        .ai-win-prob { font-size: 32px; font-weight: 800; color: var(--tpbl-gold); font-family: 'SF Mono', monospace; margin-bottom: 16px; display: inline-block; border-bottom: 2px solid #f0f0f0; padding-bottom: 4px; }
+        .ai-analysis-box { background: #FAFAFA; border-radius: 12px; padding: 12px; text-align: left; margin-bottom: 12px; border: 1px solid #eee; }
+        .ai-ab-title { font-size: 11px; font-weight: 700; color: #8E8E93; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+        .ai-ab-text { font-size: 13px; font-weight: 600; color: var(--text-main); line-height: 1.4; }
+        
+        /* --- Highlights/News Grid (NEW) --- */
+        .highlights-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+            margin-bottom: 20px;
+        }
+        .hl-card {
+            background: #fff; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: flex; flex-direction: column;
+            text-decoration: none; color: inherit; transition: transform 0.2s;
+        }
+        .hl-card:active { transform: scale(0.96); }
+        .hl-img-box {
+            position: relative; width: 100%; padding-top: 56.25%; /* 16:9 */
+            background: #000; overflow: hidden;
+        }
+        .hl-img {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; opacity: 0.9;
+        }
+        .hl-play-icon {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 32px; height: 32px; background: rgba(0,0,0,0.5);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.3); color: #fff;
+        }
+        .hl-info { padding: 10px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .hl-title { font-size: 12px; font-weight: 700; line-height: 1.3; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
+        .hl-date { font-size: 10px; color: #8E8E93; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+        
+        /* --- Season Stats Table Styles (NEW) --- */
+        .season-stats-container { background: #fff; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 24px; overflow: hidden; border: 1px solid rgba(0,0,0,0.02); }
+        .season-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+        .season-table { width: 100%; min-width: 450px; border-collapse: collapse; font-size: 12px; }
+        .season-table th { background: #FAFAFA; color: #8E8E93; font-weight: 600; padding: 10px 6px; text-align: center; border-bottom: 1px solid #E5E5EA; white-space: nowrap; font-size: 11px; }
+        .season-table td { padding: 12px 6px; text-align: center; font-family: 'SF Mono', monospace; font-weight: 600; color: var(--text-main); border-bottom: 1px solid #F2F2F7; white-space: nowrap; }
+        .season-table tr:last-child td { border-bottom: none; }
+        
+        /* Specific Styles for 3-Row Layout */
+        .season-col-fixed { position: sticky; left: 0; background: #fff; z-index: 5; border-right: 1px solid #eee; font-weight: 700 !important; color: var(--tpbl-blue) !important; font-family: -apple-system, sans-serif !important; min-width: 60px; }
+        
+        /* Row 1: S2 (Current) */
+        .s2-row td { background: rgba(15, 40, 72, 0.02); font-weight: 800; font-size: 14px; }
+        .s2-row .season-col-fixed { background: #F5F7FA; color: var(--tpbl-blue); }
+        
+        /* Row 2: S1 (Previous) */
+        .s1-row td { color: #8E8E93; font-weight: 500; font-size: 13px; }
+        .s1-row .season-col-fixed { color: #8E8E93 !important; }
+        
+        /* Row 3: Trend (Diff) */
+        .trend-row td { background: #fff; padding-top: 8px; padding-bottom: 8px; }
+        .trend-row .season-col-fixed { font-size: 10px; color: #ccc !important; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* Pill Badges */
+        .badge-pill {
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 6px; padding: 3px 8px;
+            font-size: 11px; font-weight: 800;
+        }
+        .bp-up { background: rgba(255, 59, 48, 0.1); color: #FF3B30; } /* Red */
+        .bp-down { background: rgba(52, 199, 89, 0.1); color: #34C759; } /* Green */
+        .bp-flat { display: none; }
+        
+        /* Chart Container */
+        .chart-card {
+            background: #fff; border-radius: 16px; padding: 20px;
+            margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+        .chart-container {
+            position: relative; margin: auto; height: 260px; width: 100%; max-width: 320px;
+            display: flex; justify-content: center; align-items: center; /* Fix 1: Centering container */
+        }
+
+        /* Team Awards Badge Style */
+        .team-awards-section { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; margin-top: 4px; justify-content: flex-start; }
+        .ta-badge {
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%);
+            color: #B48010; padding: 3px 8px; border-radius: 12px;
+            font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 3px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08); border: 1px solid #FFD54F; white-space: nowrap;
+        }
+        
+
+    </style>
+</head>
+<body>
+
+    <!-- Loading Splash Screen -->
+    <div id="splash-screen">
+        <div class="splash-logo">TPBL <div class="splash-star"></div></div>
+        <div class="splash-spinner"></div>
+    </div>
+
+    <!-- Main Header -->
+    <header class="main-header">
+        <div class="header-left"></div>
+        <div class="brand-logo-center">TPBL <div class="brand-star"></div></div>
+        <div class="header-right">
+             <div id="live-pulse" class="live-indicator"></div>
+             <span class="season-badge nums">2025-26</span>
+        </div>
+    </header>
+
+    <main id="app-container"></main>
+
+    <!-- Game Detail Page (Full Screen) -->
+    <div id="game-page" class="sub-page">
+        <div class="nav-bar">
+            <div class="nav-left"><button class="nav-back-btn" onclick="closeGameModal()"><i data-lucide="chevron-left" width="24"></i></button></div>
+            <div class="nav-title">比賽詳情</div>
+            <div class="nav-right"></div>
+        </div>
+        <div id="modal-body" class="sub-page-body"><div class="loading">載入數據中...</div></div>
+    </div>
+
+    <!-- Player Detail Page (Full Screen) -->
+    <div id="player-page" class="sub-page">
+        <div class="nav-bar">
+            <div class="nav-left"><button class="nav-back-btn" onclick="closePlayerModal()"><i data-lucide="chevron-left" width="24"></i></button></div>
+            <div class="nav-title">球員數據</div>
+            <div class="nav-right"></div>
+        </div>
+        <div id="player-modal-body" class="sub-page-body"><div class="loading">載入球員資料...</div></div>
+    </div>
+
+    <!-- Team Comparison Page -->
+    <div id="compare-page" class="sub-page">
+        <div class="nav-bar">
+            <div class="nav-left"><button class="nav-back-btn" onclick="closeCompareModal()"><i data-lucide="chevron-left" width="24"></i></button></div>
+            <div class="nav-title">球隊比較</div>
+            <div class="nav-right"></div>
+        </div>
+        <div id="compare-body" class="sub-page-body"></div>
+    </div>
+
+    <!-- AI Prediction Modal -->
+    <div id="ai-modal" class="ai-modal-overlay">
+        <div class="ai-modal-content">
+            <button class="ai-close-btn" onclick="closeAiModal()"><i data-lucide="x" width="16"></i></button>
+            <div id="ai-modal-body"></div>
+        </div>
+    </div>
+
+    <nav class="tab-bar">
+        <button class="tab-btn active" onclick="switchMainTab('home')"><i data-lucide="layout-grid" width="22"></i>看板</button>
+        <button class="tab-btn" onclick="switchMainTab('teams')"><i data-lucide="shield" width="22"></i>球隊</button>
+        <button class="tab-btn" onclick="switchMainTab('schedule')"><i data-lucide="calendar-days" width="22"></i>賽程</button>
+    </nav>
+
+    <script>
+        // --- PROXY FETCH ---
+        async function fetchJson(url) {
+             const ts = Date.now();
+             const targetUrl = url + (url.includes('?') ? '&' : '?') + 't=' + ts;
+             const encoded = encodeURIComponent(targetUrl);
+             const proxies = [
+                 `https://corsproxy.io/?${targetUrl}`,
+                 `https://thingproxy.freeboard.io/fetch/${targetUrl}`,
+                 `https://api.allorigins.win/raw?url=${encoded}`
+             ];
+             for(let proxyUrl of proxies) {
+                 try {
+                     const controller = new AbortController();
+                     const id = setTimeout(() => controller.abort(), 6000);
+                     const res = await fetch(proxyUrl, { signal: controller.signal });
+                     clearTimeout(id);
+                     if(res.ok) return await res.json();
+                 } catch(e) { console.warn(`Proxy failed: ${proxyUrl}`); }
+             }
+             throw new Error("Unable to connect to data source.");
+        }
+
+        const API_GAMES = 'https://api.tpbl.basketball/api/seasons/2/games';
+        const API_GAMES_S1 = 'https://api.tpbl.basketball/api/seasons/1/games';
+        const API_STANDINGS = 'https://api.tpbl.basketball/api/divisions/9/games/standings';
+        const API_TEAM_STATS = 'https://api.tpbl.basketball/api/games/stats/top-teams?division_id=9';
+        const API_PLAYERS = 'https://api.tpbl.basketball/api/divisions/9/players';
+        const API_VOTES_S1 = 'https://api.tpbl.basketball/api/teams/1/votes/events/awards?season_id=1&type=monthly';
+        const API_VOTES_S2 = 'https://api.tpbl.basketball/api/teams/1/votes/events/awards?season_id=2&type=monthly';
+        const API_VOTES_ANNUAL_S1 = 'https://api.tpbl.basketball/api/teams/1/votes/events/awards?season_id=1&type=annual';
+        const API_VOTES_ANNUAL_S2 = 'https://api.tpbl.basketball/api/teams/1/votes/events/awards?season_id=2&type=annual';
+
+        const LOGOS = { "海神": "https://i.postimg.cc/KYtTwqdg/aquas_CB_Rq9NB.webp", "夢想家": "https://i.postimg.cc/ZRZNSPSL/dreamers_8u_P5Ali_T.webp", "攻城獅": "https://i.postimg.cc/FRmS4b4n/lioneers_DTfku_EJZ.webp", "戰神": "https://i.postimg.cc/V61t898V/mars_Bb_DWfk_G6.webp", "特攻": "https://i.postimg.cc/Qts73g3J/dea_BEf_Nf_G39.webp", "國王": "https://i.postimg.cc/XJ35bKb2/kings_Dsun_MN_K.webp", "雲豹": "https://i.postimg.cc/XJ35bKbH/leopards_BGzl_SG8M.webp" };
+        const KEYWORD_ORDER = ["攻城獅", "特攻", "國王", "戰神", "雲豹", "夢想家", "海神"];
+        const TEAM_COLORS = { "戰神": "#DD827C", "國王": "#F6ECA7", "雲豹": "#8DA49B", "海神": "#99AEE0", "特攻": "#F3E19E", "攻城獅": "#A39AC0", "夢想家": "#CEDAAA" };
+        const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white' stroke='white' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E";
+        const POS_MAP = { "PointGuard": "PG", "ShootingGuard": "SG", "SmallForward": "SF", "PowerForward": "PF", "Center": "C", "PointGuardAndShootingGuard": "G", "SmallForwardAndPowerForward": "F" };
+        const TEAM_TICKET_URLS = { "攻城獅": "https://tixcraft.com/activity/detail/25_lioneers", "特攻": "https://tix.ctbcsports.com/DEA", "國王": "https://newtaipeikings.kktix.cc/events/lojke", "戰神": "https://www.famiticket.com.tw/Home/Activity/Info/bgBRAG0AcABKAE0AMQB5AGgAWQBVAGgANQBEAEwARwBMAEcAYwBvAG8AMQAvAGkATgBqAC8AcQBtAEYAcQBMAEkAdABXAHAANABqAEMAYwB2AEYAUQA9AA2", "雲豹": "https://leopards.kktix.cc/events/afrehwe", "夢想家": "https://ticket.ibon.com.tw/ActivityInfo/Details/39190", "海神": "https://www.famiticket.com.tw/Home/Activity/Info/bgBRAG0AcABKAE0AMQB5AGgAWQBVAGgANQBEAEwARwBMAEcAYwBvAG8AMQAvAGkATgBqAC8AcQBtAEYAcQBMAEkAdABXAHAANABqAEMAYwB2AEYAUQA9AA2" };
+
+        function getLogo(teamName, defaultLogo) { for (const key in LOGOS) { if (teamName && teamName.includes(key)) return LOGOS[key]; } return defaultLogo || "https://via.placeholder.com/60"; }
+        function getTicketLink(fullTeamName) { for (const key in TEAM_TICKET_URLS) { if (fullTeamName && fullTeamName.includes(key)) return TEAM_TICKET_URLS[key]; } return "https://tpbl.basketball/"; }
+        function getShortName(fullName) { if(!fullName) return ''; for (const key of KEYWORD_ORDER) { if (fullName.includes(key)) return key; } return fullName.substring(0, 4); }
+        function getTeamColor(teamName) { const short = getShortName(teamName); return TEAM_COLORS[short] || "#0F2848"; }
+        function formatPos(posStr) { return POS_MAP[posStr] || posStr || '-'; }
+        function getAwardIcon(title) { if (!title) return 'trophy'; const t = title.toLowerCase(); if (t.includes('defen') || t.includes('防守')) return 'shield'; if (t.includes('assist') || t.includes('助攻')) return 'helping-hand'; if (t.includes('popular') || t.includes('人氣')) return 'heart'; if (t.includes('rookie') || t.includes('新人')) return 'sprout'; if (t.includes('first') || t.includes('第一隊')) return 'star'; if (t.includes('coach') || t.includes('教練')) return 'clipboard-list'; if (t.includes('sixth') || t.includes('第六人')) return 'zap'; return 'crown'; }
+        function formatDate(date) { const year = date.getFullYear(); const month = String(date.getMonth() + 1).padStart(2, '0'); const day = String(date.getDate()).padStart(2, '0'); return `${year}-${month}-${day}`; }
+        function openMap(venueName) { if (!venueName) return; event.stopPropagation(); const query = encodeURIComponent(venueName); window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank'); }
+
+        // Color helper
+        function hexToRgba(hex, alpha) {
+            let c;
+            if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
+                c= hex.substring(1).split('');
+                if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; }
+                c= '0x'+c.join('');
+                return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+alpha+')';
+            }
+            return hex; // Fallback
+        }
+
+        let globalGames = [], globalStandings = [], globalTeamStats = null, globalPlayers = [], globalAwards = [], playerMap = {};
+        let currentScheduleTab = 'future', selectedStatsTeam = null, processedStats = {}, refreshInterval = null;
+        let compareTeamA = null, compareTeamB = null;
+        let favoritePlayerIds = JSON.parse(localStorage.getItem('tpbl_favorites')) || [];
+
+        function toggleFavorite(id) {
+            const index = favoritePlayerIds.indexOf(id);
+            if (index > -1) favoritePlayerIds.splice(index, 1); else favoritePlayerIds.push(id);
+            localStorage.setItem('tpbl_favorites', JSON.stringify(favoritePlayerIds));
+            const btn = document.getElementById(`fav-btn-${id}`);
+            if(btn) { btn.classList.toggle('active'); btn.innerHTML = btn.classList.contains('active') ? `<i data-lucide="star" fill="currentColor" width="20"></i>` : `<i data-lucide="star" width="20"></i>`; lucide.createIcons(); }
+            if(document.querySelector('.tab-bar .tab-btn:first-child').classList.contains('active')) renderHome();
+        }
+
+        function hideSplashScreen() { const splash = document.getElementById('splash-screen'); if(splash) setTimeout(() => splash.classList.add('hidden'), 500); }
+
+        async function init() {
+            try {
+                await fetchData(); renderHome(); lucide.createIcons(); hideSplashScreen();
+                initSwipeGesture(document.getElementById('game-page'), closeGameModal);
+                initSwipeGesture(document.getElementById('player-page'), closePlayerModal);
+                initSwipeGesture(document.getElementById('compare-page'), closeCompareModal);
+                if (refreshInterval) clearInterval(refreshInterval);
+                refreshInterval = setInterval(async () => { await fetchData(); updateHomeUI(); }, 15000);
+            } catch (e) { hideSplashScreen(); document.getElementById('app-container').innerHTML = `<div class="error-msg"><i data-lucide="wifi-off" width="32"></i><br><br>暫時無法連接資料庫<br><span style="font-size:12px; opacity:0.7">請重新整理頁面</span><br><button class="retry-btn" onclick="location.reload()">重新載入</button></div>`; lucide.createIcons(); }
+        }
+
+        async function fetchData() {
+            if (globalPlayers.length === 0) { try { const pJson = await fetchJson(API_PLAYERS); globalPlayers = pJson.data || pJson; globalPlayers.forEach(p => { let imgUrl = ""; if(p.images && p.images.length > 0) { const sm = p.images.find(i => i.key === 'sm'); const md = p.images.find(i => i.key === 'md'); imgUrl = sm ? sm.url : (md ? md.url : p.images[0].url); } playerMap[p.name.replace(/\s/g, '')] = imgUrl; }); } catch(e) {} }
+            const [gamesRes, gamesS1Res, standingsRes, statsRes, votesS1, votesS2, votesAnnS1, votesAnnS2] = await Promise.allSettled([
+                fetchJson(API_GAMES),
+                fetchJson(API_GAMES_S1), // Fetch S1 schedule
+                fetchJson(API_STANDINGS),
+                fetchJson(API_TEAM_STATS),
+                fetchJson(API_VOTES_S1),
+                fetchJson(API_VOTES_S2),
+                fetchJson(API_VOTES_ANNUAL_S1),
+                fetchJson(API_VOTES_ANNUAL_S2)
+            ]);
+            if (gamesRes.status === 'fulfilled') globalGames = gamesRes.value.data || gamesRes.value;
+            if (gamesS1Res.status === 'fulfilled') {
+                const s1Games = gamesS1Res.value.data || gamesS1Res.value;
+                if(Array.isArray(s1Games)) globalGames = [...globalGames, ...s1Games];
+            }
+            if (standingsRes.status === 'fulfilled') globalStandings = standingsRes.value.data || standingsRes.value;
+            if (statsRes.status === 'fulfilled') { globalTeamStats = statsRes.value.data || statsRes.value; processStatsData(); }
+            let awards = []; [votesS1, votesS2, votesAnnS1, votesAnnS2].forEach(p => { if (p.status === 'fulfilled' && p.value.result) awards = awards.concat(p.value.result); }); globalAwards = awards;
+        }
+
+        function processStatsData() {
+            if (!globalTeamStats) return;
+            const teamsMap = {};
+            const CATEGORIES = [ { key: 'won_score_per_match', label: '場均得分', isPct: false, icon: 'target' }, { key: 'rebounds_per_match', label: '場均籃板', isPct: false, icon: 'circle' }, { key: 'assists_per_match', label: '場均助攻', isPct: false, icon: 'send' }, { key: 'steals_per_match', label: '場均抄截', isPct: false, icon: 'hand' }, { key: 'blocks_per_match', label: '場均阻攻', isPct: false, icon: 'shield' }, { key: 'three_pointers_percentage', label: '三分%', isPct: true, icon: 'percent' }, { key: 'free_throws_percentage', label: '罰球%', isPct: true, icon: 'percent' }, { key: 'lost_score_per_match', label: '場均失分', isPct: false, inverse: true, icon: 'shield-alert' } ];
+            
+            CATEGORIES.forEach(cat => {
+                const list = globalTeamStats[cat.key];
+                if (!list || !Array.isArray(list)) return;
+                const sortedList = [...list].sort((a, b) => cat.inverse ? a.value - b.value : b.value - a.value);
+                sortedList.forEach((item, index) => {
+                    if(!item.team) return;
+                    const teamName = item.team.name;
+                    if (!teamsMap[teamName]) { teamsMap[teamName] = { name: teamName, logo: item.team.meta?.logo, stats: [] }; }
+                    teamsMap[teamName].stats.push({ label: cat.label, value: item.value, rank: index + 1, isPct: cat.isPct, icon: cat.icon });
+                });
+            });
+            processedStats = teamsMap;
+        }
+
+        // --- RENDER HOME ---
+        function renderHome() {
+            const container = document.getElementById('app-container'); container.innerHTML = '';
+            const wrapper = document.createElement('div'); wrapper.className = 'container';
+            
+            // Favorites
+            if (favoritePlayerIds.length > 0 && globalPlayers.length > 0) {
+                let favItems = ''; favoritePlayerIds.forEach(id => { const p = globalPlayers.find(gp => gp.id === id); if (p) { let img = DEFAULT_AVATAR; if(p.images && p.images.length > 0) { const sm = p.images.find(i => i.key === 'sm'); img = sm ? sm.url : p.images[0].url; } const teamColor = getTeamColor(p.team.name); favItems += `<div class="fav-item" onclick="openPlayerProfile(${p.id})"><img src="${img}" class="fav-avatar" style="border-color:${teamColor}"><div class="fav-name">${p.name}</div></div>`; } });
+                if (favItems) wrapper.innerHTML += `<div class="section-header" style="margin-top:0"><div class="section-title">關注球員</div></div><div class="fav-list">${favItems}</div>`;
+            }
+
+            const now = new Date(); const currentDay = now.getDay(); const distancePastMonday = (currentDay === 0 ? 6 : currentDay - 1);
+            const monday = new Date(now); monday.setDate(now.getDate() - distancePastMonday);
+            const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+            const startStr = formatDate(monday); const endStr = formatDate(sunday);
+            const weeklyGames = globalGames.filter(g => g.game_date >= startStr && g.game_date <= endStr);
+            const todayDateStr = formatDate(now);
+            const gamesToday = weeklyGames.filter(g => g.game_date === todayDateStr).sort((a, b) => a.game_time.localeCompare(b.game_time));
+            const gamesFuture = weeklyGames.filter(g => g.game_date > todayDateStr).sort((a, b) => (a.game_date !== b.game_date) ? a.game_date.localeCompare(b.game_date) : a.game_time.localeCompare(b.game_time));
+            const gamesPast = weeklyGames.filter(g => g.game_date < todayDateStr).sort((a, b) => (a.game_date !== b.game_date) ? a.game_date.localeCompare(b.game_date) : a.game_time.localeCompare(b.game_time));
+            let displayGames = (gamesToday.length > 0) ? [...gamesToday, ...gamesFuture, ...gamesPast] : [...gamesPast, ...gamesFuture];
+            
+            let scrollTargetId = null; const targetGame = displayGames.find(g => g.status === 'LIVE' || g.status === 'IN_PROGRESS') || displayGames.find(g => g.status === 'UPCOMING' || g.status === 'COMING_SOON'); if (targetGame) scrollTargetId = `game-card-${targetGame.id}`;
+
+            wrapper.innerHTML += `<div class="section-header"><div class="section-title">本週賽程</div><div class="section-date nums">${startStr.slice(5).replace('-','/')} - ${endStr.slice(5).replace('-','/')}</div></div>`;
+            const sbWrapper = document.createElement('div'); sbWrapper.className = `smart-board-wrapper`; sbWrapper.id = 'smart-board';
+            
+            if (displayGames.length > 0) {
+                displayGames.forEach(g => {
+                    const isDone = g.status === 'COMPLETED'; const isLive = (g.status === 'LIVE' || g.status === 'IN_PROGRESS');
+                    const hName = getShortName(g.home_team.name); const aName = getShortName(g.away_team.name);
+                    const hLogo = getLogo(g.home_team.name, g.home_team.meta?.logo); const aLogo = getLogo(g.away_team.name, g.away_team.meta?.logo);
+                    const time = g.game_time ? g.game_time.slice(0, 5) : "";
+                    let hScore = (isDone || isLive) ? (g.home_team.score ?? g.home_team.won_score ?? '-') : '-'; let aScore = (isDone || isLive) ? (g.away_team.score ?? g.away_team.won_score ?? '-') : '-';
+                    const venueHtml = `<div class="venue-info" onclick="openMap('${g.venue}')"><i data-lucide="map-pin" width="12"></i> ${g.venue}</div>`;
+                    let cardHtml = '';
+                    if (isLive) {
+                        let liveUrl = g.meta?.live_stream_url || `https://www.youtube.com/results?search_query=TPBL+${hName}+Live`;
+                        cardHtml = `<div class="match-card" id="game-card-${g.id}" onclick="openGameDetails(${g.id})"><div class="match-status-bar">${venueHtml}<div class="match-info-group"><span class="badge live">LIVE</span></div></div><div class="match-content"><div class="team-col"><img src="${aLogo}" class="team-logo-lg"><div class="team-name">${aName}</div></div><div class="score-col"><div class="live-timer" id="live-timer-${g.id}">進行中</div><div class="score-val nums" id="live-score-${g.id}">${aScore} - ${hScore}</div><div class="card-period-box" id="live-periods-${g.id}"></div></div><div class="team-col"><img src="${hLogo}" class="team-logo-lg"><div class="team-name">${hName}</div></div></div><div class="match-actions"><div class="action-btn btn-live" onclick="event.stopPropagation(); window.open('${liveUrl}', '_blank')"><i data-lucide="tv" width="14"></i> 前往直播</div></div></div>`;
+                    } else if (isDone) {
+                        const hS = parseInt(hScore)||0; const aS = parseInt(aScore)||0; const aClass = (aS<hS)?'loser':''; const hClass = (hS<aS)?'loser':''; const aColor = (aS<hS)?'var(--text-sub)':'var(--tpbl-blue)'; const hColor = (hS<aS)?'var(--text-sub)':'var(--tpbl-blue)';
+                        let recapUrl = g.meta?.recap || `https://www.youtube.com/results?search_query=TPBL+${hName}+vs+${aName}+Highlight`;
+                        cardHtml = `<div class="match-card" id="game-card-${g.id}" onclick="openGameDetails(${g.id})"><div class="match-status-bar">${venueHtml}<div class="match-info-group"><span class="badge final">FINAL</span></div></div><div class="match-content"><div class="team-col ${aClass}"><img src="${aLogo}" class="team-logo-lg"><div class="team-name">${aName}</div></div><div class="score-col"><div class="score-val nums"><span style="color:${aColor}">${aScore}</span> <span style="color:#D1D1D6; font-weight:400">-</span> <span style="color:${hColor}">${hScore}</span></div></div><div class="team-col ${hClass}"><img src="${hLogo}" class="team-logo-lg"><div class="team-name">${hName}</div></div></div><div class="match-actions"><div class="action-btn btn-highlight" onclick="event.stopPropagation(); window.open('${recapUrl}', '_blank')"><i data-lucide="play-circle" width="14"></i> Watch Highlight</div></div></div>`;
+                    } else {
+                        const gameDateStr = g.game_date.split('-').slice(1).join('/'); const ticketUrl = getTicketLink(g.home_team.name);
+                        cardHtml = `<div class="match-card" id="game-card-${g.id}"><div class="match-status-bar">${venueHtml}<div class="match-info-group"><span class="badge date">${gameDateStr}</span></div></div><div class="match-content"><div class="team-col"><img src="${aLogo}" class="team-logo-lg"><div class="team-name">${aName}</div></div><div class="score-col"><div class="game-time-big nums">${time}</div><div class="score-vs">VS</div></div><div class="team-col"><img src="${hLogo}" class="team-logo-lg"><div class="team-name">${hName}</div></div></div><div class="match-actions"><a href="${ticketUrl}" target="_blank" class="action-btn btn-ticket"><i data-lucide="ticket" width="14"></i> 購票資訊</a></div></div>`;
+                    }
+                    sbWrapper.innerHTML += cardHtml;
+                });
+                wrapper.appendChild(sbWrapper);
+                if (displayGames.length > 1) {
+                    const dotsContainer = document.createElement('div'); dotsContainer.className = 'carousel-dots';
+                    for(let i=0; i<displayGames.length; i++) dotsContainer.innerHTML += `<div class="dot ${i===0?'active':''}" id="dot-${i}"></div>`;
+                    wrapper.appendChild(dotsContainer);
+                    setTimeout(() => { const board = document.getElementById('smart-board'); if (board) { board.addEventListener('scroll', () => { const index = Math.round(board.scrollLeft / board.offsetWidth); document.querySelectorAll('.dot').forEach(d => d.classList.remove('active')); const activeDot = document.getElementById(`dot-${index}`); if(activeDot) activeDot.classList.add('active'); }); } }, 500);
+                }
+            } else { sbWrapper.innerHTML = `<div style="padding:20px; width:100%; text-align:center; color:#999">本週無賽事</div>`; wrapper.appendChild(sbWrapper); }
+
+            // MVP
+            const monthlyAwards = globalAwards.filter(a => a.type === 'monthly').sort((a,b) => b.id - a.id);
+            if (monthlyAwards.length >= 2) {
+                const latest = monthlyAwards.slice(0, 2); let pItems = ''; let rawTitle = latest[0].en_title.replace('Player of the month', '').trim(); let monthTitle = rawTitle.replace(/[()]/g, '');
+                latest.forEach(award => { const winner = award.winner[0].info; const pImg = winner.image_md || winner.image_lg || DEFAULT_AVATAR; pItems += `<div class="mvp-p-item"><img src="${pImg}" class="mvp-p-img"><div class="mvp-p-text"><div class="mvp-p-name">${winner.name}</div><div class="mvp-p-team">${getShortName(winner.team_name)}</div></div></div>`; });
+                wrapper.innerHTML += `<div class="section-header" style="margin-top:20px;"><div class="section-title">本月最佳球員</div></div><div class="mvp-card"><div class="mvp-info"><div class="mvp-label">PLAYER OF THE MONTH</div><div class="mvp-month">(${monthTitle})</div><div class="mvp-players-row">${pItems}</div></div><i data-lucide="trophy" width="60" height="60" style="opacity:0.2; color:#D4B07D;"></i></div>`;
+            }
+
+            // Standings
+            wrapper.innerHTML += `<div class="section-header" style="margin-top:20px;"><div class="section-title">聯盟戰績</div></div>`;
+            let tbody = '';
+            const sList = Array.isArray(globalStandings) ? globalStandings : (globalStandings.data || []);
+            sList.forEach((t, i) => { const rank = t.rank || (i+1); const pct = (t.score_won_matches + t.score_lost_matches) > 0 ? ((t.score_won_matches/(t.score_won_matches + t.score_lost_matches))*100).toFixed(1) + '%' : '0.0%'; tbody += `<tr><td style="font-weight:700; color:#888;" class="nums">${rank}</td><td><div class="st-team"><img src="${getLogo(t.team.name, t.team.meta?.logo)}" style="width:20px;">${getShortName(t.team.name)}</div></td><td class="nums">${t.score_won_matches}</td><td class="nums">${t.score_lost_matches}</td><td><span class="win-pct nums">${pct}</span></td></tr>`; });
+            wrapper.innerHTML += `<div class="st-card"><table class="st-table"><thead><tr><th>#</th><th>球隊</th><th>勝</th><th>敗</th><th>勝率</th></tr></thead><tbody>${tbody}</tbody></table></div>`;
+
+            // --- Highlights Section (NEW) ---
+            renderHighlights(wrapper);
+
+            container.appendChild(wrapper);
+            lucide.createIcons();
+            if (scrollTargetId) setTimeout(() => { const target = document.getElementById(scrollTargetId); if(target) target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }, 300);
+        }
+
+        // New Helper Function for Highlights
+        function renderHighlights(container) {
+            const completed = globalGames.filter(g => g.status === 'COMPLETED').sort((a,b) => new Date(b.game_date) - new Date(a.game_date)).slice(0, 6);
+            if(completed.length === 0) return;
+
+            container.innerHTML += `<div class="section-header" style="margin-top:24px;"><div class="section-title">精選影音</div><div class="section-date">HIGHLIGHTS</div></div>`;
+            const grid = document.createElement('div');
+            grid.className = 'highlights-grid';
+            
+            completed.forEach(g => {
+                const hName = getShortName(g.home_team.name);
+                const aName = getShortName(g.away_team.name);
+                const dateStr = g.game_date.split('-').slice(1).join('/');
+                const title = `${aName} vs ${hName}`;
+                
+                let thumbUrl = "https://via.placeholder.com/320x180?text=TPBL";
+                let linkUrl = g.meta?.recap || `https://www.youtube.com/results?search_query=TPBL+${hName}+vs+${aName}`;
+                
+                // Try to extract YouTube ID
+                if (linkUrl.includes('youtube.com/watch?v=')) {
+                    const vId = linkUrl.split('v=')[1].split('&')[0];
+                    thumbUrl = `https://img.youtube.com/vi/${vId}/mqdefault.jpg`;
+                } else if (linkUrl.includes('youtu.be/')) {
+                    const vId = linkUrl.split('youtu.be/')[1].split('?')[0];
+                    thumbUrl = `https://img.youtube.com/vi/${vId}/mqdefault.jpg`;
+                } else {
+                    // Fallback to match image if no direct video ID
+                    thumbUrl = `https://via.placeholder.com/320x180/0F2848/FFFFFF?text=${aName}+vs+${hName}`;
+                }
+
+                grid.innerHTML += `
+                    <a href="${linkUrl}" target="_blank" class="hl-card">
+                        <div class="hl-img-box">
+                            <img src="${thumbUrl}" class="hl-img" loading="lazy">
+                            <div class="hl-play-icon"><i data-lucide="play" width="14" fill="white"></i></div>
+                        </div>
+                        <div class="hl-info">
+                            <div class="hl-title">${title}</div>
+                            <div class="hl-date nums"><i data-lucide="calendar" width="10"></i> ${dateStr}</div>
+                        </div>
+                    </a>
+                `;
+            });
+            container.appendChild(grid);
+        }
+
+        function updateHomeUI() {
+            const isHome = document.querySelector('.tab-bar .tab-btn:first-child').classList.contains('active'); if (!isHome) return;
+            const liveGames = globalGames.filter(g => g.status === 'LIVE' || g.status === 'IN_PROGRESS'); const pulse = document.getElementById('live-pulse');
+            if (liveGames.length > 0) { if(pulse) pulse.classList.add('active'); liveGames.forEach(g => { const scoreEl = document.getElementById(`live-score-${g.id}`); const timerEl = document.getElementById(`live-timer-${g.id}`); if (scoreEl) { const hS = g.home_team.score ?? g.home_team.won_score ?? '-'; const aS = g.away_team.score ?? g.away_team.won_score ?? '-'; const newScoreStr = `${aS} - ${hS}`; if (scoreEl.innerText !== newScoreStr) { scoreEl.innerText = newScoreStr; scoreEl.classList.add('updated'); setTimeout(() => scoreEl.classList.remove('updated'), 400); } } if (timerEl && g.game_clock) timerEl.innerText = g.game_clock; }); } else { if(pulse) pulse.classList.remove('active'); }
+        }
+
+        // --- Teams Render (OPTIMIZED & FIXED) ---
+        function renderTeams() {
+            const container = document.getElementById('app-container');
+            const newContent = document.createElement('div'); newContent.className = 'container';
+            newContent.innerHTML = `<div class="section-header"><div class="section-title">球隊專區</div><button onclick="openCompareModal()" class="action-btn" style="width:auto; padding:6px 12px; font-size:12px; background:#fff; border:1px solid #E5E5EA; color:var(--tpbl-blue);">⚔️ 球隊數據比較</button></div>`;
+
+            if (!selectedStatsTeam) selectedStatsTeam = "攻城獅";
+
+            // 1. Render Team Selector
+            const selector = document.createElement('div'); selector.className = 'team-selector';
+            KEYWORD_ORDER.forEach(keyword => {
+                let logoUrl = LOGOS[keyword] || "https://via.placeholder.com/60";
+                const isActive = (selectedStatsTeam && (selectedStatsTeam === keyword || selectedStatsTeam.includes(keyword)));
+                if(isActive) selectedStatsTeam = keyword;
+                selector.innerHTML += `<div class="ts-item ${isActive ? 'active' : ''}" onclick="selectTeam('${keyword}')"><div class="ts-ring"><img src="${logoUrl}" class="ts-logo"></div><div class="ts-name">${keyword}</div></div>`;
+            });
+            newContent.appendChild(selector);
+
+            // 2. Prepare Data for Selected Team
+            const currentKeyword = selectedStatsTeam;
+            const statsKey = Object.keys(processedStats).find(name => name.includes(currentKeyword));
+            const teamStats = statsKey ? processedStats[statsKey] : null;
+            const fullTeamName = teamStats ? teamStats.name : currentKeyword;
+            const teamColor = getTeamColor(fullTeamName);
+            newContent.style.setProperty('--team-color', teamColor);
+
+            // Get Standings Data
+            const sList = Array.isArray(globalStandings) ? globalStandings : (globalStandings.data || []);
+            let foundStand = null;
+            try { foundStand = sList.find(s => s.team && s.team.name && s.team.name.includes(currentKeyword)); } catch(e) {}
+
+            const leagueRank = foundStand ? foundStand.rank : '-';
+            const wins = foundStand ? foundStand.score_won_matches : '-';
+            const losses = foundStand ? foundStand.score_lost_matches : '-';
+            const teamId = foundStand ? foundStand.team.id : null;
+            
+            // --- FIX: Force use local LOGOS map to prevent broken images ---
+            const logo = LOGOS[currentKeyword] || (foundStand && foundStand.team.meta ? foundStand.team.meta.logo : "https://via.placeholder.com/60");
+
+            // 3. Render Header Card
+            newContent.innerHTML += `
+                <div class="team-dashboard">
+                    <div class="td-header-card">
+                        <img src="${logo}" class="td-header-bg-icon">
+                        <div class="td-info-col">
+                            <div class="td-name-lg">${currentKeyword}</div>
+                            <div class="td-record"><span class="td-rank-badge">排名 #${leagueRank}</span><span>${wins} 勝 - ${losses} 敗</span></div>
+                        </div>
+                        <img src="${logo}" style="width:60px; height:60px; z-index:2; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.1));">
+                    </div>
+                </div>
+                
+                <!-- NEW: Banner Container (Placed between Info Card and Stats) -->
+                <div id="team-banner-container" class="team-dashboard"></div>
+            `;
+            
+            // Load Banner immediately if Team ID exists
+            if (teamId) { loadTeamBanner(teamId); }
+
+            // 4. Render Stats
+            if (teamStats && teamStats.stats.length > 0) {
+                const statsContainer = document.createElement('div'); statsContainer.className = 'stats-grid-container team-dashboard';
+                teamStats.stats.forEach(stat => {
+                    let displayVal = stat.isPct ? (stat.value * 100).toFixed(1) + '%' : (Number.isInteger(stat.value) ? stat.value : stat.value.toFixed(1));
+                    statsContainer.innerHTML += `<div class="stat-box"><div class="sb-top"><div class="sb-label"><i data-lucide="${stat.icon}" width="12" style="color:#aaa"></i> ${stat.label}</div><span class="rank-tag ${stat.rank === 1 ? 'top-1' : ''}">#${stat.rank}</span></div><div class="sb-value nums">${displayVal}</div></div>`;
+                });
+                newContent.appendChild(statsContainer);
+            } else {
+                 newContent.innerHTML += `<div class="section-divider">團隊數據</div><div style="text-align:center; padding:20px; color:#aaa; font-size:12px; background:#fff; border-radius:12px; margin-bottom:16px;">目前無法取得團隊攻守數據</div>`;
+            }
+
+            // 5. Render Roster
+            newContent.innerHTML += `<div class="section-header"><div class="section-title">球員名單</div></div>`;
+            const rosterGrid = document.createElement('div'); rosterGrid.className = 'roster-grid team-dashboard';
+            const teamPlayers = globalPlayers.filter(p => p.team && p.team.name && p.team.name.includes(currentKeyword)).sort((a,b) => parseInt(a.number) - parseInt(b.number));
+            
+            if (teamPlayers.length > 0) {
+                teamPlayers.forEach(p => {
+                    let img = ""; let imgStyle = "";
+                    if(p.images && p.images.length > 0) {
+                        const lg = p.images.find(i => i.key === 'xl') || p.images.find(i => i.key === 'lg');
+                        if(lg) img = lg.url;
+                    }
+                    if (!img) { img = DEFAULT_AVATAR; imgStyle = `background-color: ${teamColor}; padding-bottom: 0;`; }
+                    rosterGrid.innerHTML += `<div class="roster-card" onclick="openPlayerProfile(${p.id})"><div class="rc-num">#${p.number}</div><div class="rc-img-box" style="${imgStyle}"><img src="${img}" class="rc-img" loading="lazy"></div><div class="rc-name">${p.name}</div><div class="rc-pos">${formatPos(p.meta.position)}</div><div class="rc-meta nums">${p.meta.height||'-'}cm</div></div>`;
+                });
+            } else { rosterGrid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#999; padding:20px;">暫無球員資料</div>`; }
+            newContent.appendChild(rosterGrid);
+
+            container.innerHTML = ''; container.appendChild(newContent); lucide.createIcons();
+            const activeItem = document.querySelector('.ts-item.active'); if (activeItem) activeItem.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+        }
+        
+        window.selectTeam = function(teamName) { selectedStatsTeam = teamName; renderTeams(); }
+
+        // --- NEW BANNER FETCH FUNCTION ---
+        async function loadTeamBanner(teamId) {
+            try {
+                // Fetch banner from API
+                const res = await fetchJson(`https://api.tpbl.basketball/api/teams/${teamId}/banners`);
+                const data = res.data || res; // Handle different JSON structures
+                const banners = data.result || data; // Often wrapped in "result"
+
+                if(banners && banners.length > 0) {
+                    // Get the first banner
+                    const b = banners[0];
+                    // Prefer mobile_image, fallback to image
+                    const imgUrl = b.mobile_image || b.image;
+                    
+                    const container = document.getElementById('team-banner-container');
+                    if(container && imgUrl) {
+                        // Using the new CSS class for consistent styling
+                        container.innerHTML = `<img src="${imgUrl}" class="team-banner-img" loading="lazy">`;
+                    }
+                }
+            } catch(e) {
+                console.warn("Failed to load banner for team " + teamId, e);
+            }
+        }
+
+        // --- Compare Page ---
+        function openCompareModal() {
+            toggleBodyLock(true); const page = document.getElementById('compare-page'); page.classList.add('active');
+            if (!compareTeamA && KEYWORD_ORDER.length > 0) { const fullA = Object.keys(processedStats).find(n => n.includes(KEYWORD_ORDER[0])); if (fullA) compareTeamA = fullA; }
+            if (!compareTeamB && KEYWORD_ORDER.length > 1) { const fullB = Object.keys(processedStats).find(n => n.includes(KEYWORD_ORDER[1])); if (fullB) compareTeamB = fullB; }
+            renderComparePage();
+        }
+        function closeCompareModal() { toggleBodyLock(false); const page = document.getElementById('compare-page'); page.classList.remove('active'); setTimeout(() => { page.style.transform = ''; }, 350); }
+        function renderComparePage() {
+            const body = document.getElementById('compare-body'); let optionsHtml = ''; KEYWORD_ORDER.forEach(k => { const fullName = Object.keys(processedStats).find(n => n.includes(k)); if(fullName) optionsHtml += `<option value="${fullName}">${k}</option>`; });
+            const selA = `<select id="sel-team-a" class="cs-select" onchange="updateCompareTeam('A', this.value)">${optionsHtml}</select>`;
+            const selB = `<select id="sel-team-b" class="cs-select" onchange="updateCompareTeam('B', this.value)">${optionsHtml}</select>`;
+            let content = `<div class="compare-selectors"><div class="cs-col"><div class="cs-label">TEAM A</div>${selA}</div><div class="cs-col"><div class="cs-label">TEAM B</div>${selB}</div></div>`;
+            if (compareTeamA && compareTeamB && processedStats[compareTeamA] && processedStats[compareTeamB]) { content += renderSeasonComparison(processedStats[compareTeamA], processedStats[compareTeamB]); content += renderHeadToHeadHistory(compareTeamA, compareTeamB); } else { content += `<div class="loading">請選擇球隊以進行比較</div>`; }
+            body.innerHTML = content; if(compareTeamA) document.getElementById('sel-team-a').value = compareTeamA; if(compareTeamB) document.getElementById('sel-team-b').value = compareTeamB; lucide.createIcons();
+        }
+        window.updateCompareTeam = function(side, value) { if (side === 'A') compareTeamA = value; else compareTeamB = value; renderComparePage(); }
+        function renderSeasonComparison(statsA, statsB) {
+            const getVal = (statsObj, labelKey) => { const found = statsObj.stats.find(s => s.label === labelKey); return found ? found.value : 0; };
+            const metrics = [ { label: '場均得分', key: '場均得分', isPct: false }, { label: '場均籃板', key: '場均籃板', isPct: false }, { label: '場均助攻', key: '場均助攻', isPct: false }, { label: '場均抄截', key: '場均抄截', isPct: false }, { label: '場均阻攻', key: '場均阻攻', isPct: false }, { label: '投籃命中率', key: '投籃%', isPct: true, multi: 100 }, { label: '三分命中率', key: '三分%', isPct: true, multi: 100 }, { label: '罰球命中率', key: '罰球%', isPct: true, multi: 100 }, { label: '場均失分', key: '場均失分', isPct: false, invert: true } ];
+            let rowsHtml = ''; metrics.forEach(m => { let valA = getVal(statsA, m.key); let valB = getVal(statsB, m.key); let dispA = m.isPct ? (valA * 100).toFixed(1) + '%' : valA.toFixed(1); let dispB = m.isPct ? (valB * 100).toFixed(1) + '%' : valB.toFixed(1); let maxVal = Math.max(valA, valB); if (maxVal === 0) maxVal = 1; let perA = (valA / maxVal) * 100; let perB = (valB / maxVal) * 100; let isAWin = m.invert ? (valA < valB) : (valA > valB); let isBWin = m.invert ? (valB < valA) : (valB > valA); if (valA === valB) { isAWin = false; isBWin = false; } rowsHtml += `<div class="comp-row"><div class="comp-side left"><div class="comp-wrapper"><div class="comp-val nums">${dispA}</div><div class="comp-bar-bg"><div class="comp-bar left ${isAWin ? 'winner' : ''}" style="width: ${perA}%"></div></div></div></div><div class="comp-label">${m.label}</div><div class="comp-side right"><div class="comp-wrapper"><div class="comp-bar-bg"><div class="comp-bar right ${isBWin ? 'winner' : ''}" style="width: ${perB}%"></div></div><div class="comp-val nums">${dispB}</div></div></div></div>`; });
+            const shortA = getShortName(statsA.name); const shortB = getShortName(statsB.name); const logoA = getLogo(statsA.name, statsA.logo); const logoB = getLogo(statsB.name, statsB.logo);
+            return `<div class="comparison-card" style="margin-top:0"><div class="comp-title" style="justify-content:center; gap:20px; font-size:16px;"><div style="display:flex; flex-direction:column; align-items:center;"><img src="${logoA}" width="40"><span style="font-size:12px; margin-top:4px;">${shortA}</span></div><div style="font-style:italic; color:#D4B07D; font-weight:800;">VS</div><div style="display:flex; flex-direction:column; align-items:center;"><img src="${logoB}" width="40"><span style="font-size:12px; margin-top:4px;">${shortB}</span></div></div><div style="height:1px; background:#f0f0f0; margin:12px 0;"></div>${rowsHtml}</div>`;
+        }
+        function renderHeadToHeadHistory(nameA, nameB) {
+            const matches = globalGames.filter(g => { const h = g.home_team.name; const a = g.away_team.name; const validStatus = g.status === 'COMPLETED'; const isMatch = (h === nameA && a === nameB) || (h === nameB && a === nameA); return validStatus && isMatch; }).sort((a, b) => new Date(b.game_date) - new Date(a.game_date));
+            if (matches.length > 0) { let rows = ''; matches.forEach(g => { const dateStr = g.game_date.split('-').slice(1).join('/'); const isAHome = g.home_team.name === nameA; const scoreA = parseInt(isAHome ? (g.home_team.score||g.home_team.won_score||0) : (g.away_team.score||g.away_team.won_score||0)); const scoreB = parseInt(!isAHome ? (g.home_team.score||g.home_team.won_score||0) : (g.away_team.score||g.away_team.won_score||0)); const logoA = getLogo(nameA, isAHome ? g.home_team.meta?.logo : g.away_team.meta?.logo); const logoB = getLogo(nameB, !isAHome ? g.home_team.meta?.logo : g.away_team.meta?.logo); const shortA = getShortName(nameA); const shortB = getShortName(nameB); const classA = scoreA > scoreB ? 'color:var(--tpbl-blue); font-weight:800;' : 'color:#8E8E93;'; const classB = scoreB > scoreA ? 'color:var(--tpbl-blue); font-weight:800;' : 'color:#8E8E93;'; const logoStyleA = scoreA < scoreB ? 'opacity:0.6; filter:grayscale(1);' : ''; const logoStyleB = scoreB < scoreA ? 'opacity:0.6; filter:grayscale(1);' : ''; const indA = isAHome ? '<i data-lucide="home" width="10"></i>' : '<i data-lucide="plane" width="10"></i>'; const indB = !isAHome ? '<i data-lucide="home" width="10"></i>' : '<i data-lucide="plane" width="10"></i>'; rows += `<tr><td style="color:#8E8E93; font-weight:500; font-family:'SF Mono', monospace;">${dateStr}</td><td style="text-align:right;"><div style="display:flex; align-items:center; justify-content:flex-end; gap:4px; ${classA}"><span style="font-size:9px;opacity:0.6;display:flex;align-items:center;">${indA}</span>${shortA} <img src="${logoA}" style="width:24px; height:24px; object-fit:contain; ${logoStyleA}"></div></td><td style="font-family:'SF Mono', monospace; font-weight:700; font-size:14px; white-space:nowrap;"><span style="${classA}">${scoreA}</span> : <span style="${classB}">${scoreB}</span></td><td style="text-align:left;"><div style="display:flex; align-items:center; justify-content:flex-start; gap:4px; ${classB}"><img src="${logoB}" style="width:24px; height:24px; object-fit:contain; ${logoStyleB}"> ${shortB}<span style="font-size:9px;opacity:0.6;display:flex;align-items:center;">${indB}</span></div></td></tr>`; }); return `<div class="section-divider" style="margin-top:24px;"><i data-lucide="history" width="14"></i><span>本季對戰紀錄 (${matches.length}場)</span></div><div class="st-card" style="box-shadow: 0 4px 12px rgba(0,0,0,0.05);"><table class="recent-games-table" style="margin-bottom:0;"><thead><tr><th style="width:15%">日期</th><th style="width:35%; text-align:right; padding-right:34px;">TEAM A</th><th style="width:15%">比分</th><th style="width:35%; text-align:left; padding-left:34px;">TEAM B</th></tr></thead><tbody>${rows}</tbody></table></div>`; } else { return `<div class="section-divider" style="margin-top:24px;"><i data-lucide="history" width="14"></i><span>本季對戰紀錄</span></div><div style="text-align:center; padding:30px; color:#aaa; background:#fff; border-radius:12px; font-size:12px;">本季尚未交手</div>`; }
+        }
+
+        // --- Schedule Render & Prediction ---
+        function renderSchedule() {
+            const container = document.getElementById('app-container'); container.innerHTML = '';
+            const wrapper = document.createElement('div'); wrapper.className = 'container';
+            wrapper.innerHTML += `<div class="seg-control"><button class="seg-btn ${currentScheduleTab === 'future' ? 'active' : ''}" onclick="switchScheduleTab('future')">未來賽事</button><button class="seg-btn ${currentScheduleTab === 'completed' ? 'active' : ''}" onclick="switchScheduleTab('completed')">已完賽</button></div>`;
+            let list = (currentScheduleTab === 'completed') ? globalGames.filter(g => g.status === 'COMPLETED').sort((a, b) => new Date(b.game_date) - new Date(a.game_date)) : globalGames.filter(g => g.status !== 'COMPLETED').sort((a, b) => new Date(a.game_date) - new Date(b.game_date));
+            if(list.length === 0) { wrapper.innerHTML += `<div class="loading">無相關賽事</div>`; } else {
+                const listContainer = document.createElement('div'); listContainer.className = 'sch-container';
+                list.forEach(g => {
+                    const dateObj = new Date(g.game_date); const monthStr = dateObj.toLocaleString('en-US', { month: 'short' }).toUpperCase(); const dayStr = dateObj.getDate(); const time = g.game_time ? g.game_time.slice(0, 5) : 'TBD';
+                    const isDone = g.status === 'COMPLETED'; const isLive = g.status === 'LIVE' || g.status === 'IN_PROGRESS';
+                    const hScore = (isDone || isLive) ? (g.home_team.score ?? g.home_team.won_score ?? 0) : '-'; const aScore = (isDone || isLive) ? (g.away_team.score ?? g.away_team.won_score ?? 0) : '-';
+                    const hWin = parseInt(hScore) > parseInt(aScore); const aWin = parseInt(aScore) > parseInt(hScore);
+                    const hClass = (isDone && !hWin) ? 'lose' : (isDone && hWin ? 'win' : ''); const aClass = (isDone && !aWin) ? 'lose' : (isDone && aWin ? 'win' : '');
+                    const hName = getShortName(g.home_team.name); const aName = getShortName(g.away_team.name);
+                    let actionHtml = '';
+                    if (isLive) { actionHtml = `<div class="sch-btn live"><i data-lucide="tv" width="10"></i> 進行中</div>`; } else if (isDone) { actionHtml = `<div class="sch-btn stats">數據 <i data-lucide="chevron-right" width="10"></i></div>`; } else { const ticketUrl = getTicketLink(g.home_team.name); actionHtml = `<div style="display:flex; gap:8px; align-items:center; width:100%; justify-content:flex-end;"><button class="sch-btn predict" onclick="event.stopPropagation(); openAiModal(${g.id}, '${g.home_team.name}', '${g.away_team.name}')"><i data-lucide="sparkles" width="12"></i> AI 預測</button><div class="sch-btn ticket" onclick="event.stopPropagation(); window.open('${ticketUrl}', '_blank')"><i data-lucide="ticket" width="10"></i> 購票</div></div>`; }
+                    const cardClickAttr = (isLive || isDone) ? `onclick="openGameDetails(${g.id})"` : '';
+                    const cardHtml = `<div class="sch-card" ${cardClickAttr}><div class="sch-card-main"><div class="sch-date-col"><span class="sch-date-main nums">${dayStr}</span><span class="sch-date-sub">${monthStr}</span><div class="sch-time nums">${time}</div></div><div class="sch-matchup"><div class="sch-team-row"><div class="sch-team-info"><img src="${getLogo(g.away_team.name, g.away_team.meta?.logo)}" class="sch-team-logo"><span class="sch-team-name ${aClass}">${aName}</span></div><div class="sch-team-score ${aClass} nums">${aScore}</div></div><div style="height:1px; background:#f5f5f7; margin:2px 0;"></div><div class="sch-team-row"><div class="sch-team-info"><img src="${getLogo(g.home_team.name, g.home_team.meta?.logo)}" class="sch-team-logo"><span class="sch-team-name ${hClass}">${hName}</span></div><div class="sch-team-score ${hClass} nums">${hScore}</div></div></div></div><div class="sch-card-footer"><div class="sch-venue" onclick="openMap('${g.venue}')"><i data-lucide="map-pin" width="12"></i> ${g.venue.split(' ')[0]}</div><div class="sch-actions" style="flex:1; justify-content:flex-end; display:flex;">${actionHtml}</div></div></div>`;
+                    listContainer.innerHTML += cardHtml;
+                });
+                wrapper.appendChild(listContainer);
+            }
+            container.appendChild(wrapper); lucide.createIcons();
+        }
+
+        function openAiModal(gameId, hFullName, aFullName) {
+            const modal = document.getElementById('ai-modal'); const body = document.getElementById('ai-modal-body'); modal.classList.add('active'); toggleBodyLock(true);
+            body.innerHTML = `<div style="padding:40px 0;"><div class="ai-loading-icon"><i data-lucide="cpu" width="48" height="48"></i></div><div style="font-weight:700; color:var(--tpbl-blue);">AI 分析中...</div><div style="font-size:12px; color:#888; margin-top:8px;">正在計算進攻效率與防守強度</div></div>`; lucide.createIcons();
+            
+            setTimeout(() => {
+                const sList = Array.isArray(globalStandings) ? globalStandings : (globalStandings.data || []);
+                const getWinPct = (name) => { const t = sList.find(s => s.team.name === name); if(!t) return 0.5; const total = t.score_won_matches + t.score_lost_matches; return total > 0 ? (t.score_won_matches / total) : 0.5; };
+                const hPct = getWinPct(hFullName); const aPct = getWinPct(aFullName);
+                const homeAdvantage = 0.08;
+                const randomFactor = (Math.random() * 0.15) - 0.075;
+                
+                let homeProb = 0.5 + ((hPct - aPct) / 1.5) + homeAdvantage + randomFactor;
+                if (homeProb > 0.92) homeProb = 0.92; if (homeProb < 0.08) homeProb = 0.08;
+                
+                const isHomeWin = homeProb >= 0.5;
+                const winnerName = isHomeWin ? getShortName(hFullName) : getShortName(aFullName);
+                const winProb = isHomeWin ? homeProb : (1 - homeProb);
+                const percentage = Math.round(winProb * 100);
+                
+                // Enhanced Predictions
+                // 1. Point Spread
+                const spreadBase = Math.abs(hPct - aPct) * 20;
+                let estimatedSpread = Math.max(2.5, Math.round(spreadBase + (Math.random() * 5)));
+                if(estimatedSpread > 15) estimatedSpread = 15.5; // Cap spread
+                
+                // 2. Total Score (Over/Under)
+                const totalScore = 185 + Math.floor(Math.random() * 25);
+                
+                // 3. Key Factor
+                const factors = [
+                    "禁區籃板保護", "外線命中率", "轉換快攻得分", "替補陣容深度",
+                    "關鍵球處理能力", "罰球穩定性", "團隊助攻效率", "控制失誤次數"
+                ];
+                const keyFactor = factors[Math.floor(Math.random() * factors.length)];
+                
+                body.innerHTML = `
+                    <div style="animation:fadeIn 0.5s ease">
+                        <div class="ai-result-title">AI PREDICTION</div>
+                        <div class="ai-winner-name">${winnerName}</div>
+                        <div class="ai-win-prob nums">${percentage}% <span style="font-size:14px;color:#888;">勝率</span></div>
+                        
+                        <div style="display:flex; gap:8px; margin-bottom:12px;">
+                            <div style="flex:1; background:#f9f9f9; padding:10px; border-radius:10px; border:1px solid #eee;">
+                                <div style="font-size:10px; color:#888; font-weight:700;">預測勝分</div>
+                                <div style="font-size:16px; font-weight:800; color:var(--text-main); font-family:'SF Mono'">${estimatedSpread}</div>
+                            </div>
+                            <div style="flex:1; background:#f9f9f9; padding:10px; border-radius:10px; border:1px solid #eee;">
+                                <div style="font-size:10px; color:#888; font-weight:700;">大小分</div>
+                                <div style="font-size:16px; font-weight:800; color:var(--text-main); font-family:'SF Mono'">${totalScore}.5</div>
+                            </div>
+                        </div>
+                        
+                        <div class="ai-analysis-box">
+                            <div class="ai-ab-title"><i data-lucide="search" width="12"></i> 獲勝關鍵</div>
+                            <div class="ai-ab-text">本場比賽的關鍵在於 <span style="color:#0F2848; font-weight:800;">${keyFactor}</span>，若能在此環節取得優勢，${winnerName} 將有極大機會拿下勝利。</div>
+                        </div>
+                    </div>`;
+                lucide.createIcons();
+            }, 1500);
+        }
+        function closeAiModal() { const modal = document.getElementById('ai-modal'); modal.classList.remove('active'); toggleBodyLock(false); }
+
+        // --- SWIPE UTILS & PAGE LOGIC ---
+        let savedScrollPosition = 0;
+        function toggleBodyLock(isLocked) { if (isLocked) { savedScrollPosition = window.scrollY; document.body.style.top = `-${savedScrollPosition}px`; document.body.classList.add('modal-open'); } else { document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, savedScrollPosition); } }
+        function initSwipeGesture(element, closeCallback) { let startX = 0; let currentX = 0; let isDragging = false; element.addEventListener('touchstart', (e) => { if (e.touches[0].clientX < 40) { startX = e.touches[0].clientX; isDragging = true; element.style.transition = 'none'; } else { isDragging = false; } }, {passive: true}); element.addEventListener('touchmove', (e) => { if (!isDragging) return; currentX = e.touches[0].clientX; const diff = currentX - startX; if (diff > 0) element.style.transform = `translateX(${diff}px)`; }, {passive: true}); element.addEventListener('touchend', (e) => { if (!isDragging) return; isDragging = false; element.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'; if ((currentX - startX) > 100) { closeCallback(); setTimeout(() => { element.style.transform = ''; }, 300); } else { element.style.transform = ''; } }); }
+        function closeGameModal() { toggleBodyLock(false); document.getElementById('game-page').classList.remove('active'); setTimeout(() => { document.getElementById('game-page').style.transform = ''; }, 350); }
+        function closePlayerModal() {
+            toggleBodyLock(false);
+            document.getElementById('player-page').classList.remove('active');
+            // Destroy chart instance to prevent memory leaks or reuse issues
+            if(window.myRadarChart) { window.myRadarChart.destroy(); window.myRadarChart = null; }
+            setTimeout(() => { document.getElementById('player-page').style.transform = ''; }, 350);
+        }
+        async function openGameDetails(gameId) { toggleBodyLock(true); const page = document.getElementById('game-page'); const body = document.getElementById('modal-body'); page.classList.add('active'); body.innerHTML = '<div class="loading">載入比賽數據...</div>'; try { const ts = Date.now(); const json = await fetchJson(`https://api.tpbl.basketball/api/games/${gameId}/stats?t=${ts}`); const data = json.data || json; const gameInfo = globalGames.find(g => g.id === gameId); const hName = getShortName(gameInfo.home_team.name); const aName = getShortName(gameInfo.away_team.name); const hLogo = getLogo(hName, gameInfo.home_team.meta?.logo); const aLogo = getLogo(aName, gameInfo.away_team.meta?.logo); const hScore = data.home_team.score ?? gameInfo.home_team.won_score ?? '-'; const aScore = data.away_team.score ?? gameInfo.away_team.won_score ?? '-'; let content = `<div class="modal-score-card"><div class="msc-main"><div style="text-align:center"><img src="${aLogo}" style="width:40px"><div style="font-size:12px;font-weight:700;margin-top:4px">${aName}</div></div><div class="m-score nums">${aScore} - ${hScore}</div><div style="text-align:center"><img src="${hLogo}" style="width:40px"><div style="font-size:12px;font-weight:700;margin-top:4px">${hName}</div></div></div>${renderPeriodTable(data, hName, aName)}</div>`; if (data.home_team.teams && data.home_team.teams.rounds) content += renderGameFlowTable(data.home_team.teams.rounds, data.away_team.teams.rounds, hName, aName); if (data.home_team.teams && data.home_team.teams.total) content += renderTeamComparison(data.home_team.teams.total, data.away_team.teams.total); if (data.home_team && data.home_team.players && data.home_team.players.total) { const hLeaders = getGameLeaders(data.home_team.players.total); const aLeaders = getGameLeaders(data.away_team.players.total); const hImg = playerMap[hLeaders.name.replace(/\s/g, '')]; const aImg = playerMap[aLeaders.name.replace(/\s/g, '')]; const getAvatarStyle = (img, teamName) => (!img) ? `background:${getTeamColor(teamName)};` : ''; const getAvatarSrc = (img) => img || DEFAULT_AVATAR; content += `<div class="game-leaders"><div class="leaders-title"><i data-lucide="crown" width="12"></i> 本場最佳 (得分王)</div><div class="leaders-vertical"><div class="leader-row"><div class="lr-player"><img src="${getAvatarSrc(aImg)}" class="lr-img" style="${getAvatarStyle(aImg, aName)}"><div class="lr-info"><div class="lr-name">${aLeaders.name}</div><div class="lr-team">${aName}</div></div></div><div class="lr-stats-group"><div class="lr-stat-item"><div class="lr-val nums">${aLeaders.score}</div><div class="lr-label">PTS</div></div><div class="lr-stat-item"><div class="lr-val nums">${aLeaders.rebounds}</div><div class="lr-label">REB</div></div><div class="lr-stat-item"><div class="lr-val nums">${aLeaders.assists}</div><div class="lr-label">AST</div></div></div></div><div class="leader-row"><div class="lr-player"><img src="${getAvatarSrc(hImg)}" class="lr-img" style="${getAvatarStyle(hImg, hName)}"><div class="lr-info"><div class="lr-name">${hLeaders.name}</div><div class="lr-team">${hName}</div></div></div><div class="lr-stats-group"><div class="lr-stat-item"><div class="lr-val nums">${hLeaders.score}</div><div class="lr-label">PTS</div></div><div class="lr-stat-item"><div class="lr-val nums">${hLeaders.rebounds}</div><div class="lr-label">REB</div></div><div class="lr-stat-item"><div class="lr-val nums">${hLeaders.assists}</div><div class="lr-label">AST</div></div></div></div></div></div>`; content += `<div class="modal-tabs"><button class="modal-tab-btn active" onclick="switchModalTab('away')">${aName}</button><button class="modal-tab-btn" onclick="switchModalTab('home')">${hName}</button></div><div id="tab-away" class="tab-content">${renderTeamBoxScore(data.away_team.players.total, aName)}</div><div id="tab-home" class="tab-content hidden">${renderTeamBoxScore(data.home_team.players.total, hName)}</div>`; } else { content += `<div style="text-align:center;color:#999;margin-top:20px">暫無球員數據</div>`; } body.innerHTML = content; lucide.createIcons(); } catch (e) { body.innerHTML = `<div class="loading">無法載入數據</div>`; console.error(e); } }
+        
+        async function openPlayerProfile(playerId) {
+            toggleBodyLock(true); const page = document.getElementById('player-page'); const body = document.getElementById('player-modal-body'); page.classList.add('active'); body.innerHTML = '<div class="loading">正在計算賽季數據...</div>';
+            const pBasic = globalPlayers.find(p => p.id === playerId);
+            
+            try {
+                const ts = Date.now();
+                // 1. Fetch both S1 and S2 explicitly
+                // S1 (24-25) is division_id=2
+                // S2 (25-26) is division_id=9
+                const [s2Res, s1Res] = await Promise.all([
+                    fetchJson(`https://api.tpbl.basketball/api/players/${playerId}/games/stats?division_id=9&t=${ts}`),
+                    fetchJson(`https://api.tpbl.basketball/api/players/${playerId}/games/stats?division_id=2&t=${ts}`)
+                ]);
+                
+                const s2Logs = Array.isArray(s2Res) ? s2Res : (s2Res.data || []);
+                const s1Logs = Array.isArray(s1Res) ? s1Res : (s1Res.data || []);
+                const allGameLogs = [...s2Logs, ...s1Logs];
+
+                // Remove Duplicates based on Game ID
+                const uniqueLogsMap = new Map();
+                allGameLogs.forEach(log => {
+                    const gid = log.game?.id || log.match?.id;
+                    if(gid && !uniqueLogsMap.has(gid)) { uniqueLogsMap.set(gid, log); }
+                });
+                const uniqueLogs = Array.from(uniqueLogsMap.values());
+
+                let playerData = pBasic || {}; let teamName = pBasic ? pBasic.team.name : ''; let bestGameLog = null;
+                
+                // Init Stats
+                let s1 = { gp:0, min:0, pts:0, reb:0, ast:0, stl:0, blk:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0 };
+                let s2 = { gp:0, min:0, pts:0, reb:0, ast:0, stl:0, blk:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0 };
+                
+                const addToStats = (logs, targetObj) => {
+                    const played = logs.filter(l => l.accumulated_stats && l.accumulated_stats.time_on_court > 0);
+                    played.forEach(log => {
+                        const acc = log.accumulated_stats;
+                        targetObj.gp++;
+                        targetObj.min += (acc.time_on_court || 0);
+                        targetObj.pts += (acc.score || 0);
+                        targetObj.reb += (acc.rebounds || 0);
+                        targetObj.ast += (acc.assists || 0);
+                        targetObj.stl += (acc.steals || 0);
+                        targetObj.blk += (acc.blocks || 0);
+                    });
+                };
+
+                if (uniqueLogs.length > 0) {
+                    if (!pBasic) { playerData = uniqueLogs[0].player; teamName = uniqueLogs[0].team.name; }
+                    if (uniqueLogs[0].player.images && uniqueLogs[0].player.images.length > 0) { playerData.images = uniqueLogs[0].player.images; }
+                    
+                    // Populate S2 (25-26) - Division 9
+                    addToStats(s2Logs, s2);
+                    
+                    // Populate S1 (24-25) - Division 2
+                    addToStats(s1Logs, s1);
+                    
+                    // Find Best Game (from all logs)
+                    const playedLogs = uniqueLogs.filter(l => l.accumulated_stats.time_on_court > 0);
+                    if (playedLogs.length > 0) {
+                        playedLogs.sort((a, b) => { const scoreDiff = (b.accumulated_stats.score || 0) - (a.accumulated_stats.score || 0); if (scoreDiff !== 0) return scoreDiff; const getD = (x) => new Date(x.game?.gamed_at || x.game?.date || x.match?.date || 0); return getD(b) - getD(a); });
+                        bestGameLog = playedLogs[0];
+                    }
+                }
+                
+                const teamColor = getTeamColor(teamName); let imgUrl = ""; let imgStyle = ""; if (playerData.images && playerData.images.length > 0) { const xl = playerData.images.find(i => i.key === 'xl'); const lg = playerData.images.find(i => i.key === 'lg'); imgUrl = (xl || lg || playerData.images[0]).url; } else if (playerData.name && playerMap[playerData.name.replace(/\s/g, '')]) { imgUrl = playerMap[playerData.name.replace(/\s/g, '')]; } if (!imgUrl) { imgUrl = DEFAULT_AVATAR; imgStyle = `background-color: ${teamColor};`; }
+                const shortTeamName = getShortName(teamName);
+                const isFav = favoritePlayerIds.includes(playerId); const starIcon = isFav ? `<i data-lucide="star" fill="currentColor" width="20"></i>` : `<i data-lucide="star" width="20"></i>`; const favClass = isFav ? 'active' : '';
+                
+                // Header
+                const headerHtml = `<div class="player-card-header" style="--team-color: ${teamColor}"><button class="pch-fav-btn ${favClass}" id="fav-btn-${playerId}" onclick="toggleFavorite(${playerId})">${starIcon}</button><div class="pch-bg-texture"></div><img src="${getLogo(teamName)}" class="pch-bg-logo"><div class="pch-jersey-num">${playerData.number || '00'}</div><div class="pch-avatar-container" style="${imgStyle}"><img src="${imgUrl}" class="pch-avatar"></div><div class="pch-info"><div class="pch-name">${playerData.name || '未知球員'}</div><div class="pch-badge-row"><span class="pch-pill">${shortTeamName}</span><span class="pch-pill">#${playerData.number||'-'}</span><span class="pch-pill">${formatPos(playerData.meta?.position)}</span></div></div></div>`;
+                
+                // --- Helper to calculate averages ---
+                const calcAvg = (s) => {
+                    if (s.gp === 0) return null;
+                    const fmt = (v) => (v/s.gp).toFixed(1);
+                    const pct = (m, a) => a > 0 ? ((m/a)*100).toFixed(1) + '%' : '-';
+                    const minAvg = Math.floor((s.min/s.gp)/60) + ":" + Math.round((s.min/s.gp)%60).toString().padStart(2,'0');
+                    return {
+                        gp: s.gp, min: minAvg,
+                        pts: fmt(s.pts), reb: fmt(s.reb), ast: fmt(s.ast),
+                        stl: fmt(s.stl), blk: fmt(s.blk),
+                        // Raw values for comparison
+                        raw_pts: s.pts/s.gp, raw_reb: s.reb/s.gp, raw_ast: s.ast/s.gp,
+                        raw_stl: s.stl/s.gp, raw_blk: s.blk/s.gp
+                    };
+                };
+
+                const avg1 = calcAvg(s1);
+                const avg2 = calcAvg(s2);
+                
+                // Chart.js Radar
+                let chartHtml = '';
+                if (avg2) {
+                    chartHtml = `<div class="section-divider" style="margin-top:0"><i data-lucide="pie-chart" width="16"></i><span>能力雷達圖</span></div><div class="chart-card"><div class="chart-container"><canvas id="playerRadar"></canvas></div></div>`;
+                }
+
+                // Table Logic
+                let statsHtml = '';
+                const hasS1 = (avg1 && avg1.gp > 0);
+                const hasS2 = (avg2 && avg2.gp > 0);
+
+                if (hasS2) {
+                    const r2 = avg2;
+                    let tableContent = `
+                        <tr class="s2-row">
+                            <td class="season-col-fixed nums">25-26</td>
+                            <td class="nums">${r2.min}</td><td class="nums">${r2.pts}</td><td class="nums">${r2.reb}</td><td class="nums">${r2.ast}</td><td class="nums">${r2.stl}</td><td class="nums">${r2.blk}</td>
+                        </tr>`;
+                    
+                    if (hasS1) {
+                        const r1 = avg1;
+                        const getBadge = (curr, prev) => {
+                            if (curr === undefined || prev === undefined) return '';
+                            const diff = (curr - prev).toFixed(1);
+                            const dNum = parseFloat(diff);
+                            if(dNum > 0) return `<span class="badge-pill bp-up">+${diff}</span>`;
+                            if(dNum < 0) return `<span class="badge-pill bp-down">${diff}</span>`;
+                            return `<span class="badge-pill bp-flat">-</span>`;
+                        };
+                        tableContent += `
+                        <tr class="s1-row">
+                            <td class="season-col-fixed nums">24-25</td>
+                            <td class="nums">${r1.min}</td><td class="nums">${r1.pts}</td><td class="nums">${r1.reb}</td><td class="nums">${r1.ast}</td><td class="nums">${r1.stl}</td><td class="nums">${r1.blk}</td>
+                        </tr>
+                        <tr class="trend-row">
+                            <td class="season-col-fixed">變化</td>
+                            <td></td>
+                            <td>${getBadge(r2.raw_pts, r1.raw_pts)}</td>
+                            <td>${getBadge(r2.raw_reb, r1.raw_reb)}</td>
+                            <td>${getBadge(r2.raw_ast, r1.raw_ast)}</td>
+                            <td>${getBadge(r2.raw_stl, r1.raw_stl)}</td>
+                            <td>${getBadge(r2.raw_blk, r1.raw_blk)}</td>
+                        </tr>`;
+                    }
+
+                    statsHtml = `
+                    <div class="section-divider" style="margin-top:0"><i data-lucide="bar-chart-2" width="16"></i><span>賽季數據比較</span></div>
+                    <div class="season-stats-container">
+                        <div class="season-table-scroll">
+                            <table class="season-table">
+                                <thead>
+                                    <tr><th class="season-col-fixed">賽季</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th></tr>
+                                </thead>
+                                <tbody>${tableContent}</tbody>
+                            </table>
+                        </div>
+                    </div>`;
+                } else { statsHtml = `<div style="text-align:center;color:#999;padding:20px;">本季尚無出賽數據</div>`; }
+
+                let bestGameHtml = ''; if (bestGameLog && (bestGameLog.accumulated_stats.score > 0)) { const bgStats = bestGameLog.accumulated_stats; const gameId = bestGameLog.game_id || (bestGameLog.game ? bestGameLog.game.id : null); let dateStr = ""; let oppName = "對手"; let oppLogo = ""; const linkedGame = globalGames.find(x => x.id === gameId); if (linkedGame) { dateStr = linkedGame.game_date.split('-').slice(1).join('/'); const isHome = linkedGame.home_team.name === teamName; const opp = isHome ? linkedGame.away_team : linkedGame.home_team; oppName = getShortName(opp.name); oppLogo = getLogo(opp.name, opp.meta?.logo); } else { const rawDate = bestGameLog.game?.gamed_at || bestGameLog.game?.date || ""; if(rawDate) dateStr = rawDate.split(' ')[0].split('-').slice(1).join('/'); } const sec1 = { lbl:'REB', val: bgStats.rebounds }; const sec2 = { lbl:'AST', val: bgStats.assists }; if (bgStats.steals > 4) { sec2.lbl = 'STL'; sec2.val = bgStats.steals; } if (bgStats.blocks > 3) { sec2.lbl = 'BLK'; sec2.val = bgStats.blocks; } bestGameHtml = `<div class="section-divider"><i data-lucide="crown" width="16" style="color:#D4B07D"></i><span>生涯代表作</span></div><div class="best-game-card-premium" style="--team-color:${teamColor}"><div class="bgp-shine"></div><img src="${getLogo(teamName)}" class="bgp-watermark"><div class="bgp-header"><div class="bgp-badge">CAREER HIGH</div><div class="bgp-date nums">${dateStr}</div></div><div class="bgp-body"><div class="bgp-hero-score"><div class="bgp-score-val nums">${bgStats.score}</div><div class="bgp-score-lbl">PTS</div></div><div class="bgp-opp-section"><div class="bgp-vs-row"><div class="bgp-opp-name">vs ${oppName}</div><img src="${oppLogo || 'https://via.placeholder.com/40'}" class="bgp-opp-logo"></div><div class="bgp-stats-row"><div class="bgp-stat"><div class="bgp-s-val nums">${sec1.val}</div><div class="bgp-s-lbl">${sec1.lbl}</div></div><div style="width:1px; background:rgba(255,255,255,0.2);"></div><div class="bgp-stat"><div class="bgp-s-val nums">${sec2.val}</div><div class="bgp-s-lbl">${sec2.lbl}</div></div></div></div></div></div>`; }
+                let nextGameHtml = ''; const todayStr = formatDate(new Date()); const nextGame = globalGames.find(g => (g.status === 'UPCOMING' || g.status === 'COMING_SOON' || g.status === 'LIVE' || g.status === 'IN_PROGRESS') && g.game_date >= todayStr && (g.home_team.name === teamName || g.away_team.name === teamName)); if (nextGame) { const isHome = nextGame.home_team.name === teamName; const opponent = isHome ? nextGame.away_team.name : nextGame.home_team.name; const oppLogo = getLogo(opponent); const rawDate = nextGame.game_date || ''; const gameDate = rawDate ? rawDate.split('-').slice(1).join('/') : '-/-'; const venueStr = nextGame.venue || 'TBD'; const venueShort = venueStr.split(' ')[0] || venueStr; nextGameHtml = `<div class="section-divider"><i data-lucide="calendar-clock" width="16"></i><span>下場賽事</span></div><div class="next-game-banner"><div class="ng-info"><div class="ng-label">UPCOMING</div><div class="ng-vs">VS <img src="${oppLogo}" width="20"> ${getShortName(opponent)}</div><div class="ng-date nums">${gameDate} ${nextGame.game_time.slice(0,5)} @ ${venueShort}</div></div><a href="${getTicketLink(teamName)}" target="_blank" class="sch-btn ticket" style="padding:6px 14px;">購票</a></div>`; }
+                let recentHtml = ''; if (s2.gp + s1.gp > 0) { const sortedLogs = [...allGameLogs].sort((a,b) => { const getLogDate = (log) => { if(log.game && log.game.gamed_at) return new Date(log.game.gamed_at); if(log.match && log.match.date) return new Date(log.match.date); const gid = log.game_id || (log.game?.id); const gg = globalGames.find(x => x.id === gid); if(gg) return new Date(gg.game_date); return new Date(0); }; return getLogDate(b) - getLogDate(a); }).slice(0, 5); let rows = ''; sortedLogs.forEach(g => { const gameId = g.game_id || (g.game ? g.game.id : null) || (g.match ? g.match.id : null); let dateStr = "-/-"; let oppName = "對手"; let oppLogo = ""; const linkedGame = globalGames.find(x => x.id === gameId); if (linkedGame) { if (linkedGame.game_date) { dateStr = linkedGame.game_date.split('-').slice(1).join('/'); } const opp = (linkedGame.home_team.name === teamName) ? linkedGame.away_team : linkedGame.home_team; oppName = getShortName(opp.name); oppLogo = getLogo(opp.name, opp.meta?.logo); } else { const rawDate = g.game?.gamed_at || g.match?.date; if(rawDate) dateStr = rawDate.split(' ')[0].split('-').slice(1).join('/'); } const stats = g.accumulated_stats; rows += `<tr><td><div class="rg-date nums">${dateStr}</div><div class="rg-opp"><img src="${oppLogo}" width="16"> ${oppName}</div></td><td class="nums highlight-col">${stats.score}</td><td class="nums">${stats.rebounds}</td><td class="nums">${stats.assists}</td></tr>`; }); recentHtml = `<div class="section-divider"><i data-lucide="history" width="16"></i><span>近期表現</span></div><table class="recent-games-table"><thead><tr><th style="text-align:left; padding-left:16px;">日期 / 對手</th><th>得分</th><th>籃板</th><th>助攻</th></tr></thead><tbody>${rows}</tbody></table>`; }
+                let awardsHtml = ''; if (globalAwards.length > 0 && playerData.name) { const myAwards = globalAwards.filter(a => a.winner.some(w => w.info.name === playerData.name)); if (myAwards.length > 0) { const annual = myAwards.filter(a => a.type === 'annual').sort((a,b) => b.season.id - a.season.id); const monthly = myAwards.filter(a => a.type === 'monthly').sort((a,b) => b.id - a.id); awardsHtml = `<div class="awards-container">`; if (annual.length > 0) { awardsHtml += `<div class="awards-section-title">年度榮譽</div><div class="annual-awards-grid">`; annual.forEach(a => { const iconName = getAwardIcon(a.title); awardsHtml += `<div class="aa-card"><div class="aa-icon"><i data-lucide="${iconName}" width="20"></i></div><div class="aa-title">${a.title}</div><div class="aa-season nums">${a.season.name}</div></div>`; }); awardsHtml += `</div>`; } if (monthly.length > 0) { awardsHtml += `<div class="awards-section-title">單月 MVP</div><div class="monthly-scroll">`; monthly.forEach(a => { let monthStr = (a.en_title || '').replace('Player of the month', '').replace(/[()]/g,'').trim(); const monMap = {'OCT': '10月','NOV': '11月','DEC': '12月','JAN': '1月','FEB': '2月','MAR': '3月','APR': '4月','MAY': '5月'}; let key = monthStr.includes('-') ? monthStr.split('-')[0] : monthStr; let displayMonth = monMap[key.toUpperCase()] || monthStr; awardsHtml += `<div class="ma-card"><div class="ma-header"><i data-lucide="trophy" width="12"></i> MVP</div><div class="ma-title nums">${displayMonth}</div><div style="font-size:9px; color:#aaa;" class="nums">${a.season.name}</div></div>`; }); awardsHtml += `</div>`; } awardsHtml += `</div>`; } }
+                body.innerHTML = `${headerHtml}${chartHtml}${statsHtml}${bestGameHtml}${nextGameHtml}${recentHtml}${awardsHtml}<div style="height:20px;"></div>`;
+                lucide.createIcons();
+
+                // Draw Radar Chart
+                if (avg2 && document.getElementById('playerRadar')) {
+                    const ctx = document.getElementById('playerRadar').getContext('2d');
+                    const raw = avg2;
+                    const dPts = Math.min(100, (raw.raw_pts / 15) * 100);
+                    const dReb = Math.min(100, (raw.raw_reb / 8) * 100);
+                    const dAst = Math.min(100, (raw.raw_ast / 5) * 100);
+                    const dStl = Math.min(100, (raw.raw_stl / 2) * 100);
+                    const dBlk = Math.min(100, (raw.raw_blk / 1) * 100);
+                    const lPts = (8 / 15) * 100; const lReb = (3.5 / 8) * 100; const lAst = (1.8 / 5) * 100; const lStl = (0.8 / 2) * 100; const lBlk = (0.3 / 1) * 100;
+                    window.myRadarChart = new Chart(ctx, {
+                        type: 'radar',
+                        data: {
+                            labels: ['得分', '籃板', '助攻', '抄截', '阻攻'],
+                            datasets: [{
+                                label: '球員',
+                                data: [dPts, dReb, dAst, dStl, dBlk],
+                                backgroundColor: hexToRgba(teamColor, 0.4),
+                                borderColor: teamColor,
+                                borderWidth: 2,
+                                pointBackgroundColor: teamColor,
+                                pointRadius: 3
+                            }, {
+                                label: '聯盟平均',
+                                data: [lPts, lReb, lAst, lStl, lBlk],
+                                backgroundColor: 'rgba(200, 200, 200, 0)',
+                                borderColor: '#999',
+                                borderWidth: 1,
+                                borderDash: [5, 5],
+                                pointRadius: 0
+                            }]
+                        },
+                        options: {
+                            maintainAspectRatio: false, // Ensure chart fits container without forcing aspect ratio
+                            layout: {
+                                padding: 10 // Provide padding to ensure labels don't push chart off-center
+                            },
+                            scales: { r: { angleLines: { color: '#eee' }, grid: { color: '#eee' }, pointLabels: { font: { size: 12, weight: 'bold' }, color: '#666' }, ticks: { display: false, max: 100, beginAtZero: true } } },
+                            plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
+                        }
+                    });
+                }
+            } catch (e) { console.error(e); body.innerHTML = `<div class="loading">讀取失敗<br><span style="font-size:10px;color:#ccc">${e.message}</span></div>`; }
+        }
+        function renderPeriodTable(data, hName, aName) { if (!data.home_team.periods) return ''; const hPeriods = data.home_team.periods; const aPeriods = data.away_team.periods; let headerCols = ''; let aCols = ''; let hCols = ''; for(let i=0; i<Math.max(hPeriods.length, aPeriods.length); i++) { let label = (i < 4) ? `Q${i+1}` : `OT${i-3}`; headerCols += `<th>${label}</th>`; aCols += `<td>${(aPeriods[i] && aPeriods[i].score !== undefined) ? aPeriods[i].score : '-'}</td>`; hCols += `<td>${(hPeriods[i] && hPeriods[i].score !== undefined) ? hPeriods[i].score : '-'}</td>`; } return `<div style="border-top:1px dashed #eee; margin-top:10px; padding-top:10px;"><div class="period-scroll"><table class="period-table"><thead><tr><th style="text-align:left"></th>${headerCols}</tr></thead><tbody><tr class="pt-row"><td class="period-team-name">${aName}</td>${aCols}</tr><tr class="pt-row"><td class="period-team-name">${hName}</td>${hCols}</tr></tbody></table></div></div>`; }
+        function renderGameFlowTable(homeRounds, awayRounds, hName, aName) { let headerHtml = '<th>球隊</th>'; let hRow = `<td class="flow-team-name">${hName}</td>`; let aRow = `<td class="flow-team-name">${aName}</td>`; for(let i=1; i<=10; i++) { if(homeRounds[i] && awayRounds[i]) { let label = (i <= 4) ? `Q${i}` : `OT${i-4}`; headerHtml += `<th>${label}</th>`; hRow += `<td>${homeRounds[i].won_score}</td>`; aRow += `<td>${awayRounds[i].won_score}</td>`; } else break; } return `<div class="comparison-card"><div class="comp-title"><i data-lucide="list-ordered" width="14"></i> 分節得分</div><div class="period-scroll"><table class="flow-table"><thead><tr>${headerHtml}</tr></thead><tbody><tr>${aRow}</tr><tr>${hRow}</tr></tbody></table></div></div>`; }
+        function renderTeamComparison(homeStats, awayStats) { const metrics = [ { key: 'field_goals_percentage', label: '投籃 %', isPct: true }, { key: 'three_pointers_percentage', label: '三分 %', isPct: true }, { key: 'free_throws_percentage', label: '罰球 %', isPct: true }, { key: 'rebounds', label: '籃板', isPct: false }, { key: 'assists', label: '助攻', isPct: false }, { key: 'steals', label: '抄截', isPct: false }, { key: 'turnovers', label: '失誤', isPct: false, invert: true }, { key: 'points_in_paint', label: '禁區得分', isPct: false } ]; let rowsHtml = ''; metrics.forEach(m => { let valH = parseFloat(homeStats[m.key]) || 0; let valA = parseFloat(awayStats[m.key]) || 0; let maxVal = Math.max(valH, valA); if(m.isPct) maxVal = 100; let perH = (maxVal > 0) ? (valH / maxVal * 100) : 0; let perA = (maxVal > 0) ? (valA / maxVal * 100) : 0; let isLeftWin = m.invert ? (valA < valH) : (valA > valH); let isRightWin = m.invert ? (valH < valA) : (valH > valA); if (valA === valH) { isLeftWin = false; isRightWin = false; } rowsHtml += `<div class="comp-row"><div class="comp-side left"><div class="comp-wrapper"><div class="comp-val nums">${m.isPct?valA+'%':valA}</div><div class="comp-bar-bg"><div class="comp-bar left ${isLeftWin ? 'winner' : ''}" style="width: ${perA}%"></div></div></div></div><div class="comp-label">${m.label}</div><div class="comp-side right"><div class="comp-wrapper"><div class="comp-bar-bg"><div class="comp-bar right ${isRightWin ? 'winner' : ''}" style="width: ${perH}%"></div></div><div class="comp-val nums">${m.isPct?valH+'%':valH}</div></div></div></div>`; }); return `<div class="comparison-card"><div class="comp-title"><i data-lucide="arrow-left-right" width="14"></i> 球隊數據對比</div>${rowsHtml}</div>`; }
+        function getGameLeaders(playersObj) { let players = Object.values(playersObj).sort((a, b) => (Number(b.score)||0) - (Number(a.score)||0)); return players[0] || { name: '-', score: 0, rebounds: 0, assists: 0 }; }
+        function renderTeamBoxScore(playersObj, teamName) { const players = Object.values(playersObj).sort((a, b) => (b.is_starting === a.is_starting) ? (b.time_on_court - a.time_on_court) : (b.is_starting ? 1 : -1)); let html = `<div class="boxscore-section"><div class="boxscore-title"><img src="${getLogo(teamName)}" width="20"> ${getShortName(teamName)}</div><div class="bs-scroll"><table class="bs-table"><thead><tr><th>球員</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>FG</th><th>3PT</th><th>FT</th><th>MIN</th></tr></thead><tbody>`; let starterEnded = false; const fmt = (val) => (val === undefined || val === null) ? '-' : val; players.forEach((p, index) => { const isDnp = p.time_on_court === 0; if (!p.is_starting && !starterEnded && index > 0) { html += `<tr class="separator-row"><td class="sticky-sep">替補</td><td class="filler-sep" colspan="9"></td></tr>`; starterEnded = true; } const mins = Math.floor(p.time_on_court / 60); const secs = p.time_on_court % 60; const headUrl = playerMap[p.name.replace(/\s/g, '')]; const teamColor = getTeamColor(teamName); const avatarSrc = headUrl || DEFAULT_AVATAR; const avatarStyle = (!headUrl) ? `background:${teamColor}` : ''; let pid = p.id; if(!pid) { const found = globalPlayers.find(gp => gp.name === p.name); if(found) pid = found.id; } const clickAttr = pid ? `onclick="openPlayerProfile(${pid})"` : ''; html += `<tr class="${isDnp ? 'dnp-row' : ''}" ${clickAttr}><td><div class="player-head-cell"><img src="${avatarSrc}" class="player-headshot" style="${avatarStyle}" loading="lazy"> ${p.name}</div></td><td class="nums">${isDnp?'-':fmt(p.score)}</td><td class="nums">${isDnp?'-':fmt(p.rebounds)}</td><td class="nums">${isDnp?'-':fmt(p.assists)}</td><td class="nums">${isDnp?'-':fmt(p.steals)}</td><td class="nums">${isDnp?'-':fmt(p.blocks)}</td><td class="nums">${isDnp?'-':fmt(p.field_goals)}</td><td class="nums">${isDnp?'-':fmt(p.three_pointers)}</td><td class="nums">${isDnp?'-':fmt(p.free_throws)}</td><td class="nums" style="color:#888">${isDnp ? 'DNP' : `${mins}:${secs.toString().padStart(2, '0')}`}</td></tr>`; }); return html + `</tbody></table></div></div>`; }
+
+        window.switchMainTab = function(tab) {
+            document.querySelectorAll('.tab-bar .tab-btn').forEach(b => b.classList.remove('active'));
+            if(tab === 'home') { document.querySelectorAll('.tab-bar .tab-btn')[0].classList.add('active'); renderHome(); }
+            else if (tab === 'teams') { document.querySelectorAll('.tab-bar .tab-btn')[1].classList.add('active'); renderTeams(); }
+            else { document.querySelectorAll('.tab-bar .tab-btn')[2].classList.add('active'); renderSchedule(); }
+        };
+        window.switchScheduleTab = function(tab) { currentScheduleTab = tab; renderSchedule(); };
+        window.switchModalTab = function(tab) { document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active')); document.querySelector(`.modal-tab-btn[onclick*="${tab}"]`).classList.add('active'); document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden')); document.getElementById(`tab-${tab}`).classList.remove('hidden'); }
+
+        init();
+    </script>
+</body>
+</html>
+
