@@ -611,16 +611,41 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Favorites */
+        /* 收藏按鈕優化版 */
         .pch-fav-btn {
-            position: absolute; top: 16px; right: 16px;
-            background: rgba(255,255,255,0.2); backdrop-filter: blur(5px);
-            border: none; border-radius: 50%; width: 36px; height: 36px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: #fff; z-index: 10;
-            transition: all 0.2s;
+            margin-left: auto; /* 關鍵：將按鈕推至最右邊 */
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.15); /* 稍微降低平時亮度 */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            flex-shrink: 0; /* 防止按鈕被擠壓 */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-        .pch-fav-btn:active { transform: scale(0.9); }
-        .pch-fav-btn.active { background: #fff; color: #FFCC00; box-shadow: 0 0 10px rgba(255, 204, 0, 0.5); }
+
+        .pch-fav-btn:active {
+            transform: scale(0.9);
+        }
+
+        /* 選中狀態：使用動態傳入的球隊主色 */
+        .pch-fav-btn.active {
+            background: #FFFFFF; /* 背景改為純白，襯托主色圖示 */
+            color: var(--team-accent); /* 圖示顏色變為球隊色 */
+            border-color: #FFFFFF;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .pch-fav-btn.active i {
+            filter: drop-shadow(0 0 2px rgba(255, 204, 0, 0.5));
+        }
         
         .fav-list { display: flex; gap: 12px; overflow-x: auto; padding: 4px 4px 12px 4px; margin: 0 -4px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
         .fav-list::-webkit-scrollbar { display: none; }
@@ -908,11 +933,28 @@
 
         function toggleFavorite(id) {
             const index = favoritePlayerIds.indexOf(id);
-            if (index > -1) favoritePlayerIds.splice(index, 1); else favoritePlayerIds.push(id);
+            if (index > -1) {
+                favoritePlayerIds.splice(index, 1);
+            } else {
+                favoritePlayerIds.push(id);
+            }
             localStorage.setItem('tpbl_favorites', JSON.stringify(favoritePlayerIds));
+            
+            // 更新球員詳情頁的按鈕狀態
             const btn = document.getElementById(`fav-btn-${id}`);
-            if(btn) { btn.classList.toggle('active'); btn.innerHTML = btn.classList.contains('active') ? `<i data-lucide="star" fill="currentColor" width="20"></i>` : `<i data-lucide="star" width="20"></i>`; lucide.createIcons(); }
-            if(document.querySelector('.tab-bar .tab-btn:first-child').classList.contains('active')) renderHome();
+            if(btn) {
+                const isActive = favoritePlayerIds.includes(id);
+                btn.classList.toggle('active', isActive);
+                btn.innerHTML = isActive
+                    ? `<i data-lucide="star" fill="currentColor" width="22"></i>`
+                    : `<i data-lucide="star" width="22"></i>`;
+                lucide.createIcons(); // 關鍵：必須重新渲染圖示
+            }
+            
+            // 如果在主首頁，順便更新一下首頁的關注列表
+            if(document.querySelector('.tab-bar .tab-btn:first-child').classList.contains('active')) {
+                renderHome();
+            }
         }
 
         function hideSplashScreen() { const splash = document.getElementById('splash-screen'); if(splash) setTimeout(() => splash.classList.add('hidden'), 500); }
@@ -1567,14 +1609,15 @@ wrapper.innerHTML += `
                 let imgUrl = pBasic?.images?.find(i => i.key === 'lg')?.url || playerMap[pBasic?.name.replace(/\s/g, '')] || DEFAULT_AVATAR;
 
                 // --- 1. 沉浸式 Header (修正數據歪斜與語法錯誤版) ---
+                // ... 之前的程式碼
+                // --- 1. 沉浸式 Header (修正對齊與收藏按鈕版) ---
                 let headerHtml = `
                     <div class="immersive-header">
                         <div class="immersive-banner" style="background: linear-gradient(180deg, ${teamColor} 0%, ${hexToRgba(teamColor, 0.85)} 100%)">
-                            <button class="pch-fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${playerId})">
-                                <i data-lucide="star" ${isFav ? 'fill="currentColor"' : ''} width="22"></i>
-                            </button>
+                            <!-- 背景浮水印 -->
                             <img src="${getLogo(teamName)}" class="imm-watermark">
                             
+                            <!-- 內容橫條：頭像、文字、按鈕都在這一行 -->
                             <div class="imm-info-content">
                                 <div class="imm-avatar-box">
                                     <img src="${imgUrl}" class="imm-avatar-img">
@@ -1583,10 +1626,18 @@ wrapper.innerHTML += `
                                     <div class="imm-p-name">${pBasic?.name || '未知球員'}</div>
                                     <div class="imm-p-sub">${getShortName(teamName)} · #${pBasic?.number || '00'} · ${formatPos(pBasic?.meta?.position)}</div>
                                 </div>
+                                
+                                <!-- 收藏按鈕：高度會與頭像一致 -->
+                                <button id="fav-btn-${playerId}" 
+                                        class="pch-fav-btn ${isFav ? 'active' : ''}" 
+                                        style="--team-accent: ${teamColor};" 
+                                        onclick="toggleFavorite(${playerId})">
+                                    <i data-lucide="star" ${isFav ? 'fill="currentColor"' : ''} width="22"></i>
+                                </button>
                             </div>
                         </div>
 
-                        <!-- 核心數據橫條卡片 (精確均分佈局) -->
+                        <!-- 核心數據橫條卡片 (浮動在紫色背景邊緣) -->
                         <div class="floating-stats-card nums">
                             <div class="f-stat-item">
                                 <span class="f-stat-val">${avg2 ? avg2.pts : '-'}</span>
@@ -1604,30 +1655,84 @@ wrapper.innerHTML += `
                             </div>
                         </div>
                     </div>
+                
 
                     <style>
-                        #player-modal-body { padding-top: 0; }
-                        .immersive-header { margin: 0 calc(var(--page-padding) * -1) 24px calc(var(--page-padding) * -1); position: relative; }
-                        .immersive-banner { height: 200px; width: 100%; position: relative; padding: 0 24px; display: flex; align-items: center; overflow: hidden; }
-                        .imm-watermark { position: absolute; right: -30px; top: -10px; height: 170px; opacity: 0.15; filter: brightness(0) invert(1); pointer-events: none; }
-                        .imm-info-content { display: flex; align-items: center; gap: 18px; width: 100%; z-index: 2; transform: translateY(-5px); }
-                        .imm-avatar-box { width: 95px; height: 95px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.9); background: #fff; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.2); flex-shrink: 0; }
-                        .imm-avatar-img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
-                        .imm-text-box { color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-                        .imm-p-name { font-size: 28px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 2px; }
-                        .imm-p-sub { font-size: 14px; font-weight: 600; opacity: 0.95; }
+                        #player-modal-body { padding-top: 0; overflow-x: hidden; }
                         
-                        /* 核心數據卡片修正：使用 flex: 1 確保均分 */
+                        /* 整個 Header 容器 */
+                        .immersive-header { 
+                            margin: 0 calc(var(--page-padding) * -1) 24px calc(var(--page-padding) * -1); 
+                            position: relative; 
+                            width: calc(100% + (var(--page-padding) * 2));
+                        }
+
+                        /* 紫色漸層背景區 */
+                        .immersive-banner { 
+                            height: 180px; /* 稍微縮短高度讓比例更好看 */
+                            width: 100%; 
+                            position: relative; 
+                            padding: 0 var(--page-padding); 
+                            display: flex; 
+                            align-items: center; /* 讓內容垂直居中 */
+                            overflow: hidden; 
+                            box-sizing: border-box;
+                        }
+
+                        /* 內容橫向佈局 */
+                        .imm-info-content { 
+                            display: flex; 
+                            align-items: center; /* 讓頭像、文字、收藏鈕中線對齊 */
+                            gap: 16px; 
+                            width: 100%; 
+                            z-index: 2; 
+                            margin-bottom: 20px; /* 為下方的浮動卡片留空間 */
+                        }
+
+                        .imm-avatar-box { 
+                            width: 84px; height: 84px; 
+                            border-radius: 50%; 
+                            border: 3px solid rgba(255,255,255,0.9); 
+                            background: #fff; overflow: hidden; 
+                            box-shadow: 0 8px 20px rgba(0,0,0,0.15); 
+                            flex-shrink: 0; 
+                        }
+                        .imm-avatar-img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+
+                        .imm-text-box { color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.2); flex: 1; }
+                        .imm-p-name { font-size: 26px; font-weight: 900; margin-bottom: 2px; }
+                        .imm-p-sub { font-size: 13px; font-weight: 600; opacity: 0.9; }
+
+                        /* 收藏按鈕 - 玻璃擬態 */
+                        .pch-fav-btn {
+                            width: 44px; height: 44px;
+                            border-radius: 50%;
+                            border: 1px solid rgba(255, 255, 255, 0.4);
+                            background: rgba(255, 255, 255, 0.2);
+                            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                            display: flex; align-items: center; justify-content: center;
+                            color: white; cursor: pointer; transition: all 0.3s;
+                            flex-shrink: 0; padding: 0; margin-left: auto; /* 推到最右邊 */
+                        }
+                        .pch-fav-btn.active {
+                            background: #fff;
+                            color: var(--team-accent); /* 選中時變球隊色 */
+                            border-color: #fff;
+                            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                        }
+
+                        /* 數據卡片 */
                         .floating-stats-card { 
-                            margin: -30px 24px 0 24px; background: #fff; border-radius: 20px; 
+                            margin: -35px 24px 0 24px; background: #fff; border-radius: 20px; 
                             display: flex; justify-content: space-between; align-items: center;
                             padding: 18px 0; box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
                             border: 1px solid rgba(0,0,0,0.03); position: relative; z-index: 10;
                         }
-                        .f-stat-item { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
-                        .f-stat-val { font-size: 22px; font-weight: 800; color: var(--tpbl-blue); line-height: 1.1; margin-bottom: 4px; }
+                        .f-stat-item { flex: 1; text-align: center; }
+                        .f-stat-val { font-size: 22px; font-weight: 800; color: var(--tpbl-blue); display: block; }
                         .f-stat-lbl { font-size: 11px; color: #8E8E93; font-weight: 700; }
-                        .f-stat-divider { width: 1px; background: #F2F2F7; height: 22px; flex-shrink: 0; }
+                        .f-stat-divider { width: 1px; background: #F2F2F7; height: 20px; }
+                        .imm-watermark { position: absolute; right: -20px; top: 0; height: 160px; opacity: 0.12; filter: brightness(0) invert(1); pointer-events: none; }
                     </style>
                 `;
 
