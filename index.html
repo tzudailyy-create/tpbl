@@ -860,6 +860,8 @@
 
         const API_GAMES = 'https://api.tpbl.basketball/api/seasons/2/games';
         const API_GAMES_S1 = 'https://api.tpbl.basketball/api/seasons/1/games';
+        const API_NEWS = 'https://api.tpbl.basketball/api/teams/1/posts?type=news&page=1';
+        let globalMvpPosts = []; // 存放過濾後的單週 MVP 文章
         const API_STANDINGS = 'https://api.tpbl.basketball/api/divisions/9/games/standings';
         const API_TEAM_STATS = 'https://api.tpbl.basketball/api/games/stats/top-teams?division_id=9';
         const API_PLAYERS = 'https://api.tpbl.basketball/api/divisions/9/players';
@@ -958,6 +960,8 @@
                 ]);
                 if (tpRes.status === 'fulfilled') globalTopPlayers = tpRes.value.data || tpRes.value;
                 if (ttRes.status === 'fulfilled') globalTopTeams = ttRes.value.data || ttRes.value;
+                
+            
         }
 
         function processStatsData() {
@@ -1426,37 +1430,62 @@ wrapper.innerHTML += `
             const body = document.getElementById('modal-body');
             page.classList.add('active');
             body.innerHTML = '<div class="loading">載入比賽數據...</div>';
+            
             try {
                 const ts = Date.now();
                 const json = await fetchJson(`https://api.tpbl.basketball/api/games/${gameId}/stats?t=${ts}`);
                 const data = json.data || json;
-                currentDetailedGameData = data; // Cache data for quarter switching
+                currentDetailedGameData = data;
                 
                 const gameInfo = globalGames.find(g => g.id === gameId);
+                if (!gameInfo) throw new Error("找不到賽事資訊");
+
                 const hName = getShortName(gameInfo.home_team.name);
                 const aName = getShortName(gameInfo.away_team.name);
                 const hLogo = getLogo(hName, gameInfo.home_team.meta?.logo);
                 const aLogo = getLogo(aName, gameInfo.away_team.meta?.logo);
-                const hScore = data.home_team.score ?? gameInfo.home_team.won_score ?? '-';
-                const aScore = data.away_team.score ?? gameInfo.away_team.won_score ?? '-';
                 
-                let content = `<div class="modal-score-card"><div class="msc-main"><div style="text-align:center"><img src="${aLogo}" style="width:40px"><div style="font-size:12px;font-weight:700;margin-top:4px">${aName}</div></div><div class="m-score nums">${aScore} - ${hScore}</div><div style="text-align:center"><img src="${hLogo}" style="width:40px"><div style="font-size:12px;font-weight:700;margin-top:4px">${hName}</div></div></div>${renderPeriodTable(data, hName, aName)}</div>`;
+                const hScore = data.home_team.score ?? (data.home_team.teams?.total?.won_score) ?? '-';
+                const aScore = data.away_team.score ?? (data.away_team.teams?.total?.won_score) ?? '-';
                 
+                // 1. 比分卡
+                let content = `<div class="modal-score-card">
+                    <div class="msc-main">
+                        <div style="text-align:center"><img src="${aLogo}" style="width:40px"><div style="font-size:12px;font-weight:700;margin-top:4px">${aName}</div></div>
+                        <div class="m-score nums">${aScore} - ${hScore}</div>
+                        <div style="text-align:center"><img src="${hLogo}" style="width:40px"><div style="font-size:12px;font-weight:700;margin-top:4px">${hName}</div></div>
+                    </div>
+                    ${renderPeriodTable(data, hName, aName)}
+                </div>`;
+                
+                // 2. 插入兩隊得分王 (得分/籃板/助攻)
+                content += renderGameBestPlayers(data);
+
+                // 3. 節次得分與團隊對比
                 if (data.home_team.teams && data.home_team.teams.rounds) content += renderGameFlowTable(data.home_team.teams.rounds, data.away_team.teams.rounds, hName, aName);
                 if (data.home_team.teams && data.home_team.teams.total) content += renderTeamComparison(data.home_team.teams.total, data.away_team.teams.total);
                 
-                // Boxscore Sections
-                if (data.home_team && data.home_team.players && data.home_team.players.total) {
-                    content += `<div class="section-divider" style="margin-top:20px;">球員數據</div>`;
+                // 4. 詳細 Boxscore
+                if (data.home_team && data.home_team.players) {
+                    const hp = data.home_team.players.total || data.home_team.players;
+                    const ap = data.away_team.players.total || data.away_team.players;
+                    const ht = data.home_team.teams?.total || null;
+                    const at = data.away_team.teams?.total || null;
 
-                    content += `<div class="modal-tabs"><button class="modal-tab-btn active" onclick="switchModalTab('away')">${aName}</button><button class="modal-tab-btn" onclick="switchModalTab('home')">${hName}</button></div><div id="tab-away" class="tab-content">${renderTeamBoxScore(data.away_team.players.total, aName, data.away_team.teams.total)}</div><div id="tab-home" class="tab-content hidden">${renderTeamBoxScore(data.home_team.players.total, hName, data.home_team.teams.total)}</div>`;
-                } else {
-                    content += `<div style="text-align:center;color:#999;margin-top:20px">暫無球員數據</div>`;
+                    content += `<div class="section-divider" style="margin-top:20px;">詳細數據</div>
+                        <div class="modal-tabs">
+                            <button class="modal-tab-btn active" onclick="switchModalTab('away')">${aName}</button>
+                            <button class="modal-tab-btn" onclick="switchModalTab('home')">${hName}</button>
+                        </div>
+                        <div id="tab-away" class="tab-content">${renderTeamBoxScore(ap, aName, at)}</div>
+                        <div id="tab-home" class="tab-content hidden">${renderTeamBoxScore(hp, hName, ht)}</div>`;
                 }
-                body.innerHTML = content; lucide.createIcons();
+                
+                body.innerHTML = content;
+                lucide.createIcons();
             } catch (e) {
-                body.innerHTML = `<div class="loading">無法載入數據</div>`;
                 console.error(e);
+                body.innerHTML = `<div class="error-msg">數據加載失敗</div>`;
             }
         }
         
@@ -1499,13 +1528,12 @@ wrapper.innerHTML += `
             const page = document.getElementById('player-page');
             const body = document.getElementById('player-modal-body');
             page.classList.add('active');
-            body.innerHTML = '<div class="loading">正在計算數據...</div>';
+            body.innerHTML = '<div class="loading">正在生成球員檔案...</div>';
 
             const pBasic = globalPlayers.find(p => p.id === playerId);
 
             try {
                 const ts = Date.now();
-                // 同時抓取 S2 (division 9) 與 S1 (division 2) 數據
                 const [s2Res, s1Res] = await Promise.all([
                     fetchJson(`https://api.tpbl.basketball/api/players/${playerId}/games/stats?division_id=9&t=${ts}`),
                     fetchJson(`https://api.tpbl.basketball/api/players/${playerId}/games/stats?division_id=2&t=${ts}`)
@@ -1513,100 +1541,177 @@ wrapper.innerHTML += `
 
                 const s2Logs = Array.isArray(s2Res) ? s2Res : (s2Res.data || []);
                 const s1Logs = Array.isArray(s1Res) ? s1Res : (s1Res.data || []);
-                const allLogs = [...s2Logs, ...s1Logs];
-
-                // 建立唯一比賽 Map 防止重複
-                const uniqueLogsMap = new Map();
-                allLogs.forEach(log => {
-                    const gid = log.game?.id || log.match?.id || log.game_id;
-                    if (gid && !uniqueLogsMap.has(gid)) uniqueLogsMap.set(gid, log);
-                });
-                const uniqueLogs = Array.from(uniqueLogsMap.values());
-
-                // 基礎資料定義
-                let playerData = pBasic || (uniqueLogs.length > 0 ? uniqueLogs[0].player : {});
-                let teamName = pBasic ? pBasic.team.name : (uniqueLogs.length > 0 ? uniqueLogs[0].team.name : '');
-                let teamColor = getTeamColor(teamName);
-
-                // --- 統計數據計算 ---
-                let s1 = { gp: 0, min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0 };
-                let s2 = { gp: 0, min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0 };
-
-                const processStats = (logs, obj) => {
+                
+                const calcStats = (logs) => {
+                    let s = { gp: 0, min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0 };
                     logs.filter(l => l.accumulated_stats?.time_on_court > 0).forEach(l => {
                         const acc = l.accumulated_stats;
-                        obj.gp++; obj.min += acc.time_on_court; obj.pts += acc.score;
-                        obj.reb += acc.rebounds; obj.ast += acc.assists;
-                        obj.stl += acc.steals; obj.blk += acc.blocks;
+                        s.gp++; s.min += acc.time_on_court; s.pts += acc.score;
+                        s.reb += acc.rebounds; s.ast += acc.assists;
+                        s.stl += acc.steals; s.blk += acc.blocks;
                     });
-                };
-                processStats(s2Logs, s2);
-                processStats(s1Logs, s1);
-
-                const calcAvg = (s) => {
                     if (s.gp === 0) return null;
                     const f = (v) => (v / s.gp).toFixed(1);
                     return {
                         gp: s.gp, pts: f(s.pts), reb: f(s.reb), ast: f(s.ast), stl: f(s.stl), blk: f(s.blk),
-                        min: Math.floor((s.min / s.gp) / 60) + ":" + Math.round((s.min / s.gp) % 60).toString().padStart(2, '0'),
-                        raw: { pts: s.pts / s.gp, reb: s.reb / s.gp, ast: s.ast / s.gp, stl: s.stl / s.gp, blk: s.blk / s.gp }
+                        raw: { pts: s.pts/s.gp, reb: s.reb/s.gp, ast: s.ast/s.gp, stl: s.stl/s.gp, blk: s.blk/s.gp }
                     };
                 };
-                const avg2 = calcAvg(s2);
-                const avg1 = calcAvg(s1);
 
-                // 1. Header
-                let imgUrl = playerData.images?.find(i => i.key === 'lg')?.url || playerMap[playerData.name.replace(/\s/g, '')] || DEFAULT_AVATAR;
+                const avg2 = calcStats(s2Logs);
+                const avg1 = calcStats(s1Logs);
+
+                const teamName = pBasic ? pBasic.team.name : (s2Logs[0]?.team.name || '');
+                const teamColor = getTeamColor(teamName);
                 const isFav = favoritePlayerIds.includes(playerId);
-                const headerHtml = `<div class="player-card-header" style="--team-color: ${teamColor}"><button class="pch-fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${playerId})"><i data-lucide="star" ${isFav ? 'fill="currentColor"' : ''} width="20"></i></button><img src="${getLogo(teamName)}" class="pch-bg-logo"><div class="pch-jersey-num">${playerData.number || '00'}</div><div class="pch-avatar-container"><img src="${imgUrl}" class="pch-avatar"></div><div class="pch-info"><div class="pch-name">${playerData.name}</div><div class="pch-badge-row"><span class="pch-pill">${getShortName(teamName)}</span><span class="pch-pill">#${playerData.number}</span><span class="pch-pill">${formatPos(playerData.meta?.position)}</span></div></div></div>`;
+                let imgUrl = pBasic?.images?.find(i => i.key === 'lg')?.url || playerMap[pBasic?.name.replace(/\s/g, '')] || DEFAULT_AVATAR;
+
+                // --- 1. 沉浸式 Header (修正數據歪斜與語法錯誤版) ---
+                let headerHtml = `
+                    <div class="immersive-header">
+                        <div class="immersive-banner" style="background: linear-gradient(180deg, ${teamColor} 0%, ${hexToRgba(teamColor, 0.85)} 100%)">
+                            <button class="pch-fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${playerId})">
+                                <i data-lucide="star" ${isFav ? 'fill="currentColor"' : ''} width="22"></i>
+                            </button>
+                            <img src="${getLogo(teamName)}" class="imm-watermark">
+                            
+                            <div class="imm-info-content">
+                                <div class="imm-avatar-box">
+                                    <img src="${imgUrl}" class="imm-avatar-img">
+                                </div>
+                                <div class="imm-text-box">
+                                    <div class="imm-p-name">${pBasic?.name || '未知球員'}</div>
+                                    <div class="imm-p-sub">${getShortName(teamName)} · #${pBasic?.number || '00'} · ${formatPos(pBasic?.meta?.position)}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 核心數據橫條卡片 (精確均分佈局) -->
+                        <div class="floating-stats-card nums">
+                            <div class="f-stat-item">
+                                <span class="f-stat-val">${avg2 ? avg2.pts : '-'}</span>
+                                <span class="f-stat-lbl">得分</span>
+                            </div>
+                            <div class="f-stat-divider"></div>
+                            <div class="f-stat-item">
+                                <span class="f-stat-val">${avg2 ? avg2.reb : '-'}</span>
+                                <span class="f-stat-lbl">籃板</span>
+                            </div>
+                            <div class="f-stat-divider"></div>
+                            <div class="f-stat-item">
+                                <span class="f-stat-val">${avg2 ? avg2.ast : '-'}</span>
+                                <span class="f-stat-lbl">助攻</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <style>
+                        #player-modal-body { padding-top: 0; }
+                        .immersive-header { margin: 0 calc(var(--page-padding) * -1) 24px calc(var(--page-padding) * -1); position: relative; }
+                        .immersive-banner { height: 200px; width: 100%; position: relative; padding: 0 24px; display: flex; align-items: center; overflow: hidden; }
+                        .imm-watermark { position: absolute; right: -30px; top: -10px; height: 170px; opacity: 0.15; filter: brightness(0) invert(1); pointer-events: none; }
+                        .imm-info-content { display: flex; align-items: center; gap: 18px; width: 100%; z-index: 2; transform: translateY(-5px); }
+                        .imm-avatar-box { width: 95px; height: 95px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.9); background: #fff; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.2); flex-shrink: 0; }
+                        .imm-avatar-img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+                        .imm-text-box { color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+                        .imm-p-name { font-size: 28px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 2px; }
+                        .imm-p-sub { font-size: 14px; font-weight: 600; opacity: 0.95; }
+                        
+                        /* 核心數據卡片修正：使用 flex: 1 確保均分 */
+                        .floating-stats-card { 
+                            margin: -30px 24px 0 24px; background: #fff; border-radius: 20px; 
+                            display: flex; justify-content: space-between; align-items: center;
+                            padding: 18px 0; box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
+                            border: 1px solid rgba(0,0,0,0.03); position: relative; z-index: 10;
+                        }
+                        .f-stat-item { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
+                        .f-stat-val { font-size: 22px; font-weight: 800; color: var(--tpbl-blue); line-height: 1.1; margin-bottom: 4px; }
+                        .f-stat-lbl { font-size: 11px; color: #8E8E93; font-weight: 700; }
+                        .f-stat-divider { width: 1px; background: #F2F2F7; height: 22px; flex-shrink: 0; }
+                    </style>
+                `;
 
                 // 2. 雷達圖
-                let chartHtml = avg2 ? `<div class="section-divider"><i data-lucide="pie-chart" width="16"></i> 能力雷達圖</div><div class="chart-card"><div class="chart-container"><canvas id="playerRadar"></canvas></div></div>` : '';
+                let chartHtml = avg2 ? `<div class="section-divider"><i data-lucide="pie-chart" width="16"></i> 能力分析</div><div class="chart-card"><div class="chart-container"><canvas id="playerRadar"></canvas></div></div>` : '';
 
-                // 3. 賽季數據比較 (趨勢變化)
+                // 3. 賽季數據趨勢
                 let statsHtml = '';
                 if (avg2) {
                     const getBadge = (curr, prev) => {
                         const diff = (curr - prev).toFixed(1);
                         return parseFloat(diff) > 0 ? `<span class="badge-pill bp-up">+${diff}</span>` : (parseFloat(diff) < 0 ? `<span class="badge-pill bp-down">${diff}</span>` : '-');
                     };
-                    let trendRow = avg1 ? `<tr class="trend-row"><td class="season-col-fixed">變化</td><td></td><td>${getBadge(avg2.raw.pts, avg1.raw.pts)}</td><td>${getBadge(avg2.raw.reb, avg1.raw.reb)}</td><td>${getBadge(avg2.raw.ast, avg1.raw.ast)}</td><td>${getBadge(avg2.raw.stl, avg1.raw.stl)}</td><td>${getBadge(avg2.raw.blk, avg1.raw.blk)}</td></tr>` : '';
-                    statsHtml = `<div class="section-divider"><i data-lucide="bar-chart-2" width="16"></i> 賽季數據比較</div><div class="season-stats-container"><div class="season-table-scroll"><table class="season-table"><thead><tr><th class="season-col-fixed">賽季</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th></tr></thead><tbody><tr class="s2-row"><td class="season-col-fixed nums">25-26</td><td>${avg2.min}</td><td>${avg2.pts}</td><td>${avg2.reb}</td><td>${avg2.ast}</td><td>${avg2.stl}</td><td>${avg2.blk}</td></tr>${avg1 ? `<tr class="s1-row"><td class="season-col-fixed nums">24-25</td><td>${avg1.min}</td><td>${avg1.pts}</td><td>${avg1.reb}</td><td>${avg1.ast}</td><td>${avg1.stl}</td><td>${avg1.blk}</td></tr>` : ''}${trendRow}</tbody></table></div></div>`;
+                    let trendRow = avg1 ? `<tr class="trend-row"><td class="season-col-fixed">趨勢</td><td></td><td>${getBadge(avg2.raw.pts, avg1.raw.pts)}</td><td>${getBadge(avg2.raw.reb, avg1.raw.reb)}</td><td>${getBadge(avg2.raw.ast, avg1.raw.ast)}</td><td>${getBadge(avg2.raw.stl, avg1.raw.stl)}</td><td>${getBadge(avg2.raw.blk, avg1.raw.blk)}</td></tr>` : '';
+                    statsHtml = `<div class="section-divider"><i data-lucide="bar-chart-2" width="16"></i> 賽季數據趨勢</div><div class="season-stats-container"><div class="season-table-scroll"><table class="season-table"><thead><tr><th class="season-col-fixed">賽季</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th></tr></thead><tbody><tr class="s2-row"><td class="season-col-fixed nums">25-26</td><td>-</td><td>${avg2.pts}</td><td>${avg2.reb}</td><td>${avg2.ast}</td><td>${avg2.stl}</td><td>${avg2.blk}</td></tr>${avg1 ? `<tr class="s1-row"><td class="season-col-fixed nums">24-25</td><td>-</td><td>${avg1.pts}</td><td>${avg1.reb}</td><td>${avg1.ast}</td><td>${avg1.stl}</td><td>${avg1.blk}</td></tr>` : ''}${trendRow}</tbody></table></div></div>`;
                 }
 
-                // 4. 生涯代表作 (修正 VS 邏輯)
+                // 4. 生涯代表作
                 let bestGameHtml = '';
-                const playedList = uniqueLogs.filter(l => l.accumulated_stats?.score > 0).sort((a, b) => b.accumulated_stats.score - a.accumulated_stats.score);
+                const allLogs = [...s2Logs, ...s1Logs];
+                const playedList = allLogs.filter(l => l.accumulated_stats?.score > 0).sort((a, b) => b.accumulated_stats.score - a.accumulated_stats.score);
                 if (playedList.length > 0) {
                     const bg = playedList[0];
-                    const gid = bg.game_id || bg.game?.id;
-                    const linked = globalGames.find(x => x.id === gid);
+                    const linked = globalGames.find(x => x.id === (bg.game_id || bg.game?.id));
                     const opp = getOpponentInfo(linked, teamName);
-                    const date = linked ? linked.game_date.split('-').slice(1).join('/') : "00/00";
-                    bestGameHtml = `<div class="section-divider"><i data-lucide="crown" width="16"></i> 生涯代表作</div><div class="best-game-card-premium"><div class="bgp-header"><span class="bgp-badge">CAREER HIGH</span><span class="bgp-date nums">${date}</span></div><div class="bgp-body"><div class="bgp-score-group"><div class="bgp-score-val nums">${bg.accumulated_stats.score}</div><div class="bgp-score-lbl">PTS</div></div><div class="bgp-right-side"><div class="bgp-vs-row"><span style="font-size:14px; opacity:0.7;">VS</span> <span>${opp.name}</span><img src="${opp.logo}" class="bgp-opp-logo"></div><div class="bgp-stats-sub-box"><div class="bgp-s-item"><span>${bg.accumulated_stats.rebounds}</span><span class="bgp-s-lbl">REB</span></div><div class="bgp-s-divider"></div><div class="bgp-s-item"><span>${bg.accumulated_stats.assists}</span><span class="bgp-s-lbl">AST</span></div></div></div></div></div>`;
+                    bestGameHtml = `
+                        <div class="section-divider"><i data-lucide="crown" width="16"></i> 生涯代表作</div>
+                        <div class="best-game-small">
+                            <div class="bgs-left">
+                                <div class="bgs-label">SINGLE GAME HIGH</div>
+                                <div class="bgs-score-row">
+                                    <span class="bgs-score nums">${bg.accumulated_stats.score}</span>
+                                    <span class="bgs-unit">PTS</span>
+                                </div>
+                                <div class="bgs-meta nums">${linked ? linked.game_date.split('-').slice(1).join('/') : '--/--'}</div>
+                            </div>
+                            <div class="bgs-right">
+                                <div class="bgs-opp">
+                                    <span>VS</span> ${opp.name}
+                                    <img src="${opp.logo}">
+                                </div>
+                                <div class="bgs-stats-row nums">
+                                    <div class="bgs-s-item"><b>${bg.accumulated_stats.rebounds}</b> REB</div>
+                                    <div class="bgs-s-item"><b>${bg.accumulated_stats.assists}</b> AST</div>
+                                </div>
+                            </div>
+                        </div>
+                        <style>
+                            .best-game-small { background: #1C1C1E; color: #fff; border-radius: 16px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; background: linear-gradient(135deg, #2c2c2e 0%, #1c1c1e 100%); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+                            .bgs-label { font-size: 9px; font-weight: 800; color: #D4B07D; letter-spacing: 1px; margin-bottom: 4px; }
+                            .bgs-score { font-size: 36px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+                            .bgs-unit { font-size: 12px; font-weight: 700; color: #8E8E93; margin-left: 4px; }
+                            .bgs-meta { font-size: 11px; color: #8E8E93; margin-top: 2px; }
+                            .bgs-opp { display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-weight: 700; font-size: 14px; margin-bottom: 12px; }
+                            .bgs-opp img { width: 32px; height: 32px; background: #fff; border-radius: 50%; padding: 2px; }
+                            .bgs-stats-row { display: flex; gap: 12px; justify-content: flex-end; }
+                            .bgs-s-item { font-size: 11px; color: #8E8E93; }
+                            .bgs-s-item b { color: #fff; font-size: 13px; margin-right: 2px; }
+                        </style>
+                    `;
                 }
 
-                // 5. 近期表現 (修正 VS 邏輯)
+                // 5. 近期表現
                 let recentHtml = '';
-                if (uniqueLogs.length > 0) {
-                    const sorted = [...uniqueLogs].sort((a, b) => new Date(b.game?.gamed_at || 0) - new Date(a.game?.gamed_at || 0)).slice(0, 5);
-                    let rows = sorted.map(g => {
-                        const gid = g.game_id || g.game?.id;
-                        const linked = globalGames.find(x => x.id === gid);
+                const recentLogs = allLogs.sort((a, b) => new Date(b.game?.gamed_at || 0) - new Date(a.game?.gamed_at || 0)).slice(0, 5);
+                if (recentLogs.length > 0) {
+                    let rows = recentLogs.map(g => {
+                        const linked = globalGames.find(x => x.id === (g.game_id || g.game?.id));
                         const opp = getOpponentInfo(linked, teamName);
-                        const date = linked ? linked.game_date.split('-').slice(1).join('/') : "-/-";
-                        return `<tr><td><div class="rg-date nums">${date}</div><div class="rg-opp"><img src="${opp.logo}" width="16"> ${opp.name}</div></td><td class="nums highlight-col">${g.accumulated_stats.score}</td><td>${g.accumulated_stats.rebounds}</td><td>${g.accumulated_stats.assists}</td></tr>`;
+                        return `<tr><td><div class="rg-date nums">${linked ? linked.game_date.split('-').slice(1).join('/') : '-'}</div><div class="rg-opp"><img src="${opp.logo}" width="16"> ${opp.name}</div></td><td class="nums highlight-col">${g.accumulated_stats.score}</td><td>${g.accumulated_stats.rebounds}</td><td>${g.accumulated_stats.assists}</td></tr>`;
                     }).join('');
                     recentHtml = `<div class="section-divider"><i data-lucide="history" width="16"></i> 近期表現</div><table class="recent-games-table"><thead><tr><th>日期 / 對手</th><th>得分</th><th>籃板</th><th>助攻</th></tr></thead><tbody>${rows}</tbody></table>`;
                 }
 
-                // 6. 賽季獎項
+                // 6. 獎項
                 let awardsHtml = '';
-                const myAwards = globalAwards.filter(a => a.winner?.some(w => w.info.name === playerData.name));
+                const myAwards = globalAwards.filter(a => a.winner?.some(w => w.info.name === pBasic?.name));
                 if (myAwards.length > 0) {
                     const annual = myAwards.filter(a => a.type === 'annual');
                     const monthly = myAwards.filter(a => a.type === 'monthly');
-                    awardsHtml = `<div class="awards-container">` + (annual.length ? `<div class="awards-section-title">年度榮譽</div><div class="annual-awards-grid">` + annual.map(a => `<div class="aa-card"><div class="aa-icon"><i data-lucide="${getAwardIcon(a.title)}" width="20"></i></div><div class="aa-title">${a.title}</div><div class="aa-season nums">${a.season.name}</div></div>`).join('') + `</div>` : '') + (monthly.length ? `<div class="awards-section-title">單月 MVP</div><div class="monthly-scroll">` + monthly.map(a => `<div class="ma-card"><div class="ma-header"><i data-lucide="trophy" width="12"></i> MVP</div><div class="ma-title">${a.en_title.split('(')[1]?.replace(')', '') || 'MVP'}</div><div class="nums" style="font-size:9px; color:#aaa">${a.season.name}</div></div>`).join('') + `</div>` : '') + `</div>`;
+                    awardsHtml = `<div class="awards-container">` +
+                        (annual.length ? `<div class="awards-section-title">年度榮譽</div><div class="annual-awards-grid">` + annual.map(a => `<div class="aa-card"><div class="aa-icon"><i data-lucide="${getAwardIcon(a.title)}" width="20"></i></div><div class="aa-title">${a.title}</div><div class="aa-season nums">${a.season.name}</div></div>`).join('') + `</div>` : '') +
+                        (monthly.length ? `<div class="awards-section-title">單月最佳</div><div class="monthly-scroll">` + monthly.map(a => `<div class="ma-card"><div class="ma-header"><i data-lucide="trophy" width="12"></i> MVP</div><div class="ma-title">${a.en_title.split('(')[1]?.replace(')', '') || 'MVP'}</div><div class="nums" style="font-size:9px; color:#aaa">${a.season.name}</div></div>`).join('') + `</div>` : '') +
+                    `</div>`;
                 }
 
                 body.innerHTML = `${headerHtml}${chartHtml}${statsHtml}${bestGameHtml}${recentHtml}${awardsHtml}<div style="height:40px;"></div>`;
@@ -1629,14 +1734,73 @@ wrapper.innerHTML += `
                 }
             } catch (e) {
                 console.error(e);
-                body.innerHTML = `<div class="loading">讀取失敗 <br><small>${e.message}</small></div>`;
+                body.innerHTML = `<div class="loading">加載數據失敗，請稍後再試</div>`;
             }
         }
-
         function renderPeriodTable(data, hName, aName) { if (!data.home_team.periods) return ''; const hPeriods = data.home_team.periods; const aPeriods = data.away_team.periods; let headerCols = ''; let aCols = ''; let hCols = ''; for(let i=0; i<Math.max(hPeriods.length, aPeriods.length); i++) { let label = (i < 4) ? `Q${i+1}` : `OT${i-3}`; headerCols += `<th>${label}</th>`; aCols += `<td>${(aPeriods[i] && aPeriods[i].score !== undefined) ? aPeriods[i].score : '-'}</td>`; hCols += `<td>${(hPeriods[i] && hPeriods[i].score !== undefined) ? hPeriods[i].score : '-'}</td>`; } return `<div style="border-top:1px dashed #eee; margin-top:10px; padding-top:10px;"><div class="period-scroll"><table class="period-table"><thead><tr><th style="text-align:left"></th>${headerCols}</tr></thead><tbody><tr class="pt-row"><td class="period-team-name">${aName}</td>${aCols}</tr><tr class="pt-row"><td class="period-team-name">${hName}</td>${hCols}</tr></tbody></table></div></div>`; }
         function renderGameFlowTable(homeRounds, awayRounds, hName, aName) { let headerHtml = '<th>球隊</th>'; let hRow = `<td class="flow-team-name">${hName}</td>`; let aRow = `<td class="flow-team-name">${aName}</td>`; for(let i=1; i<=10; i++) { if(homeRounds[i] && awayRounds[i]) { let label = (i <= 4) ? `Q${i}` : `OT${i-4}`; headerHtml += `<th>${label}</th>`; hRow += `<td>${homeRounds[i].won_score}</td>`; aRow += `<td>${awayRounds[i].won_score}</td>`; } else break; } return `<div class="comparison-card"><div class="comp-title"><i data-lucide="list-ordered" width="14"></i> 分節得分</div><div class="period-scroll"><table class="flow-table"><thead><tr>${headerHtml}</tr></thead><tbody><tr>${aRow}</tr><tr>${hRow}</tr></tbody></table></div></div>`; }
         function renderTeamComparison(homeStats, awayStats) { const metrics = [ { key: 'field_goals_percentage', label: '投籃 %', isPct: true }, { key: 'three_pointers_percentage', label: '三分 %', isPct: true }, { key: 'free_throws_percentage', label: '罰球 %', isPct: true }, { key: 'rebounds', label: '籃板', isPct: false }, { key: 'assists', label: '助攻', isPct: false }, { key: 'steals', label: '抄截', isPct: false }, { key: 'turnovers', label: '失誤', isPct: false, invert: true } ]; let rowsHtml = ''; metrics.forEach(m => { let valH = parseFloat(homeStats[m.key]) || 0; let valA = parseFloat(awayStats[m.key]) || 0; let maxVal = Math.max(valH, valA); if(m.isPct) maxVal = 100; let perH = (maxVal > 0) ? (valH / maxVal * 100) : 0; let perA = (maxVal > 0) ? (valA / maxVal * 100) : 0; let isLeftWin = m.invert ? (valA < valH) : (valA > valH); let isRightWin = m.invert ? (valH < valA) : (valH > valA); rowsHtml += `<div class="comp-row"><div class="comp-side left"><div class="comp-wrapper"><div class="comp-val nums">${m.isPct?valA+'%':valA}</div><div class="comp-bar-bg"><div class="comp-bar left ${isLeftWin ? 'winner' : ''}" style="width: ${perA}%"></div></div></div></div><div class="comp-label">${m.label}</div><div class="comp-side right"><div class="comp-wrapper"><div class="comp-bar-bg"><div class="comp-bar right ${isRightWin ? 'winner' : ''}" style="width: ${perH}%"></div></div><div class="comp-val nums">${m.isPct?valH+'%':valH}</div></div></div></div>`; }); return `<div class="comparison-card"><div class="comp-title"><i data-lucide="arrow-left-right" width="14"></i> 球隊數據對比</div>${rowsHtml}</div>`; }
+//Best Player in the game
+function renderGameBestPlayers(data) {
+    try {
+        const getTopScorer = (teamNode) => {
+            const players = Array.isArray(teamNode.players.total) ? teamNode.players.total :
+                           (Array.isArray(teamNode.players) ? teamNode.players : Object.values(teamNode.players.total || teamNode.players || {}));
+            
+            return players
+                .filter(p => p && p.time_on_court > 0)
+                .sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+        };
 
+        const aBest = getTopScorer(data.away_team);
+        const hBest = getTopScorer(data.home_team);
+
+        if (!hBest && !aBest) return '';
+
+        const renderPlayerRow = (player, teamName) => {
+            if (!player) return '';
+            const headUrl = playerMap[player.name.replace(/\s/g, '')] || DEFAULT_AVATAR;
+            const teamColor = getTeamColor(teamName);
+            return `
+                <div class="leader-row" onclick="openPlayerProfile(${player.id})">
+                    <div class="lr-player">
+                        <img src="${headUrl}" class="lr-img" style="${!playerMap[player.name.replace(/\s/g, '')] ? `background:${teamColor}` : ''}">
+                        <div class="lr-info">
+                            <div class="lr-name">${player.name}</div>
+                            <div class="lr-team">${getShortName(teamName)} · #${player.number || ''}</div>
+                        </div>
+                    </div>
+                    <div class="lr-stats-group">
+                        <div class="lr-stat-item">
+                            <div class="lr-val nums">${player.score || 0}</div>
+                            <div class="lr-label">得分</div>
+                        </div>
+                        <div class="lr-stat-item">
+                            <div class="lr-val nums">${player.rebounds || 0}</div>
+                            <div class="lr-label">籃板</div>
+                        </div>
+                        <div class="lr-stat-item">
+                            <div class="lr-val nums">${player.assists || 0}</div>
+                            <div class="lr-label">助攻</div>
+                        </div>
+                    </div>
+                </div>`;
+        };
+
+        return `
+            <div class="game-leaders">
+                <div class="leaders-title"><i data-lucide="award" width="14"></i> 本場最佳表現</div>
+                <div class="leaders-vertical">
+                    ${renderPlayerRow(aBest, data.away_team.name)}
+                    <!-- 這裡刪除了原本的實線 div -->
+                    ${renderPlayerRow(hBest, data.home_team.name)}
+                </div>
+            </div>`;
+    } catch (e) {
+        console.error("Render Best Players Error:", e);
+        return '';
+    }
+}
   function renderTeamBoxScore(playersNode, teamName, teamTotalNode) {
     const players = Array.isArray(playersNode) ? playersNode : Object.values(playersNode || {});
     if(players.length === 0) return `<div style="padding:40px; text-align:center;">暫無數據</div>`;
