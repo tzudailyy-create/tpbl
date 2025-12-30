@@ -964,8 +964,9 @@
         const API_GAMES = 'https://api.tpbl.basketball/api/seasons/2/games';
         const API_GAMES_S1 = 'https://api.tpbl.basketball/api/seasons/1/games';
         // 請確保這行網址是這個
-        const API_NEWS = 'https://api.tpbl.basketball/api/teams/1/posts?category=1&type=news&page=1';
+        const API_NEWS = 'https://api.tpbl.basketball/api/teams/1/posts?type=news&page=1';
         let globalMvpPosts = []; // 存放過濾後的單週 MVP 文章
+        let globalAllNews = []; // 儲存所有新聞供球員頁面比對
         const API_STANDINGS = 'https://api.tpbl.basketball/api/divisions/9/games/standings';
         const API_TEAM_STATS = 'https://api.tpbl.basketball/api/games/stats/top-teams?division_id=9';
         const API_PLAYERS = 'https://api.tpbl.basketball/api/divisions/9/players';
@@ -1079,6 +1080,7 @@
                             // 1. 確保拿到陣列 (相容不同 API 層級)
                             const raw = newsRes.value.data || newsRes.value.result || [];
                             const newsData = Array.isArray(raw) ? raw : (raw.data || []);
+                            globalAllNews = newsData; // <--- 關鍵：存入這行，讓球員頁面找得到資料
 
                             // 2. 過濾單週 (取最新 1 篇)
                             const weekly = newsData.filter(post => {
@@ -1959,6 +1961,24 @@ wrapper.innerHTML += `
                         .f-stat-lbl { font-size: 11px; color: #8E8E93; font-weight: 700; }
                         .f-stat-divider { width: 1px; background: #F2F2F7; height: 20px; }
                         .imm-watermark { position: absolute; right: -20px; top: 0; height: 160px; opacity: 0.12; filter: brightness(0) invert(1); pointer-events: none; }
+                /* 相關報導輪播專用 */
+                .honors-scroll-wrapper {
+                    display: flex; gap: 12px; overflow-x: auto;
+                    padding: 4px 0 16px 0; margin: 0 -4px;
+                    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+                }
+                .honors-scroll-wrapper::-webkit-scrollbar { display: none; }
+                .honor-card {
+                    flex: 0 0 280px; height: 160px; scroll-snap-align: start;
+                    position: relative; border-radius: 16px; overflow: hidden;
+                    background: #000; box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+                }
+                .honor-card-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+                .honor-card-overlay {
+                    position: absolute; bottom: 0; left: 0; right: 0; padding: 16px;
+                    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
+                    display: flex; flex-direction: column; justify-content: flex-end;
+                }
                     </style>
                 `;
 
@@ -2045,8 +2065,38 @@ wrapper.innerHTML += `
                     `</div>`;
                 }
 
-                body.innerHTML = `${headerHtml}${chartHtml}${statsHtml}${bestGameHtml}${recentHtml}${awardsHtml}<div style="height:40px;"></div>`;
-                lucide.createIcons();
+                // --- 在 openPlayerProfile 函數內部 ---
+
+                // --- 新增：抓取所有包含球員姓名的報導 ---
+                                const searchName = pBasic.name.replace(/\s/g, ''); // 沃許本
+                                const myNews = (globalAllNews || []).filter(post => post.title.includes(searchName));
+
+                                let newsHtml = "";
+                                if (myNews.length > 0) {
+                                    newsHtml = `
+                                        <div class="section-divider"><i data-lucide="newspaper" width="16"></i> 相關報導 (${myNews.length})</div>
+                                        <div class="honors-scroll-wrapper">
+                                            ${myNews.map(post => {
+                                                // 判斷是否為大獎
+                                                const isAward = post.title.includes('年度') || post.title.includes('MVP') || post.title.includes('🏆');
+                                                const tag = isAward ? '🏆 AWARD' : 'NEWS';
+                                                const tagColor = isAward ? 'var(--tpbl-gold)' : 'rgba(255,255,255,0.3)';
+                                                return `
+                                                <div class="honor-card" onclick="window.open('https://tpbl.basketball/news/${post.id}', '_blank')">
+                                                    <img src="${post.thumbnail}" class="honor-card-img" loading="lazy">
+                                                    <div class="honor-card-overlay">
+                                                        <div class="hpc-badge" style="background:${tagColor}; color:${isAward ? 'var(--tpbl-blue)' : '#fff'}; font-size:9px; font-weight:800; padding:2px 6px; border-radius:4px; align-self:flex-start; margin-bottom:6px;">${tag}</div>
+                                                        <div class="hpc-title" style="color:#fff; font-size:14px; font-weight:700; line-height:1.3; margin-bottom:4px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${post.title}</div>
+                                                        <div class="hpc-date nums" style="color:rgba(255,255,255,0.5); font-size:10px;">${post.published_at.split(' ')[0]}</div>
+                                                    </div>
+                                                </div>`;
+                                            }).join('')}
+                                        </div>`;
+                                }
+
+                                // --- 修改這行：將 ${newsHtml} 插入到 ${statsHtml} 之後 ---
+                                body.innerHTML = `${headerHtml}${chartHtml}${statsHtml}${newsHtml}${bestGameHtml}${recentHtml}${awardsHtml}<div style="height:40px;"></div>`;
+                                lucide.createIcons();
 
                 // 繪製雷達圖
                 if (avg2 && document.getElementById('playerRadar')) {
