@@ -805,15 +805,17 @@
         .weekly-mvp-scroll::-webkit-scrollbar { display: none; }
 
         /* 確保圖片鋪滿且有基本底色 */
+        /* 修改原本的 .wmvp-post-card */
         .wmvp-post-card {
-            flex: 0 0 100%;
+            flex: 0 0 85%; /* 讓下一張卡片露出一點點，提示可以滑動 */
             scroll-snap-align: center;
             position: relative;
             border-radius: 20px;
-            height: 400px;
+            height: 380px;
             overflow: hidden;
-            background-color: #0F2848; /* 圖片載入前的底色 */
+            background-color: #0F2848;
             box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            margin-right: 4px;
         }
 
         .wmvp-post-img {
@@ -961,7 +963,8 @@
 
         const API_GAMES = 'https://api.tpbl.basketball/api/seasons/2/games';
         const API_GAMES_S1 = 'https://api.tpbl.basketball/api/seasons/1/games';
-        const API_NEWS = 'https://api.tpbl.basketball/api/teams/1/posts?type=news&page=1';
+        // 請確保這行網址是這個
+        const API_NEWS = 'https://api.tpbl.basketball/api/teams/1/posts?category=1&type=news&page=1';
         let globalMvpPosts = []; // 存放過濾後的單週 MVP 文章
         const API_STANDINGS = 'https://api.tpbl.basketball/api/divisions/9/games/standings';
         const API_TEAM_STATS = 'https://api.tpbl.basketball/api/games/stats/top-teams?division_id=9';
@@ -1071,15 +1074,28 @@
             if (standingsRes.status === 'fulfilled') globalStandings = standingsRes.value.data || standingsRes.value;
             if (statsRes.status === 'fulfilled') { globalTeamStats = statsRes.value.data || statsRes.value; processStatsData(); }
             let awards = []; [votesS1, votesS2, votesAnnS1, votesAnnS2].forEach(p => { if (p.status === 'fulfilled' && p.value.result) awards = awards.concat(p.value.result); }); globalAwards = awards;
+            // 在 fetchData 函數內修改新聞處理部分
             if (newsRes.status === 'fulfilled') {
-                    const newsData = newsRes.value.data || newsRes.value.result || [];
-                    // 篩選標題包含關鍵字的文章
-                    globalMvpPosts = newsData.filter(post =>
-                        post.title.includes('單週 MVP') ||
-                        post.title.includes('單週MVP') ||
-                        post.title.includes('Player of the Week')
-                    ).slice(0, 2); // 只取最近兩篇
-                }
+                            // 1. 確保拿到陣列 (相容不同 API 層級)
+                            const raw = newsRes.value.data || newsRes.value.result || [];
+                            const newsData = Array.isArray(raw) ? raw : (raw.data || []);
+
+                            // 2. 過濾單週 (取最新 1 篇)
+                            const weekly = newsData.filter(post => {
+                                const t = post.title || "";
+                                return t.includes('週') && (t.includes('MVP') || t.includes('殊榮'));
+                            }).slice(0, 1);
+
+                            // 3. 過濾單月 (取最新 2 篇，包含特殊字、獎盃、或月+MVP)
+                            const monthly = newsData.filter(post => {
+                                const t = post.title || "";
+                                const hasFancyType = /[\u{1D400}-\u{1D7FF}]/u.test(t);
+                                return hasFancyType || t.includes('𝑷𝒍𝒂𝒚𝒆𝒓 𝑶𝒇 𝑻𝒉𝒆 𝑴𝒐𝒏𝒕𝒉') || t.includes('🏆') || (t.includes('月') && t.includes('MVP'));
+                            }).slice(0, 2);
+
+                            // 4. 重要：變數名稱請統一使用原本檔案中的 globalMvpPosts
+                            globalMvpPosts = [...weekly, ...monthly];
+                        }
             //排行榜數據
             
             const [tpRes, ttRes] = await Promise.allSettled([
@@ -1168,47 +1184,40 @@
                     setTimeout(() => { const board = document.getElementById('smart-board'); if (board) { board.addEventListener('scroll', () => { const index = Math.round(board.scrollLeft / board.offsetWidth); document.querySelectorAll('.dot').forEach(d => d.classList.remove('active')); const activeDot = document.getElementById(`dot-${index}`); if(activeDot) activeDot.classList.add('active'); }); } }, 500);
                 }
             } else { sbWrapper.innerHTML = `<div style="padding:20px; width:100%; text-align:center; color:#999">本週無賽事</div>`; wrapper.appendChild(sbWrapper); }
-            // --- 在 renderHome 內插入 ---
-            if (globalMvpPosts && globalMvpPosts.length > 0) {
-                wrapper.innerHTML += `<div class="section-header" style="margin-top:24px;"><div class="section-title">單週最佳球員</div><div class="section-date">WEEKLY MVP</div></div>`;
-                
-                let wmvpHtml = `<div class="weekly-mvp-scroll">`;
-                // --- 修正後的圖片抓取邏輯 ---
-                // --- 修正後的圖片抓取邏輯：優先抓取 thumbnail ---
-                globalMvpPosts.forEach(post => {
-                    // 優先抓取你提供的 thumbnail 欄位，再來才是其他備案
-                    let img = post.thumbnail || "";
-                    
-                    // 如果 thumbnail 沒抓到，再嘗試抓 images 陣列
-                    if (!img && post.images && post.images.length > 0) {
-                        const bestImg = post.images.find(i => i.key === 'xl' || i.key === 'lg' || i.key === 'md') || post.images[0];
-                        img = bestImg.url;
-                    }
+            // --- 在 renderHome 內找到 MVP 渲染區塊 ---
+                        if (globalMvpPosts && globalMvpPosts.length > 0) {
+                            wrapper.innerHTML += `<div class="section-header" style="margin-top:24px;"><div class="section-title">本月 / 本週最佳球員</div><div class="section-date">MVP AWARDS</div></div>`;
+                            
+                            let wmvpHtml = `<div class="weekly-mvp-scroll">`;
+                            globalMvpPosts.forEach(post => {
+                                const t = post.title || "";
+                                
+                                // 同步過濾邏輯：只要有花體字、月字、或獎盃，就標記為 MONTHLY
+                                const isMonthly = /[\u{1D400}-\u{1D7FF}]/u.test(t) || t.includes('月') || t.includes('🏆');
+                                
+                                const tagText = isMonthly ? 'MONTHLY MVP' : 'WEEKLY MVP';
+                                const tagColor = isMonthly ? '#D4B07D' : '#FF3B30';
+                                const tagIcon = isMonthly ? 'calendar' : 'zap';
+                                const img = post.thumbnail || "";
+                                const date = post.published_at ? post.published_at.split(' ')[0].replace(/-/g, '/') : '';
+                                
+                                wmvpHtml += `
+                                    <div class="wmvp-post-card" onclick="window.open('https://tpbl.basketball/news/${post.id}', '_blank')">
+                                        <img src="${img}" class="wmvp-post-img" loading="lazy" onerror="this.style.opacity='0'">
+                                        <div class="wmvp-post-overlay">
+                                            <div class="wmvp-post-tag" style="background:${tagColor}; color:#fff;">
+                                                <i data-lucide="${tagIcon}" width="10"></i> ${tagText}
+                                            </div>
+                                            <div class="wmvp-post-title">${t}</div>
+                                            <div class="wmvp-post-date nums">${date}</div>
+                                        </div>
+                                    </div>`;
+                            });
+                            wmvpHtml += `</div>`;
+                            wrapper.innerHTML += wmvpHtml;
+                        }
 
-                    // 格式化日期
-                    const date = post.published_at ? post.published_at.split(' ')[0].replace(/-/g, '/') : '';
-                    
-                    wmvpHtml += `
-                        <div class="wmvp-post-card" onclick="window.open('https://tpbl.basketball/news/${post.id}', '_blank')">
-                            <!-- 加入 onerror 處理，如果連結失效會顯示深藍色背景 -->
-                            <img src="${img}" class="wmvp-post-img" loading="lazy" onerror="this.style.opacity='0'">
-                            <div class="wmvp-post-overlay">
-                                <div class="wmvp-post-tag"><i data-lucide="zap" width="10"></i> BREAKING</div>
-                                <div class="wmvp-post-title">${post.title}</div>
-                                <div class="wmvp-post-date nums">${date}</div>
-                            </div>
-                        </div>`;
-                });
-                wmvpHtml += `</div>`;
-                wrapper.innerHTML += wmvpHtml;
-            }
-            // MVP
-            const monthlyAwards = globalAwards.filter(a => a.type === 'monthly').sort((a,b) => b.id - a.id);
-            if (monthlyAwards.length >= 2) {
-                const latest = monthlyAwards.slice(0, 2); let pItems = ''; let rawTitle = latest[0].en_title.replace('Player of the month', '').trim(); let monthTitle = rawTitle.replace(/[()]/g, '');
-                latest.forEach(award => { const winner = award.winner[0].info; const pImg = winner.image_md || winner.image_lg || DEFAULT_AVATAR; pItems += `<div class="mvp-p-item"><img src="${pImg}" class="mvp-p-img"><div class="mvp-p-text"><div class="mvp-p-name">${winner.name}</div><div class="mvp-p-team">${getShortName(winner.team_name)}</div></div></div>`; });
-                wrapper.innerHTML += `<div class="section-header" style="margin-top:20px;"><div class="section-title">本月最佳球員</div></div><div class="mvp-card"><div class="mvp-info"><div class="mvp-label">PLAYER OF THE MONTH</div><div class="mvp-month">(${monthTitle})</div><div class="mvp-players-row">${pItems}</div></div><i data-lucide="trophy" width="60" height="60" style="opacity:0.2; color:#D4B07D;"></i></div>`;
-            }
+            // *** 注意：請記得刪除 renderHome 裡面原本渲染「本月最佳球員 (mvp-card)」的那段代碼，以免重複顯示 ***
 
        // --- 找到 renderHome 函數中 Standings 的區塊 ---
 wrapper.innerHTML += `<div class="section-header" style="margin-top:20px;"><div class="section-title">聯盟戰績</div></div>`;
@@ -1268,7 +1277,7 @@ wrapper.innerHTML += `
         </table>
     </div>`;
             // --- Highlights Section (NEW) ---
-            renderHighlights(wrapper);
+            
 
             container.appendChild(wrapper);
             lucide.createIcons();
@@ -1477,29 +1486,127 @@ wrapper.innerHTML += `
         }
 
         // --- Schedule Render & Prediction ---
+        // --- 修改後的 renderSchedule 函數 ---
+        // --- 修改後的 renderSchedule 函數 ---
         function renderSchedule() {
-            const container = document.getElementById('app-container'); container.innerHTML = '';
-            const wrapper = document.createElement('div'); wrapper.className = 'container';
-            wrapper.innerHTML += `<div class="seg-control"><button class="seg-btn ${currentScheduleTab === 'future' ? 'active' : ''}" onclick="switchScheduleTab('future')">未來賽事</button><button class="seg-btn ${currentScheduleTab === 'completed' ? 'active' : ''}" onclick="switchScheduleTab('completed')">已完賽</button></div>`;
-            let list = (currentScheduleTab === 'completed') ? globalGames.filter(g => g.status === 'COMPLETED').sort((a, b) => new Date(b.game_date) - new Date(a.game_date)) : globalGames.filter(g => g.status !== 'COMPLETED').sort((a, b) => new Date(a.game_date) - new Date(b.game_date));
-            if(list.length === 0) { wrapper.innerHTML += `<div class="loading">無相關賽事</div>`; } else {
-                const listContainer = document.createElement('div'); listContainer.className = 'sch-container';
+            const container = document.getElementById('app-container');
+            container.innerHTML = '';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'container';
+            
+            // 渲染上方分段控制器
+            wrapper.innerHTML += `
+                <div class="seg-control">
+                    <button class="seg-btn ${currentScheduleTab === 'future' ? 'active' : ''}" onclick="switchScheduleTab('future')">未來賽事</button>
+                    <button class="seg-btn ${currentScheduleTab === 'completed' ? 'active' : ''}" onclick="switchScheduleTab('completed')">已完賽</button>
+                </div>`;
+
+            
+
+            let list = (currentScheduleTab === 'completed')
+                ? globalGames.filter(g => g.status === 'COMPLETED').sort((a, b) => new Date(b.game_date) - new Date(a.game_date))
+                : globalGames.filter(g => g.status !== 'COMPLETED').sort((a, b) => new Date(a.game_date) - new Date(b.game_date));
+
+            if(list.length === 0) {
+                wrapper.innerHTML += `<div class="loading">無相關賽事</div>`;
+            } else {
+                const listContainer = document.createElement('div');
+                listContainer.className = 'sch-container';
+                
+                if (currentScheduleTab === 'completed') {
+                    wrapper.innerHTML += `<div class="section-header"><div class="section-title">歷史賽報</div></div>`;
+                }
+
                 list.forEach(g => {
-                    const dateObj = new Date(g.game_date); const monthStr = dateObj.toLocaleString('en-US', { month: 'short' }).toUpperCase(); const dayStr = dateObj.getDate(); const time = g.game_time ? g.game_time.slice(0, 5) : 'TBD';
-                    const isDone = g.status === 'COMPLETED'; const isLive = g.status === 'LIVE' || g.status === 'IN_PROGRESS';
-                    const hScore = (isDone || isLive) ? (g.home_team.score ?? g.home_team.won_score ?? 0) : '-'; const aScore = (isDone || isLive) ? (g.away_team.score ?? g.away_team.won_score ?? 0) : '-';
-                    const hWin = parseInt(hScore) > parseInt(aScore); const aWin = parseInt(aScore) > parseInt(hScore);
-                    const hClass = (isDone && !hWin) ? 'lose' : (isDone && hWin ? 'win' : ''); const aClass = (isDone && !aWin) ? 'lose' : (isDone && aWin ? 'win' : '');
-                    const hName = getShortName(g.home_team.name); const aName = getShortName(g.away_team.name);
+                    const dateObj = new Date(g.game_date);
+                    const monthStr = dateObj.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+                    const dayStr = dateObj.getDate();
+                    const time = g.game_time ? g.game_time.slice(0, 5) : 'TBD';
+                    const isDone = g.status === 'COMPLETED';
+                    const isLive = g.status === 'LIVE' || g.status === 'IN_PROGRESS';
+                    
+                    const hScore = (isDone || isLive) ? (g.home_team.score ?? g.home_team.won_score ?? 0) : '-';
+                    const aScore = (isDone || isLive) ? (g.away_team.score ?? g.away_team.won_score ?? 0) : '-';
+                    
+                    const hWin = parseInt(hScore) > parseInt(aScore);
+                    const aWin = parseInt(aScore) > parseInt(hScore);
+                    const hClass = (isDone && !hWin) ? 'lose' : (isDone && hWin ? 'win' : '');
+                    const aClass = (isDone && !aWin) ? 'lose' : (isDone && aWin ? 'win' : '');
+                    
+                    const hName = getShortName(g.home_team.name);
+                    const aName = getShortName(g.away_team.name);
+                    
                     let actionHtml = '';
-                    if (isLive) { actionHtml = `<div class="sch-btn live"><i data-lucide="tv" width="10"></i> 進行中</div>`; } else if (isDone) { actionHtml = `<div class="sch-btn stats">數據 <i data-lucide="chevron-right" width="10"></i></div>`; } else { const ticketUrl = getTicketLink(g.home_team.name); actionHtml = `<div style="display:flex; gap:8px; align-items:center; width:100%; justify-content:flex-end;"><button class="sch-btn predict" onclick="event.stopPropagation(); openAiModal(${g.id}, '${g.home_team.name}', '${g.away_team.name}')"><i data-lucide="sparkles" width="12"></i> AI 預測</button><div class="sch-btn ticket" onclick="event.stopPropagation(); window.open('${ticketUrl}', '_blank')"><i data-lucide="ticket" width="10"></i> 購票</div></div>`; }
+                    
+                    if (isLive) {
+                        actionHtml = `<div class="sch-btn live"><i data-lucide="tv" width="10"></i> 進行中</div>`;
+                    } else if (isDone) {
+                        // --- 這裡修改：加入「全場精華」按鈕 ---
+                        const recapUrl = g.meta?.recap || `https://www.youtube.com/results?search_query=TPBL+${hName}+vs+${aName}+Highlight`;
+                        actionHtml = `
+                            <div style="display:flex; gap:8px;">
+                                <div class="sch-btn stats">
+                                    數據 <i data-lucide="chevron-right" width="10"></i>
+                                </div>
+                                <div class="sch-btn" style="background:var(--tpbl-blue); color:white; border:none;" onclick="event.stopPropagation(); window.open('${recapUrl}', '_blank')">
+                                    <i data-lucide="play-circle" width="12"></i> 全場精華
+                                </div>
+                            </div>`;
+                    } else {
+                        const ticketUrl = getTicketLink(g.home_team.name);
+                        actionHtml = `
+                            <div style="display:flex; gap:8px; align-items:center; width:100%; justify-content:flex-end;">
+                                <button class="sch-btn predict" onclick="event.stopPropagation(); openAiModal(${g.id}, '${g.home_team.name}', '${g.away_team.name}')">
+                                    <i data-lucide="sparkles" width="12"></i> AI 預測
+                                </button>
+                                <div class="sch-btn ticket" onclick="event.stopPropagation(); window.open('${ticketUrl}', '_blank')">
+                                    <i data-lucide="ticket" width="10"></i> 購票
+                                </div>
+                            </div>`;
+                    }
+                    
                     const cardClickAttr = (isLive || isDone) ? `onclick="openGameDetails(${g.id})"` : '';
-                    const cardHtml = `<div class="sch-card" ${cardClickAttr}><div class="sch-card-main"><div class="sch-date-col"><span class="sch-date-main nums">${dayStr}</span><span class="sch-date-sub">${monthStr}</span><div class="sch-time nums">${time}</div></div><div class="sch-matchup"><div class="sch-team-row"><div class="sch-team-info"><img src="${getLogo(g.away_team.name, g.away_team.meta?.logo)}" class="sch-team-logo"><span class="sch-team-name ${aClass}">${aName}</span></div><div class="sch-team-score ${aClass} nums">${aScore}</div></div><div style="height:1px; background:#f5f5f7; margin:2px 0;"></div><div class="sch-team-row"><div class="sch-team-info"><img src="${getLogo(g.home_team.name, g.home_team.meta?.logo)}" class="sch-team-logo"><span class="sch-team-name ${hClass}">${hName}</span></div><div class="sch-team-score ${hClass} nums">${hScore}</div></div></div></div><div class="sch-card-footer"><div class="sch-venue" onclick="openMap('${g.venue}')"><i data-lucide="map-pin" width="12"></i> ${g.venue.split(' ')[0]}</div><div class="sch-actions" style="flex:1; justify-content:flex-end; display:flex;">${actionHtml}</div></div></div>`;
+                    const cardHtml = `
+                        <div class="sch-card" ${cardClickAttr}>
+                            <div class="sch-card-main">
+                                <div class="sch-date-col">
+                                    <span class="sch-date-main nums">${dayStr}</span>
+                                    <span class="sch-date-sub">${monthStr}</span>
+                                    <div class="sch-time nums">${time}</div>
+                                </div>
+                                <div class="sch-matchup">
+                                    <div class="sch-team-row">
+                                        <div class="sch-team-info">
+                                            <img src="${getLogo(g.away_team.name, g.away_team.meta?.logo)}" class="sch-team-logo">
+                                            <span class="sch-team-name ${aClass}">${aName}</span>
+                                        </div>
+                                        <div class="sch-team-score ${aClass} nums">${aScore}</div>
+                                    </div>
+                                    <div style="height:1px; background:#f5f5f7; margin:2px 0;"></div>
+                                    <div class="sch-team-row">
+                                        <div class="sch-team-info">
+                                            <img src="${getLogo(g.home_team.name, g.home_team.meta?.logo)}" class="sch-team-logo">
+                                            <span class="sch-team-name ${hClass}">${hName}</span>
+                                        </div>
+                                        <div class="sch-team-score ${hClass} nums">${hScore}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="sch-card-footer">
+                                <div class="sch-venue" onclick="openMap('${g.venue}')">
+                                    <i data-lucide="map-pin" width="12"></i> ${g.venue.split(' ')[0]}
+                                </div>
+                                <div class="sch-actions" style="flex:1; justify-content:flex-end; display:flex;">
+                                    ${actionHtml}
+                                </div>
+                            </div>
+                        </div>`;
                     listContainer.innerHTML += cardHtml;
                 });
                 wrapper.appendChild(listContainer);
             }
-            container.appendChild(wrapper); lucide.createIcons();
+            container.appendChild(wrapper);
+            lucide.createIcons();
         }
 
         function openAiModal(gameId, hFullName, aFullName) {
