@@ -793,6 +793,82 @@
             font-family: 'SF Mono', monospace; font-weight: 800; font-size: 17px;
             color: var(--tpbl-blue); text-align: right; min-width: 50px;
         }
+        /* 單週 MVP 新聞卡片樣式 */
+        .weekly-mvp-scroll {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding: 4px 0 12px 0;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+        .weekly-mvp-scroll::-webkit-scrollbar { display: none; }
+
+        /* 確保圖片鋪滿且有基本底色 */
+        .wmvp-post-card {
+            flex: 0 0 100%;
+            scroll-snap-align: center;
+            position: relative;
+            border-radius: 20px;
+            height: 400px;
+            overflow: hidden;
+            background-color: #0F2848; /* 圖片載入前的底色 */
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .wmvp-post-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: opacity 0.3s;
+        }
+
+        /* 底部文字遮罩：加強黑影深度，確保文字清晰 */
+        .wmvp-post-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 24px 20px 16px 20px;
+            background: linear-gradient(to top,
+                rgba(0,0,0,0.95) 0%,
+                rgba(0,0,0,0.6) 50%,
+                transparent 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .wmvp-post-title {
+            color: #fff;
+            font-size: 19px; /* 稍微加大字體 */
+            font-weight: 800;
+            line-height: 1.25;
+            margin-bottom: 6px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .wmvp-post-tag {
+            background: var(--tpbl-gold);
+            color: var(--tpbl-blue);
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 4px;
+            align-self: flex-start;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .wmvp-post-date {
+            color: rgba(255,255,255,0.6);
+            font-size: 11px;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -976,16 +1052,17 @@
         const API_TOP_TEAMS = 'https://api.tpbl.basketball/api/games/stats/top-teams?division_id=9';
         async function fetchData() {
             if (globalPlayers.length === 0) { try { const pJson = await fetchJson(API_PLAYERS); globalPlayers = pJson.data || pJson; globalPlayers.forEach(p => { let imgUrl = ""; if(p.images && p.images.length > 0) { const sm = p.images.find(i => i.key === 'sm'); const md = p.images.find(i => i.key === 'md'); imgUrl = sm ? sm.url : (md ? md.url : p.images[0].url); } playerMap[p.name.replace(/\s/g, '')] = imgUrl; }); } catch(e) {} }
-            const [gamesRes, gamesS1Res, standingsRes, statsRes, votesS1, votesS2, votesAnnS1, votesAnnS2] = await Promise.allSettled([
-                fetchJson(API_GAMES),
-                fetchJson(API_GAMES_S1), // Fetch S1 schedule
-                fetchJson(API_STANDINGS),
-                fetchJson(API_TEAM_STATS),
-                fetchJson(API_VOTES_S1),
-                fetchJson(API_VOTES_S2),
-                fetchJson(API_VOTES_ANNUAL_S1),
-                fetchJson(API_VOTES_ANNUAL_S2)
-            ]);
+            const [gamesRes, gamesS1Res, standingsRes, statsRes, votesS1, votesS2, votesAnnS1, votesAnnS2, newsRes] = await Promise.allSettled([
+                    fetchJson(API_GAMES),
+                    fetchJson(API_GAMES_S1),
+                    fetchJson(API_STANDINGS),
+                    fetchJson(API_TEAM_STATS),
+                    fetchJson(API_VOTES_S1),
+                    fetchJson(API_VOTES_S2),
+                    fetchJson(API_VOTES_ANNUAL_S1),
+                    fetchJson(API_VOTES_ANNUAL_S2),
+                    fetchJson(API_NEWS) // 抓取新聞
+                ]);
             if (gamesRes.status === 'fulfilled') globalGames = gamesRes.value.data || gamesRes.value;
             if (gamesS1Res.status === 'fulfilled') {
                 const s1Games = gamesS1Res.value.data || gamesS1Res.value;
@@ -994,6 +1071,15 @@
             if (standingsRes.status === 'fulfilled') globalStandings = standingsRes.value.data || standingsRes.value;
             if (statsRes.status === 'fulfilled') { globalTeamStats = statsRes.value.data || statsRes.value; processStatsData(); }
             let awards = []; [votesS1, votesS2, votesAnnS1, votesAnnS2].forEach(p => { if (p.status === 'fulfilled' && p.value.result) awards = awards.concat(p.value.result); }); globalAwards = awards;
+            if (newsRes.status === 'fulfilled') {
+                    const newsData = newsRes.value.data || newsRes.value.result || [];
+                    // 篩選標題包含關鍵字的文章
+                    globalMvpPosts = newsData.filter(post =>
+                        post.title.includes('單週 MVP') ||
+                        post.title.includes('單週MVP') ||
+                        post.title.includes('Player of the Week')
+                    ).slice(0, 2); // 只取最近兩篇
+                }
             //排行榜數據
             
             const [tpRes, ttRes] = await Promise.allSettled([
@@ -1082,7 +1168,40 @@
                     setTimeout(() => { const board = document.getElementById('smart-board'); if (board) { board.addEventListener('scroll', () => { const index = Math.round(board.scrollLeft / board.offsetWidth); document.querySelectorAll('.dot').forEach(d => d.classList.remove('active')); const activeDot = document.getElementById(`dot-${index}`); if(activeDot) activeDot.classList.add('active'); }); } }, 500);
                 }
             } else { sbWrapper.innerHTML = `<div style="padding:20px; width:100%; text-align:center; color:#999">本週無賽事</div>`; wrapper.appendChild(sbWrapper); }
+            // --- 在 renderHome 內插入 ---
+            if (globalMvpPosts && globalMvpPosts.length > 0) {
+                wrapper.innerHTML += `<div class="section-header" style="margin-top:24px;"><div class="section-title">單週最佳球員</div><div class="section-date">WEEKLY MVP</div></div>`;
+                
+                let wmvpHtml = `<div class="weekly-mvp-scroll">`;
+                // --- 修正後的圖片抓取邏輯 ---
+                // --- 修正後的圖片抓取邏輯：優先抓取 thumbnail ---
+                globalMvpPosts.forEach(post => {
+                    // 優先抓取你提供的 thumbnail 欄位，再來才是其他備案
+                    let img = post.thumbnail || "";
+                    
+                    // 如果 thumbnail 沒抓到，再嘗試抓 images 陣列
+                    if (!img && post.images && post.images.length > 0) {
+                        const bestImg = post.images.find(i => i.key === 'xl' || i.key === 'lg' || i.key === 'md') || post.images[0];
+                        img = bestImg.url;
+                    }
 
+                    // 格式化日期
+                    const date = post.published_at ? post.published_at.split(' ')[0].replace(/-/g, '/') : '';
+                    
+                    wmvpHtml += `
+                        <div class="wmvp-post-card" onclick="window.open('https://tpbl.basketball/news/${post.id}', '_blank')">
+                            <!-- 加入 onerror 處理，如果連結失效會顯示深藍色背景 -->
+                            <img src="${img}" class="wmvp-post-img" loading="lazy" onerror="this.style.opacity='0'">
+                            <div class="wmvp-post-overlay">
+                                <div class="wmvp-post-tag"><i data-lucide="zap" width="10"></i> BREAKING</div>
+                                <div class="wmvp-post-title">${post.title}</div>
+                                <div class="wmvp-post-date nums">${date}</div>
+                            </div>
+                        </div>`;
+                });
+                wmvpHtml += `</div>`;
+                wrapper.innerHTML += wmvpHtml;
+            }
             // MVP
             const monthlyAwards = globalAwards.filter(a => a.type === 'monthly').sort((a,b) => b.id - a.id);
             if (monthlyAwards.length >= 2) {
