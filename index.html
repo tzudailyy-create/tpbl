@@ -1453,22 +1453,30 @@
         const API_TOP_PLAYERS = 'https://api.tpbl.basketball/api/games/stats/top-players?division_id=9';
         const API_TOP_TEAMS = 'https://api.tpbl.basketball/api/games/stats/top-teams?division_id=9';
         async function fetchData() {
-                    // A. 優先確保球員清單載入 (球員頁面必備)
-                    if (globalPlayers.length === 0) {
-                        try {
-                            const pJson = await fetchJson(API_PLAYERS);
-                            globalPlayers = pJson.data || pJson;
-                            globalPlayers.forEach(p => {
-                                let imgUrl = "";
-                                if(p.images && p.images.length > 0) {
-                                    const sm = p.images.find(i => i.key === 'sm');
-                                    const md = p.images.find(i => i.key === 'md');
-                                    imgUrl = sm ? sm.url : (md ? md.url : p.images[0].url);
-                                }
-                                playerMap[p.name.replace(/\s/g, '')] = imgUrl;
-                            });
-                        } catch(e) { console.error("球員清單載入失敗"); }
-                    }
+                    // A. 優先確保球員清單載入
+    try {
+        const pJson = await fetchJson(API_PLAYERS);
+        const playersData = pJson.data || pJson;
+        if (Array.isArray(playersData)) {
+            globalPlayers = playersData;
+            // 建立圖片映射表
+            playerMap = {}; 
+            globalPlayers.forEach(p => {
+                let imgUrl = "";
+                if(p.images && p.images.length > 0) {
+                    const sm = p.images.find(i => i.key === 'sm');
+                    const md = p.images.find(i => i.key === 'md');
+                    imgUrl = sm ? sm.url : (md ? md.url : p.images[0].url);
+                }
+                playerMap[p.name.replace(/\s/g, '')] = imgUrl;
+            });
+            console.log("球員名單更新成功");
+        }
+    } catch(e) { 
+        console.error("球員清單載入失敗，目前使用快取或空值", e);
+        // 如果載入失敗，給予一個空陣列避免後續 .filter 或 .find 噴錯
+        if (!globalPlayers) globalPlayers = [];
+    }
 
                     // B. 同步抓取賽事與戰績
                     const [gamesRes, gamesS1Res, standingsRes, statsRes, votesS1, votesS2, votesAnnS1, votesAnnS2] = await Promise.allSettled([
