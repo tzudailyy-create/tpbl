@@ -1477,32 +1477,37 @@
                     if (statsRes.status === 'fulfilled') { globalTeamStats = statsRes.value.data || statsRes.value; processStatsData(); }
                     let awards = []; [votesS1, votesS2, votesAnnS1, votesAnnS2].forEach(p => { if (p.status === 'fulfilled' && p.value.result) awards = awards.concat(p.value.result); }); globalAwards = awards;
 
-                    // C. 併行抓取 15 頁新聞 (追溯週/月 MVP)
-                    try {
-                        const pageNumbers = Array.from({length: 15}, (_, i) => i + 1);
-                        const newsResults = await Promise.allSettled(
-                            pageNumbers.map(p => fetchJson(`https://api.tpbl.basketball/api/teams/1/posts?type=news&page=${p}`))
-                        );
+                    // --- 修改後的 fetchData 區塊 ---
 
-                        let allFetchedNews = [];
-                        newsResults.forEach(res => {
-                            if (res.status === 'fulfilled') {
-                                const data = res.value.data || res.value.result || [];
-                                const items = Array.isArray(data) ? data : (data.data || []);
-                                allFetchedNews = [...allFetchedNews, ...items];
-                            }
-                        });
-                        globalAllNews = allFetchedNews;
+// C. 精準抓取單週與單月 MVP (僅抓取第一頁新聞以節省請求次數)
+try {
+    // 1. 只抓取第一頁新聞，避免觸發 Proxy 的 429 限制
+    const newsRes = await fetchJson('https://api.tpbl.basketball/api/teams/1/posts?type=news&page=1');
+    const newsItems = newsRes.data || newsRes.result || [];
+    
+    // 儲存所有新聞供其他頁面使用
+    globalAllNews = Array.isArray(newsItems) ? newsItems : (newsItems.data || []);
 
-                        // 過濾看板 MVP
-                        const weekly = globalAllNews.filter(post => post.title.includes('週') && post.title.includes('MVP')).slice(0, 1);
-                        const monthly = globalAllNews.filter(post =>
-                            /[\u{1D400}-\u{1D7FF}]/u.test(post.title || "") ||
-                            (post.title || "").includes('🏆') ||
-                            ((post.title || "").includes('月') && (post.title || "").includes('MVP'))
-                        ).slice(0, 2);
-                        globalMvpPosts = [...weekly, ...monthly];
-                    } catch (e) { console.warn("新聞追溯失敗"); }
+    // 2. 從第一頁過濾出所需的 MVP 資訊
+    // 過濾單週 MVP (標題含有 '週' 且含有 'MVP')
+    const weekly = globalAllNews.filter(post => 
+        post.title.includes('週') && post.title.includes('MVP')
+    ).slice(0, 1);
+
+    // 過濾單月 MVP (標題含有 '月' 且含有 'MVP'，或含有特定的獎盃圖示/花體字)
+    const monthly = globalAllNews.filter(post =>
+        (post.title.includes('月') && post.title.includes('MVP')) ||
+        /[\u{1D400}-\u{1D7FF}]/u.test(post.title) || // 偵測花體字
+        post.title.includes('🏆')
+    ).slice(0, 1);
+
+    // 整合到看板顯示清單
+    globalMvpPosts = [...weekly, ...monthly];
+
+} catch (e) {
+    console.warn("MVP 新聞抓取失敗，可能是 Proxy 仍受限中", e);
+    globalMvpPosts = []; // 失敗則給空陣列，避免程式崩潰
+}
 
                     // D. 排行榜
                     const [tpRes, ttRes] = await Promise.allSettled([
