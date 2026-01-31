@@ -1330,32 +1330,31 @@
         async function fetchJson(url) {
     const ts = Date.now();
     const targetUrl = url + (url.includes('?') ? '&' : '?') + 't=' + ts;
-    
-    // 優先嘗試「直接連線」，如果不噴 CORS 錯誤，這最快也最穩
-    try {
-        const directRes = await fetch(targetUrl);
-        if(directRes.ok) return await directRes.json();
-    } catch(e) {
-        console.log("直接連線失敗或受限，嘗試使用 Proxy...");
-    }
-
-    // 如果直接連線失敗，才走 Proxy
     const encoded = encodeURIComponent(targetUrl);
+
+    // 針對手機版優化的 Proxy 清單
     const proxies = [
-        `https://api.allorigins.win/raw?url=${encoded}`, // 較穩定
-        `https://api.codetabs.com/v1/proxy?quest=${targetUrl}` // 新增一個備選
+        `https://api.allorigins.win/raw?url=${encoded}`, 
+        `https://api.codetabs.com/v1/proxy?quest=${targetUrl}`,
+        `https://corsproxy.io/?${targetUrl}`
     ];
-             for(let proxyUrl of proxies) {
-                 try {
-                     const controller = new AbortController();
-                     const id = setTimeout(() => controller.abort(), 6000);
-                     const res = await fetch(proxyUrl, { signal: controller.signal });
-                     clearTimeout(id);
-                     if(res.ok) return await res.json();
-                 } catch(e) { console.warn(`Proxy failed: ${proxyUrl}`); }
-             }
-             throw new Error("Unable to connect to data source.");
+
+    for(let proxyUrl of proxies) {
+        try {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), 8000); // 手機網路較慢，增加到 8 秒
+            const res = await fetch(proxyUrl, { 
+                signal: controller.signal,
+                headers: { 'Accept': 'application/json' } // 明確告訴伺服器你要 JSON
+            });
+            clearTimeout(id);
+            if(res.ok) return await res.json();
+        } catch(e) { 
+            console.warn(`Proxy 跳轉失敗: ${proxyUrl}`); 
         }
+    }
+    throw new Error("手機版無法建立連線，請切換至 4G/5G 網路測試。");
+}
 
         const API_GAMES = 'https://api.tpbl.basketball/api/seasons/2/games';
         const API_GAMES_S1 = 'https://api.tpbl.basketball/api/seasons/1/games';
@@ -1488,34 +1487,38 @@
 
                     // --- 修改後的 fetchData 區塊 ---
 
-// C. 精準抓取單週與單月 MVP (僅抓取第一頁新聞以節省請求次數)
+// --- 修改後的 fetchData C 區塊 ---
 try {
-    // 1. 只抓取第一頁新聞，避免觸發 Proxy 的 429 限制
-    const newsRes = await fetchJson('https://api.tpbl.basketball/api/teams/1/posts?type=news&page=1');
-    const newsItems = newsRes.data || newsRes.result || [];
+    let allNews = [];
+    // 循序抓取前 3 頁，不使用 Promise.all，避免手機版觸發併發限制
+    for (let p = 1; p <= 3; p++) {
+        try {
+            const res = await fetchJson(`https://api.tpbl.basketball/api/teams/1/posts?type=news&page=${p}`);
+            const items = res.data || res.result || [];
+            const pageData = Array.isArray(items) ? items : (items.data || []);
+            allNews = [...allNews, ...pageData];
+            
+            // 如果已經同時找到週 MVP 和 月 MVP，就提早停止，省流量
+            const hasWeekly = allNews.some(n => n.title.includes('週') && n.title.includes('MVP'));
+            const hasMonthly = allNews.some(n => n.title.includes('月') && n.title.includes('MVP'));
+            if (hasWeekly && hasMonthly) break; 
+        } catch (err) {
+            console.warn(`第 ${p} 頁抓取失敗`);
+        }
+    }
     
-    // 儲存所有新聞供其他頁面使用
-    globalAllNews = Array.isArray(newsItems) ? newsItems : (newsItems.data || []);
+    globalAllNews = allNews;
 
-    // 2. 從第一頁過濾出所需的 MVP 資訊
-    // 過濾單週 MVP (標題含有 '週' 且含有 'MVP')
-    const weekly = globalAllNews.filter(post => 
-        post.title.includes('週') && post.title.includes('MVP')
+    // 過濾邏輯
+    const weekly = allNews.filter(n => n.title.includes('週') && n.title.includes('MVP')).slice(0, 1);
+    const monthly = allNews.filter(n => 
+        (n.title.includes('月') && n.title.includes('MVP')) || 
+        /[\u{1D400}-\u{1D7FF}]/u.test(n.title) // 偵測特殊花體字
     ).slice(0, 1);
 
-    // 過濾單月 MVP (標題含有 '月' 且含有 'MVP'，或含有特定的獎盃圖示/花體字)
-    const monthly = globalAllNews.filter(post =>
-        (post.title.includes('月') && post.title.includes('MVP')) ||
-        /[\u{1D400}-\u{1D7FF}]/u.test(post.title) || // 偵測花體字
-        post.title.includes('🏆')
-    ).slice(0, 1);
-
-    // 整合到看板顯示清單
     globalMvpPosts = [...weekly, ...monthly];
-
 } catch (e) {
-    console.warn("MVP 新聞抓取失敗，可能是 Proxy 仍受限中", e);
-    globalMvpPosts = []; // 失敗則給空陣列，避免程式崩潰
+    console.error("新聞加載失敗", e);
 }
 
                     // D. 排行榜
