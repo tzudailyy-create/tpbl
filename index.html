@@ -1328,14 +1328,23 @@
     <script>
         // --- PROXY FETCH ---
         async function fetchJson(url) {
-             const ts = Date.now();
-             const targetUrl = url + (url.includes('?') ? '&' : '?') + 't=' + ts;
-             const encoded = encodeURIComponent(targetUrl);
-             const proxies = [
-                 `https://corsproxy.io/?${targetUrl}`,
-                 `https://thingproxy.freeboard.io/fetch/${targetUrl}`,
-                 `https://api.allorigins.win/raw?url=${encoded}`
-             ];
+    const ts = Date.now();
+    const targetUrl = url + (url.includes('?') ? '&' : '?') + 't=' + ts;
+    
+    // 優先嘗試「直接連線」，如果不噴 CORS 錯誤，這最快也最穩
+    try {
+        const directRes = await fetch(targetUrl);
+        if(directRes.ok) return await directRes.json();
+    } catch(e) {
+        console.log("直接連線失敗或受限，嘗試使用 Proxy...");
+    }
+
+    // 如果直接連線失敗，才走 Proxy
+    const encoded = encodeURIComponent(targetUrl);
+    const proxies = [
+        `https://api.allorigins.win/raw?url=${encoded}`, // 較穩定
+        `https://api.codetabs.com/v1/proxy?quest=${targetUrl}` // 新增一個備選
+    ];
              for(let proxyUrl of proxies) {
                  try {
                      const controller = new AbortController();
