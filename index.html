@@ -2215,30 +2215,15 @@ wrapper.innerHTML += `
                             ${renderGrid("防守神盾")}
                             ${renderGrid("精準效率")}
                         </div>`;
-                    } // 在 updateTeamTabContent 函數中找到 tabId === 'roster'
-} else if (tabId === 'roster') {
-    // 加上保護機制：確保 globalPlayers 是陣列
-    const playersList = Array.isArray(globalPlayers) ? globalPlayers : [];
-    
-    const teamPlayers = playersList.filter(p => 
-        p.team && p.team.name && p.team.name.includes(keyword)
-    ).sort((a,b) => parseInt(a.number) - parseInt(b.number));
-
-    if (teamPlayers.length === 0) {
-        html = `<div class="card-team"><div class="section-title-team">目前無法載入球員名單</div></div>`;
-    } else {
-        let rosterItems = teamPlayers.map(p => {
-            const pImg = p.images?.find(i => i.key === 'sm')?.url || DEFAULT_AVATAR;
-            return `<div class="roster-row-team" onclick="openPlayerProfile(${p.id})">
-                        <span class="p-num-team">#${p.number}</span>
-                        <img src="${pImg}" class="p-img-team">
-                        <div class="p-name-team">${p.name}</div>
-                        <span class="p-pos-team">${formatPos(p.meta?.position)}</span>
-                    </div>`;
-        }).join('');
-        html = `<div class="card-team" style="animation: fadeIn 0.4s ease;"><div class="section-title-team"><i data-lucide="users" width="16"></i> 球員陣容</div>${rosterItems}</div>`;
-    }
-} else if (tabId === 'schedule') {
+                    } else if (tabId === 'roster') {
+                        const teamPlayers = globalPlayers.filter(p => p.team.name.includes(keyword)).sort((a,b) => parseInt(a.number) - parseInt(b.number));
+                        let rosterItems = teamPlayers.map(p => {
+                            const pImg = p.images?.find(i => i.key === 'sm')?.url || DEFAULT_AVATAR;
+                            return `<div class="roster-row-team" onclick="openPlayerProfile(${p.id})"><span class="p-num-team">#${p.number}</span><img src="${pImg}" class="p-img-team"><div class="p-name-team">${p.name}</div><span class="p-pos-team">${formatPos(p.meta.position)}</span></div>`;
+                        }).join('');
+                        html = `<div class="card-team" style="animation: fadeIn 0.4s ease;"><div class="section-title-team"><i data-lucide="users" width="16"></i> 球員陣容</div>${rosterItems}</div>`;
+                        
+                    } else if (tabId === 'schedule') {
                         const upcomingGames = globalGames.filter(g => g.status !== 'COMPLETED' && (g.home_team.name.includes(keyword) || g.away_team.name.includes(keyword))).sort((a,b) => new Date(a.game_date) - new Date(b.game_date));
                         let lastMonth = ''; let schHtml = '';
                         if (upcomingGames.length > 0) {
