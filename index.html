@@ -780,34 +780,49 @@
         .fav-name { font-size: 11px; font-weight: 600; margin-top: 4px; text-align: center; white-space: nowrap; width: 100%; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
 
         
-        /* --- Highlights/News Grid (NEW) --- */
-        .highlights-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-            margin-bottom: 20px;
+        /* --- 短影音專區 (Shorts Scroll) --- */
+        .shorts-scroll {
+            display: flex; gap: 12px; overflow-x: auto;
+            padding: 4px var(--page-padding) 24px;
+            margin: 0 calc(var(--page-padding) * -1);
+            scrollbar-width: none; -webkit-overflow-scrolling: touch;
         }
-        .hl-card {
-            background: #fff; border-radius: 12px; overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: flex; flex-direction: column;
-            text-decoration: none; color: inherit; transition: transform 0.2s;
+        .shorts-scroll::-webkit-scrollbar { display: none; }
+        
+        .short-card {
+            flex: 0 0 140px; height: 250px; border-radius: 16px;
+            position: relative; overflow: hidden; background: #111827;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08); 
+            cursor: pointer; transition: transform 0.2s; text-decoration: none;
         }
-        .hl-card:active { transform: scale(0.96); }
-        .hl-img-box {
-            position: relative; width: 100%; padding-top: 56.25%; /* 16:9 */
-            background: #000; overflow: hidden;
+        .short-card:active { transform: scale(0.96); }
+        
+        .short-img {
+            width: 100%; height: 100%; object-fit: cover; opacity: 0.85; 
+            transition: opacity 0.3s;
         }
-        .hl-img {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            object-fit: cover; opacity: 0.9;
+        .short-card:hover .short-img { opacity: 1; }
+        
+        .short-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.3) 50%, transparent 100%);
+            display: flex; flex-direction: column; justify-content: flex-end;
+            padding: 12px; pointer-events: none;
         }
-        .hl-play-icon {
+        
+        .short-title {
+            color: #fff; font-size: 13px; font-weight: 700; line-height: 1.35;
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; 
+            overflow: hidden; text-shadow: 0 2px 4px rgba(0,0,0,0.5); letter-spacing: 0.5px;
+        }
+        
+        .short-play-icon {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 32px; height: 32px; background: rgba(0,0,0,0.5);
+            width: 36px; height: 36px; background: rgba(0,0,0,0.4);
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.3); color: #fff;
+            backdrop-filter: blur(4px); border: 1.5px solid rgba(255,255,255,0.6); 
+            color: #fff; pointer-events: none;
         }
-        .hl-info { padding: 10px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-        .hl-title { font-size: 12px; font-weight: 700; line-height: 1.3; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
-        .hl-date { font-size: 10px; color: #8E8E93; font-weight: 500; display: flex; align-items: center; gap: 4px; }
         
         /* --- Season Stats Table Styles (NEW) --- */
         .season-stats-container { background: #fff; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 24px; overflow: hidden; border: 1px solid rgba(0,0,0,0.02); }
@@ -1832,7 +1847,23 @@ try {
                         ]);
                     if (tpRes.status === 'fulfilled') globalTopPlayers = tpRes.value.data || tpRes.value;
                     if (ttRes.status === 'fulfilled') globalTopTeams = ttRes.value.data || ttRes.value;
+           // E. 抓取 YouTube 影音 (直接解析 shorts 陣列)
+            try {
+                // 抓取包含 videos 與 shorts 的大物件
+                const ytRes = await fetchJson('https://api.tpbl.basketball/api/teams/1/youtube/videos-shorts');
+                
+                // 精準抓取裡面的 shorts 陣列
+                if (ytRes && ytRes.shorts && Array.isArray(ytRes.shorts)) {
+                    window.globalShorts = ytRes.shorts;
+                } else if (ytRes && ytRes.data && ytRes.data.shorts && Array.isArray(ytRes.data.shorts)) {
+                    window.globalShorts = ytRes.data.shorts;
+                } else {
+                    window.globalShorts = [];
                 }
+            } catch(err) {
+                window.globalShorts = [];
+                console.error("Shorts 抓取失敗", err);
+            }}
 
         function processStatsData() {
             if (!globalTeamStats) return;
@@ -1942,12 +1973,16 @@ try {
                             wmvpHtml += `</div>`;
                             wrapper.innerHTML += wmvpHtml;
                         }
+// --- 在 renderHome 內，MVP 區塊結束後 ---
 
-            // *** 注意：請記得刪除 renderHome 裡面原本渲染「本月最佳球員 (mvp-card)」的那段代碼，以免重複顯示 ***
-// 最新快訊 (排除已經顯示在上面的 MVP 新聞)
+            // 1. 【先】呼叫 Shorts 影音專區，讓它排在新聞上方
+            renderHighlights(wrapper);
+
+            // 2. 【後】處理最新快訊 (News)，改用 appendChild 附加避免衝突
             const generalNews = globalAllNews.filter(post => !post.title.includes('MVP') && !post.title.includes('🏆')).slice(0, 6);
             if (generalNews.length > 0) {
-                wrapper.innerHTML += `<div class="section-header" style="margin-top:24px;"><div class="section-title">最新快訊</div><div class="section-date">NEWS</div></div>`;
+                const newsWrap = document.createElement('div');
+                newsWrap.innerHTML += `<div class="section-header" style="margin-top:24px;"><div class="section-title">最新快訊</div><div class="section-date">NEWS</div></div>`;
                 let newsHtml = `<div class="home-news-scroll">`;
                 
                 generalNews.forEach(n => {
@@ -1964,61 +1999,85 @@ try {
                 });
                 
                 newsHtml += `</div>`;
-                wrapper.innerHTML += newsHtml;
+                newsWrap.innerHTML += newsHtml;
+                wrapper.appendChild(newsWrap); // 安全地把新聞區塊塞到最底下
             }
-      
-            // --- Highlights Section (NEW) ---
-            
 
+            // --- 最後統一放進畫面並渲染 Icon ---
             container.appendChild(wrapper);
             lucide.createIcons();
-            if (scrollTargetId) setTimeout(() => { const target = document.getElementById(scrollTargetId); if(target) target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }, 300);
-        }
-
-        // New Helper Function for Highlights
-        function renderHighlights(container) {
-            const completed = globalGames.filter(g => g.status === 'COMPLETED').sort((a,b) => new Date(b.game_date) - new Date(a.game_date)).slice(0, 6);
-            if(completed.length === 0) return;
-
-            container.innerHTML += `<div class="section-header" style="margin-top:24px;"><div class="section-title">精選影音</div><div class="section-date">HIGHLIGHTS</div></div>`;
-            const grid = document.createElement('div');
-            grid.className = 'highlights-grid';
             
-            completed.forEach(g => {
-                const hName = getShortName(g.home_team.name);
-                const aName = getShortName(g.away_team.name);
-                const dateStr = g.game_date.split('-').slice(1).join('/');
-                const title = `${aName} vs ${hName}`;
-                
-                let thumbUrl = "https://via.placeholder.com/320x180?text=TPBL";
-                let linkUrl = g.meta?.recap || `https://www.youtube.com/results?search_query=TPBL+${hName}+vs+${aName}`;
-                
-                // Try to extract YouTube ID
-                if (linkUrl.includes('youtube.com/watch?v=')) {
-                    const vId = linkUrl.split('v=')[1].split('&')[0];
-                    thumbUrl = `https://img.youtube.com/vi/${vId}/mqdefault.jpg`;
-                } else if (linkUrl.includes('youtu.be/')) {
-                    const vId = linkUrl.split('youtu.be/')[1].split('?')[0];
-                    thumbUrl = `https://img.youtube.com/vi/${vId}/mqdefault.jpg`;
-                } else {
-                    // Fallback to match image if no direct video ID
-                    thumbUrl = `https://via.placeholder.com/320x180/0F2848/FFFFFF?text=${aName}+vs+${hName}`;
-                }
+            if (scrollTargetId) {
+                setTimeout(() => { 
+                    const target = document.getElementById(scrollTargetId); 
+                    if(target) target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); 
+                }, 300);
+            }
+        } // <--- 這是 renderHome 函數結束的括號
+        // New Helper Function for Highlights
+        // --- 渲染 YouTube Shorts 短影音專區 ---
+        // --- 渲染 YouTube Shorts 短影音專區 ---
+       // --- 渲染 YouTube Shorts 直式影音專區 ---
+        function renderHighlights(container) {
+            // 1. 如果完全沒有資料，直接返回不渲染任何東西
+            if (!window.globalShorts || window.globalShorts.length === 0) return;
 
-                grid.innerHTML += `
-                    <a href="${linkUrl}" target="_blank" class="hl-card">
-                        <div class="hl-img-box">
-                            <img src="${thumbUrl}" class="hl-img" loading="lazy">
-                            <div class="hl-play-icon"><i data-lucide="play" width="14" fill="white"></i></div>
+            // 2. 只取最新的 8 部 Shorts
+            const shortsList = window.globalShorts.slice(0, 8);
+            if (shortsList.length === 0) return;
+
+            // 3. 建立外層區塊與標題
+            const wrap = document.createElement('div');
+            wrap.innerHTML += `
+                <div class="section-header" style="margin-top:24px;">
+                    <div class="section-title">
+                        <i data-lucide="zap" width="18" style="color:var(--live-red); margin-right:6px;"></i>比賽精華
+                    </div>
+                    <div class="section-date">SHORTS</div>
+                </div>`;
+            
+            // 4. 建立橫向捲動的 Shorts 卡片容器
+            let html = `<div class="shorts-scroll">`;
+            
+            shortsList.forEach(v => {
+                const title = v.title || '';
+                
+                // 解析 Video ID
+                let videoId = v.id || v.video_id || '';
+                if (!videoId && v.url) {
+                    if (v.url.includes('v=')) videoId = v.url.split('v=')[1].split('&')[0];
+                    else if (v.url.includes('shorts/')) videoId = v.url.split('shorts/')[1].split('?')[0];
+                    else if (v.url.includes('youtu.be/')) videoId = v.url.split('youtu.be/')[1].split('?')[0];
+                }
+                
+                // 優先使用 API 提供的 standard 或 medium 畫質縮圖，若無則降級回算
+                let thumbUrl = 'https://via.placeholder.com/140x250?text=Shorts';
+                if (v.thumbnails) {
+                    thumbUrl = v.thumbnails.standard?.url || v.thumbnails.medium?.url || v.thumbnails.high?.url || v.thumbnails.default?.url;
+                } else if (videoId) {
+                    thumbUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                }
+                
+                // 強制轉換為 YouTube Shorts 播放格式連結
+                const linkUrl = videoId ? `https://www.youtube.com/shorts/${videoId}` : (v.url || '#');
+
+                html += `
+                    <a href="${linkUrl}" target="_blank" class="short-card">
+                        <img src="${thumbUrl}" class="short-img" loading="lazy" onerror="this.src='https://via.placeholder.com/140x250?text=TPBL'">
+                        <div class="short-overlay">
+                            <div class="short-title">${title}</div>
                         </div>
-                        <div class="hl-info">
-                            <div class="hl-title">${title}</div>
-                            <div class="hl-date nums"><i data-lucide="calendar" width="10"></i> ${dateStr}</div>
+                        <div class="short-play-icon">
+                            <i data-lucide="play" width="16" fill="white" style="margin-left:2px;"></i>
                         </div>
                     </a>
                 `;
             });
-            container.appendChild(grid);
+            
+            html += `</div>`;
+            wrap.innerHTML += html;
+            container.appendChild(wrap);
+            lucide.createIcons();
         }
 
         function updateHomeUI() {
