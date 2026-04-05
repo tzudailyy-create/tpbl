@@ -1424,6 +1424,132 @@
     cursor: pointer; transition: background 0.2s;
 }
 .team-sch-card-foot:active { background: #F3F4F6; }
+/* =========================================
+   球隊戰績總覽列表 (滿版無邊框設計)
+========================================= */
+.tl-container { padding: 0 0 40px 0; }
+
+/* 頂部標題區 */
+.tl-header { padding: 16px 20px 12px 20px; }
+.tl-title { font-size: 20px; font-weight: 900; color: var(--tpbl-blue); margin: 0 0 4px 0; letter-spacing: -0.5px; }
+.tl-desc { font-size: 12px; color: #8E8E93; margin: 0; }
+
+/* 列表表頭對齊 */
+.tl-col-headers { 
+    display: flex; align-items: center; padding: 4px 16px 8px 16px; 
+    font-size: 11px; color: #8E8E93; font-weight: 700; 
+}
+.tl-col-rank { width: 30px; text-align: center; }
+.tl-col-team { flex: 1; padding-left: 12px; }
+.tl-col-record { width: 70px; text-align: center; }
+.tl-col-winrate { width: 55px; text-align: center; }
+.tl-col-status { width: 55px; text-align: center; }
+
+/* 列表容器 */
+.tl-list-container { 
+    display: flex; flex-direction: column; gap: 12px; 
+    padding: 0 16px; 
+}
+
+/* 獨立卡片樣式 */
+.tl-row { 
+    width: 100%; background: white; border-radius: 14px; 
+    display: flex; align-items: stretch; overflow: hidden; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.01);
+    cursor: pointer; transition: transform 0.2s, background 0.2s; 
+    padding: 0; text-align: left; 
+}
+.tl-row:active { background: #F9FAFB; transform: scale(0.98); }
+
+/* 左側賽制裝飾線 */
+.tl-border { width: 6px; flex-shrink: 0; }
+.zone-playoff { background: var(--tpbl-blue); } 
+.zone-playin { background: var(--tpbl-gold); }  
+.zone-out { background: #E5E5EA; }              
+
+/* 內容區塊 */
+.tl-content { 
+    flex: 1; display: flex; align-items: center; 
+    padding: 16px 12px 16px 8px; 
+}
+
+.tl-rank { width: 30px; text-align: center; font-weight: 900; font-size: 16px; font-family: 'SF Mono', monospace; }
+.rank-playoff { color: var(--tpbl-blue); }
+.rank-playin { color: var(--tpbl-gold); }
+.rank-out { color: #9CA3AF; }
+
+/* 球隊名稱與隊徽 */
+.tl-team { flex: 1; padding-left: 8px; display: flex; align-items: center; }
+.tl-team-info { display: flex; align-items: center; gap: 10px; }
+.tl-team-logo { width: 28px; height: 28px; object-fit: contain; }
+.tl-name { font-size: 16px; font-weight: 800; color: #111827; }
+
+/* 數據欄位 */
+.tl-record { width: 70px; text-align: center; font-size: 16px; font-weight: 800; color: #111827; font-family: 'SF Mono', monospace; letter-spacing: -0.5px; }
+.tl-winrate { width: 55px; text-align: center; font-size: 13px; font-weight: 600; color: #8E8E93; font-family: 'SF Mono', monospace; }
+
+/* 狀態指數 Tag */
+.tl-status { width: 55px; display: flex; justify-content: center; align-items: center; }
+.tl-tag { 
+    padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; 
+    display: inline-block; font-family: 'SF Mono', monospace; letter-spacing: 0.5px;
+}
+.tag-clinched { background: #E8F5E9; color: #16A34A; }
+.tag-eliminated { background: #F3F4F6; color: #9CA3AF; }
+.tag-m { background: #EFF6FF; color: #2563EB; }
+.tag-m-playin { background: #FEF3C7; color: #D97706; }
+.tag-e { background: #FEE2E2; color: #DC2626; }
+.tag-streak { background: #F3F4F6; color: #8E8E93; }
+
+/* 底部圖例說明 (完美修復版) */
+.tl-legend { padding: 24px 16px; }
+.tl-legend-box { 
+    display: flex; align-items: flex-start; gap: 12px; 
+    background: white; padding: 18px; border-radius: 16px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.01);
+}
+.tl-legend-icon { color: var(--tpbl-blue); flex-shrink: 0; margin-top: 2px;}
+.tl-legend-text { font-size: 12px; color: #6B7280; line-height: 1.6; font-weight: 600; width: 100%;}
+.tl-legend-text p { margin: 0 0 8px 0; display: flex; align-items: center; }
+.tl-legend-text p:last-child { margin: 0; }
+.leg-lbl { display: inline-block; width: 68px; font-weight: 800; flex-shrink: 0;}
+
+/* 底部圖例說明 */
+        /* =========================================
+   首頁最新快訊 (News Scroll)
+========================================= */
+.home-news-scroll { 
+    display: flex; gap: 14px; overflow-x: auto; 
+    padding: 0 var(--page-padding) 20px; 
+    margin: 0 calc(var(--page-padding) * -1); 
+    scrollbar-width: none; -webkit-overflow-scrolling: touch; 
+}
+.home-news-scroll::-webkit-scrollbar { display: none; }
+
+.home-news-card { 
+    flex: 0 0 240px; background: white; border-radius: 16px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.04); overflow: hidden; 
+    border: 1px solid rgba(0,0,0,0.02); display: flex; flex-direction: column; 
+    transition: transform 0.2s; cursor: pointer;
+}
+.home-news-card:active { transform: scale(0.97); }
+
+.home-news-img { 
+    width: 100%; height: 135px; object-fit: cover; 
+    background: #F3F4F6; border-bottom: 1px solid rgba(0,0,0,0.03);
+}
+.home-news-content { 
+    padding: 14px 16px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; 
+}
+.home-news-title { 
+    font-size: 13px; font-weight: 700; color: #111827; line-height: 1.4; 
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; 
+    overflow: hidden; margin-bottom: 10px;
+}
+.home-news-date { 
+    font-size: 10px; color: #8E8E93; font-weight: 600; 
+    display: flex; align-items: center; gap: 4px; 
+}
     </style>
 </head>
 <body>
@@ -1818,64 +1944,29 @@ try {
                         }
 
             // *** 注意：請記得刪除 renderHome 裡面原本渲染「本月最佳球員 (mvp-card)」的那段代碼，以免重複顯示 ***
-
-       // --- 找到 renderHome 函數中 Standings 的區塊 ---
-wrapper.innerHTML += `<div class="section-header" style="margin-top:20px;"><div class="section-title">聯盟戰績</div></div>`;
-
-const sList = Array.isArray(globalStandings) ? globalStandings : (globalStandings.data || []);
-let tbody = '';
-
-sList.forEach((t, i) => {
-    const rank = t.rank || (i + 1);
-    const won = t.score_won_matches || 0;
-    const lost = t.score_lost_matches || 0;
-    
-    // 計算勝率
-    const pct = (won + lost) > 0 ? ((won / (won + lost)) * 100).toFixed(1) + '%' : '0.0%';
-    
-    // 直接抓取 API 提供的勝差與近況
-    const gb = (t.games_behind === 0 || t.games_behind === "0") ? '-' : t.games_behind;
-    const streak = t.streaks || '-';
-
-    // 根據 W 或 L 設定近況顏色
-    let streakColor = 'inherit';
-    if (streak.startsWith('W')) streakColor = 'var(--live-red)';
-    else if (streak.startsWith('L')) streakColor = 'var(--trend-down)';
-
-    tbody += `
-        <tr>
-            <td style="font-weight:700; color:#888;" class="nums">${rank}</td>
-            <td>
-                <div class="st-team">
-                    <img src="${getLogo(t.team.name, t.team.meta?.logo)}" style="width:20px;">
-                    ${getShortName(t.team.name)}
-                </div>
-            </td>
-            <td class="nums">${won}</td>
-            <td class="nums">${lost}</td>
-            <td class="nums" style="color:#666">${gb}</td>
-            <td><span class="win-pct nums">${pct}</span></td>
-            <td class="nums" style="font-weight:700; font-size:11px; color:${streakColor}">${streak}</td>
-        </tr>`;
-});
-
-wrapper.innerHTML += `
-    <div class="st-card">
-        <table class="st-table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>球隊</th>
-                    <th>勝</th>
-                    <th>敗</th>
-                    <th>勝差</th>
-                    <th>勝率</th>
-                    <th>近況</th>
-                </tr>
-            </thead>
-            <tbody>${tbody}</tbody>
-        </table>
-    </div>`;
+// 最新快訊 (排除已經顯示在上面的 MVP 新聞)
+            const generalNews = globalAllNews.filter(post => !post.title.includes('MVP') && !post.title.includes('🏆')).slice(0, 6);
+            if (generalNews.length > 0) {
+                wrapper.innerHTML += `<div class="section-header" style="margin-top:24px;"><div class="section-title">最新快訊</div><div class="section-date">NEWS</div></div>`;
+                let newsHtml = `<div class="home-news-scroll">`;
+                
+                generalNews.forEach(n => {
+                    const img = n.thumbnail || "https://via.placeholder.com/300x150";
+                    const date = n.published_at ? n.published_at.split(' ')[0].replace(/-/g, '/') : '';
+                    newsHtml += `
+                        <div class="home-news-card" onclick="window.open('https://tpbl.basketball/news/${n.id}', '_blank')">
+                            <img src="${img}" class="home-news-img" loading="lazy">
+                            <div class="home-news-content">
+                                <div class="home-news-title">${n.title}</div>
+                                <div class="home-news-date nums"><i data-lucide="clock" width="10"></i> ${date}</div>
+                            </div>
+                        </div>`;
+                });
+                
+                newsHtml += `</div>`;
+                wrapper.innerHTML += newsHtml;
+            }
+      
             // --- Highlights Section (NEW) ---
             
 
@@ -1954,67 +2045,121 @@ wrapper.innerHTML += `
 
         let currentTeamTab = 'billboard';
 
+// --- Teams Render (結合晉級/淘汰指數的高質感列表) ---
+   // --- Teams Render (滿版高質感列表) ---
         async function renderTeams() {
             const container = document.getElementById('app-container');
             container.innerHTML = '';
             
-            const wrapper = document.createElement('div');
-            wrapper.className = 'team-list-container';
-            
-            // 標題
-            wrapper.innerHTML = `<div class="section-header" style="margin-top:0"><div class="section-title">TPBL 球隊列表</div></div>`;
-
-            // 取得戰績列表
             const sList = Array.isArray(globalStandings) ? globalStandings : (globalStandings.data || []);
+            sList.sort((a, b) => (a.rank || 0) - (b.rank || 0));
 
-            // 這裡我們預設一個各隊的 Banner 映射 (或者你也可以在 openTeamDetail 抓完後緩存)
-            // 暫時用代表色當底，若有需求可另外抓取官方 banner 網址
-            const teamBanners = {
-                "攻城獅": "https://scontent-tpe1-1.xx.fbcdn.net/v/t39.30808-6/561517266_811112361562549_8462237075830491726_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=cc71e4&_nc_ohc=4VKnjXre2oIQ7kNvwEM_T_x&_nc_oc=Adknutw03TMpMpJfte5_bf5EB9ssvCMSulH-E_gPGMDgnlM8jK2W98W9LL-TYNzAf5A&_nc_zt=23&_nc_ht=scontent-tpe1-1.xx&_nc_gid=gOxo9gZAAAoV8MoO6vu3xQ&oh=00_Afq6USiJ2pDPrOJc8n91zJB2_rC9jy5qcMIju_cszgw9JA&oe=695C59AF",
-                "特攻": "https://assets.tpbl.basketball/production/banners/4PmPIbuVfxID3zh9qOTYtgQ5QtXNCh5Su7Vwn5cb.jpg?20251009100353",
-                "國王": "https://assets.tpbl.basketball/production/banners/PDzg5qNYzPHXjtpYkEt4dLH7FgEuCupQ4fAbtIA3.jpg?20251016175029",
-                "戰神": "https://assets.tpbl.basketball/production/banners/ttOjiu5A7OG7usc4rOfarCeCcakadY1zF9df6iHh.jpg?20251014182354",
-                "雲豹": "https://assets.tpbl.basketball/production/banners/TMYQozla46g6ZtLtVd2cFyV2b2uHVcmVI6ikNUV1.jpg?20251016124106",
-                "夢想家": "https://assets.tpbl.basketball/production/banners/AxQcYOObvm95AhLOilIQOYqSRuoMOAFsX9CPm7iJ.jpg?20251014123050",
-                "海神": "https://assets.tpbl.basketball/production/banners/I2Ls5tVeMwD1zhilFtwXEWtJvZoS2ZARlhCIFTbA.jpg?20251213110503"
-            };
+            const totalGamesPerTeam = 36;
+            const rank4 = sList.length >= 4 ? sList[3] : null; 
+            const rank5 = sList.length >= 5 ? sList[4] : null; 
+            const rank6 = sList.length >= 6 ? sList[5] : null; 
 
-            KEYWORD_ORDER.forEach(k => {
-                const foundStand = sList.find(s => s.team.name.includes(k));
-                const wins = foundStand ? foundStand.score_won_matches : 0;
-                const losses = foundStand ? foundStand.score_lost_matches : 0;
-                const teamColor = getTeamColor(k);
-                const rgb = hexToRgbValues(teamColor);
-                const logo = LOGOS[k];
-                const banner = teamBanners[k] || ""; // 若無 banner 則顯示純色
+            let listHtml = '';
+            
+            sList.forEach((t, i) => {
+                const rank = t.rank || (i + 1);
+                const w = t.score_won_matches || 0;
+                const l = t.score_lost_matches || 0;
+                const winRate = (w + l) > 0 ? (w / (w + l)) : 0;
+                const winRateStr = (winRate * 100).toFixed(1) + '%';
+                
+                const shortName = getShortName(t.team.name);
+                const logoUrl = getLogo(t.team.name, t.team.meta?.logo);
 
-                wrapper.innerHTML += `
-                    <div class="team-card-horizontal" 
-                         style="--team-color-rgb: ${rgb};" 
-                         onclick="openTeamDetail('${k}')">
-                        
-                        <!-- 背景圖片層 -->
-                        <div class="tch-banner" style="background-image: url('${banner}')"></div>
-                        
-                        <!-- 漸層遮罩層 -->
-                        <div class="tch-gradient"></div>
-                        
-                        <!-- 內容層 -->
-                        <div class="tch-content">
-                            <img src="${logo}" class="tch-logo">
-                            <div class="tch-info">
-                                <div class="tch-name">${k}</div>
-                                <div class="tch-record">${wins}W - ${losses}L</div>
+                let tagHtml = `<span class="tl-tag tag-streak">${t.streaks || '-'}</span>`;
+                
+                if (rank4 && rank5 && rank6) {
+                    const w5 = rank5.score_won_matches || 0;
+                    const l4 = rank4.score_lost_matches || 0;
+                    const l6 = rank6.score_lost_matches || 0;
+                    
+                    if ((w + l) >= 10) {
+                        if (rank <= 3) {
+                            const M = (totalGamesPerTeam + 1) - w - l4;
+                            if (M <= 0) tagHtml = `<span class="tl-tag tag-clinched">已晉級</span>`;
+                            else tagHtml = `<span class="tl-tag tag-m">M${M}</span>`;
+                        } else if (rank <= 5) {
+                            const M = (totalGamesPerTeam + 1) - w - l6;
+                            if (M <= 0) tagHtml = `<span class="tl-tag tag-clinched" style="color:#D97706; background:#FEF3C7;">挑戰賽</span>`;
+                            else tagHtml = `<span class="tl-tag tag-m-playin">M${M}</span>`;
+                        } else {
+                            const E = (totalGamesPerTeam + 1) - w5 - l;
+                            if (E <= 0) tagHtml = `<span class="tl-tag tag-eliminated">已淘汰</span>`;
+                            else tagHtml = `<span class="tl-tag tag-e">E${E}</span>`;
+                        }
+                    }
+                }
+
+                let zoneClass = 'zone-out';
+                let rankClass = 'rank-out';
+                if (rank <= 3) {
+                    zoneClass = 'zone-playoff';
+                    rankClass = 'rank-playoff';
+                } else if (rank <= 5) {
+                    zoneClass = 'zone-playin';
+                    rankClass = 'rank-playin';
+                }
+
+                listHtml += `
+                    <button class="tl-row" onclick="openTeamDetail('${shortName}')">
+                        <div class="tl-border ${zoneClass}"></div>
+                        <div class="tl-content">
+                            <div class="tl-rank ${rankClass}">${rank}</div>
+                            <div class="tl-team">
+                                <div class="tl-team-info">
+                                    <img src="${logoUrl}" class="tl-team-logo">
+                                    <span class="tl-name">${shortName}</span>
+                                </div>
                             </div>
+                            <div class="tl-record nums">${w} - ${l}</div>
+                            <div class="tl-winrate nums">${winRateStr}</div>
+                            <div class="tl-status">${tagHtml}</div>
                         </div>
-                    </div>
+                    </button>
                 `;
             });
 
-            container.appendChild(wrapper);
+            const wrapperHtml = `
+                <div class="tl-container">
+                    <div class="tl-header">
+                        <h1 class="tl-title">球隊戰績列表</h1>
+                        <p class="tl-desc">點擊球隊可查看詳細數據與球員陣容</p>
+                    </div>
+                    
+                    <div class="tl-col-headers">
+                        <div class="tl-col-rank">排名</div>
+                        <div class="tl-col-team">球隊</div>
+                        <div class="tl-col-record">勝-敗</div>
+                        <div class="tl-col-winrate">勝率</div>
+                        <div class="tl-col-status">狀態</div>
+                    </div>
+
+                    <div class="tl-list-container">
+                        ${listHtml}
+                    </div>
+
+                    <div class="tl-legend">
+                        <div class="tl-legend-box">
+                            <div class="tl-legend-icon"><i data-lucide="info" width="18"></i></div>
+                            <div class="tl-legend-text">
+                                <p style="font-weight:800; color:var(--tpbl-blue); margin-bottom:8px;">狀態指數說明</p>
+                                <p><span class="leg-lbl" style="color:#2563EB;">前三名 M</span>距離確保「直接晉級季後賽」所需勝場數。</p>
+                                <p><span class="leg-lbl" style="color:#D97706;">四五名 M</span>距離確保「晉級挑戰賽」所需勝場數。</p>
+                                <p><span class="leg-lbl" style="color:#DC2626;">淘汰區 E</span>距離「無緣季後賽」所剩的敗場數。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = wrapperHtml;
             lucide.createIcons();
         }
-
         // 內部標籤切換邏輯
         function switchTeamTab(event, tabId) {
             currentTeamTab = tabId;
