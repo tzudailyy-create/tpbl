@@ -3996,12 +3996,273 @@ function getSingleTeamStat(teamFullName, key) {
                 <div class="gb-team-row"><img src="${logoB}" class="gb-logo"><span class="gb-name">${shortB}</span><span class="gb-score">-</span></div>
                 <div class="gb-team-row"><img src="${logoA}" class="gb-logo"><span class="gb-name">${shortA}</span><span class="gb-score">-</span></div>
             </div>
+            
         </div>
     `;
     
     modal.classList.add('active');
     lucide.createIcons();
 };
+function renderSeriesSchedule(games, teamAName, teamBName, logoA, logoB, shortA, shortB, isPlayIn = false) {
+            if (!games || games.length === 0) {
+                return `<div style="padding: 20px; text-align: center; color: #8E8E93; font-size: 13px;">賽程尚未公佈</div>`;
+            }
+
+            let html = '';
+            
+            if (isPlayIn) {
+                html += `
+                <div class="game-box" style="background:#f9f9f9; opacity:0.8;">
+                    <div class="gb-header">
+                        <div class="gb-info"><span class="gb-title">Game 1</span><span class="gb-date">例行賽優勢</span></div>
+                        <div class="gb-status final">已結束</div>
+                    </div>
+                    <div class="gb-team-row winner">
+                        <img src="${logoA}" class="gb-logo"><span class="gb-name">${shortA}</span><span class="gb-score" style="color:var(--tpbl-blue);">1</span>
+                    </div>
+                    <div class="gb-team-row loser">
+                        <img src="${logoB}" class="gb-logo"><span class="gb-name">${shortB}</span><span class="gb-score">0</span>
+                    </div>
+                </div>`;
+            }
+
+            // 確保賽程按照日期與場次排序
+            games.sort((a, b) => new Date(a.game_date) - new Date(b.game_date) || a.code.localeCompare(b.code));
+
+            games.forEach((g) => {
+                const isDone = g.status === 'COMPLETED';
+                const isLive = g.status === 'LIVE' || g.status === 'IN_PROGRESS';
+                const dateStr = g.game_date.slice(5).replace('-', '/');
+                const timeStr = g.game_time ? g.game_time.slice(0, 5) : '待定';
+                
+                let statusHtml = '';
+                if (isDone) statusHtml = `<div class="gb-status final">已結束</div>`;
+                else if (isLive) statusHtml = `<div class="gb-status live"><span class="live-indicator active" style="position:static; width:6px; height:6px;"></span> 進行中</div>`;
+                else statusHtml = `<div class="gb-status tbd">${timeStr}</div>`;
+
+                const hNameRaw = g.home_team?.name || '';
+                const aNameRaw = g.away_team?.name || '';
+                
+                let hTeamShort = hNameRaw.includes('勝隊') ? '待定' : getShortName(hNameRaw);
+                let aTeamShort = aNameRaw.includes('勝隊') ? '待定' : getShortName(aNameRaw);
+                let hTeamLogo = hNameRaw.includes('勝隊') ? 'https://via.placeholder.com/64?text=?' : getLogo(hNameRaw, g.home_team?.meta?.logo);
+                let aTeamLogo = aNameRaw.includes('勝隊') ? 'https://via.placeholder.com/64?text=?' : getLogo(aNameRaw, g.away_team?.meta?.logo);
+                
+                let hScore = isDone || isLive ? (g.home_team.score ?? g.home_team.won_score ?? '-') : '-';
+                let aScore = isDone || isLive ? (g.away_team.score ?? g.away_team.won_score ?? '-') : '-';
+
+                let winClassH = '';
+                let winClassA = '';
+                if (isDone && hScore !== '-' && aScore !== '-') {
+                    const hs = parseInt(hScore);
+                    const as = parseInt(aScore);
+                    if (hs > as) winClassH = 'winner';
+                    else if (as > hs) winClassA = 'winner';
+                }
+
+                let gameNumStr = g.code;
+                if(isPlayIn) {
+                    gameNumStr = 'Game ' + g.code.replace('G', '');
+                } else {
+                    // 將 AG1, BG1 等轉為 Game 1
+                    gameNumStr = 'Game ' + g.code.replace(/A|B/g, '').replace('G', '');
+                }
+
+                html += `
+                    <div class="game-box" ${isLive || isDone ? `onclick="openGameDetails(${g.id})"` : ''} style="${isLive || isDone ? 'cursor:pointer;' : ''}">
+                        <div class="gb-header">
+                            <div class="gb-info"><span class="gb-title">${gameNumStr}</span><span class="gb-date">${dateStr}</span></div>
+                            ${statusHtml}
+                        </div>
+                        <div class="gb-team-row ${winClassA}">
+                            <img src="${aTeamLogo}" class="gb-logo"><span class="gb-name">${aTeamShort}</span><span class="gb-score">${aScore}</span>
+                        </div>
+                        <div class="gb-team-row ${winClassH}">
+                            <img src="${hTeamLogo}" class="gb-logo"><span class="gb-name">${hTeamShort}</span><span class="gb-score">${hScore}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        window.openSeriesDetail = function(groupId, teamAName, teamBName, seedA, seedB) {
+            toggleBodyLock(true);
+            const modal = document.getElementById('series-modal-a');
+            const titleEl = modal.querySelector('.modal-nav-title');
+            const heroEl = modal.querySelector('.hero-matchup');
+            const bodyEl = modal.querySelector('.sub-page-body');
+
+            titleEl.innerText = `首輪 ${groupId} 組系列賽`;
+            
+            const logoA = getLogo(teamAName);
+            const logoB = (teamBName === '待定') ? 'https://via.placeholder.com/64?text=?' : getLogo(teamBName);
+            const nameA = getShortName(teamAName);
+            const nameB = (teamBName === '待定') ? '挑戰賽勝者' : getShortName(teamBName);
+
+            // 抓取該系列賽的比賽資料
+            const seriesGames = globalGames.filter(g => g.division_id === 12 && g.code.startsWith(`${groupId}G`));
+            let winsA = 0, winsB = 0;
+            
+            seriesGames.forEach(g => {
+                if (g.status === 'COMPLETED') {
+                    const hs = parseInt(g.home_team.score ?? g.home_team.won_score ?? 0);
+                    const as = parseInt(g.away_team.score ?? g.away_team.won_score ?? 0);
+                    if (g.home_team.name === teamAName) {
+                        if (hs > as) winsA++; else winsB++;
+                    } else if (g.away_team.name === teamAName) {
+                        if (as > hs) winsA++; else winsB++;
+                    } else if (g.home_team.name.includes('勝隊') || g.away_team.name.includes('勝隊')) {
+                        if (g.home_team.name === teamAName) { if(hs>as) winsA++; else winsB++; }
+                        else if (g.away_team.name === teamAName) { if(as>hs) winsA++; else winsB++; }
+                    }
+                }
+            });
+
+            let statusPill = 'BO5 · 未開始';
+            if (winsA === 3 || winsB === 3) statusPill = `BO5 · ${winsA === 3 ? nameA : nameB} 晉級`;
+            else if (winsA === 2 && winsB === 2) statusPill = 'BO5 · 關鍵戰';
+            else if (winsA === 2 || winsB === 2) statusPill = `BO5 · ${winsA === 2 ? nameA : nameB} 聽牌`;
+            else if (winsA > 0 || winsB > 0) statusPill = 'BO5 · 進行中';
+
+            // 渲染 Hero
+            heroEl.innerHTML = `
+                <div class="hero-team"><div class="hero-seed">SEED ${seedA}</div><img src="${logoA}" class="hero-logo"><div style="font-weight:800; font-size:14px;">${nameA}</div></div>
+                <div class="hero-score-board nums"><div class="hero-score-nums"><span>${winsA}</span><span class="hero-score-dash">-</span><span style="color:rgba(255,255,255,0.5)">${winsB}</span></div><div class="hero-status-pill">${statusPill}</div></div>
+                <div class="hero-team"><div class="hero-seed">SEED ${seedB}</div><img src="${logoB}" class="hero-logo"><div style="font-weight:800; font-size:14px;">${nameB}</div></div>
+            `;
+
+            // 渲染數據對比與賽程清單
+            if (teamBName === '待定') {
+                bodyEl.innerHTML = `
+                    <div style="padding:40px; text-align:center; color:#8E8E93;">等待對戰組合確定中</div>
+                    <div class="detail-card">
+                        <div class="detail-card-header"><i data-lucide="calendar" width="16"></i> 系列賽賽程 (BO5)</div>
+                        ${renderSeriesSchedule(seriesGames, teamAName, teamBName, logoA, logoB, nameA, nameB, false)}
+                    </div>
+                `;
+            } else {
+                const buildStat = (label, key) => {
+                    const valA = getSingleTeamStat(teamAName, key);
+                    const valB = getSingleTeamStat(teamBName, key);
+                    const max = Math.max(valA, valB) || 1;
+                    return `
+                        <div class="tc-row-hz">
+                            <div class="tc-side left"><div class="tc-val-hz left ${valA>=valB?'winner':''}">${valA}</div><div class="tc-bar-bg-hz left"><div class="tc-fill-hz ${valA>=valB?'winner':''}" style="width:${(valA/max)*100}%"></div></div></div>
+                            <div class="tc-label-center">${label}</div>
+                            <div class="tc-side right"><div class="tc-bar-bg-hz right"><div class="tc-fill-hz ${valB>=valA?'winner':''}" style="width:${(valB/max)*100}%"></div></div><div class="tc-val-hz right ${valB>=valA?'winner':''}">${valB}</div></div>
+                        </div>`;
+                };
+
+                bodyEl.innerHTML = `
+                    <div class="detail-card">
+                        <div class="detail-card-header"><i data-lucide="bar-chart-2" width="16"></i> 兩隊例行賽場均數據</div>
+                        <div class="tc-header-logos"><img src="${logoA}"><div class="tc-header-vs">VS</div><img src="${logoB}"></div>
+                        ${buildStat('得分', 'won_score_per_match')}
+                        ${buildStat('籃板', 'rebounds_per_match')}
+                        ${buildStat('助攻', 'assists_per_match')}
+                        ${buildStat('抄截', 'steals_per_match')}
+                        ${buildStat('阻攻', 'blocks_per_match')}
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-header"><i data-lucide="calendar" width="16"></i> 系列賽賽程 (BO5)</div>
+                        ${renderSeriesSchedule(seriesGames, teamAName, teamBName, logoA, logoB, nameA, nameB, false)}
+                    </div>
+                `;
+            }
+            
+            modal.classList.add('active');
+            lucide.createIcons();
+        };
+
+        window.openPlayInDetail = function(teamAName, teamBName) {
+            toggleBodyLock(true);
+            const modal = document.getElementById('playin-modal');
+            const hero = document.getElementById('playin-modal-hero');
+            const body = document.getElementById('playin-modal-body');
+
+            // 取得 Logo 與簡稱
+            const logoA = getLogo(teamAName);
+            const logoB = getLogo(teamBName);
+            const shortA = getShortName(teamAName);
+            const shortB = getShortName(teamBName);
+
+            // 抓取挑戰賽 (division_id === 11) 的遊戲數據
+            const playinGames = globalGames.filter(g => g.division_id === 11);
+            let winsA = 1, winsB = 0; // 第四名保底一勝
+            
+            playinGames.forEach(g => {
+                if (g.status === 'COMPLETED') {
+                    const hs = parseInt(g.home_team.score ?? g.home_team.won_score ?? 0);
+                    const as = parseInt(g.away_team.score ?? g.away_team.won_score ?? 0);
+                    if (g.home_team.name === teamAName) {
+                        if (hs > as) winsA++; else winsB++;
+                    } else if (g.away_team.name === teamAName) {
+                        if (as > hs) winsA++; else winsB++;
+                    }
+                }
+            });
+
+            let statusPill = 'BO3 · 進行中';
+            if (winsA === 2 || winsB === 2) statusPill = `BO3 · ${winsA === 2 ? shortA : shortB} 晉級`;
+
+            // 渲染上方比分看板
+            hero.innerHTML = `
+                <div class="hero-matchup">
+                    <div class="hero-team"><div class="hero-seed">SEED 4</div><img src="${logoA}" class="hero-logo"><div>${shortA}</div></div>
+                    <div class="hero-score-board nums">
+                        <div class="hero-score-nums"><span>${winsA}</span><span class="hero-score-dash">-</span><span style="color:rgba(255,255,255,0.5)">${winsB}</span></div>
+                        <div class="hero-status-pill">${statusPill}</div>
+                    </div>
+                    <div class="hero-team"><div class="hero-seed">SEED 5</div><img src="${logoB}" class="hero-logo"><div>${shortB}</div></div>
+                </div>`;
+
+            // 內部輔助函數：建立對比條
+            const buildStatRow = (label, key) => {
+                const valA = getSingleTeamStat(teamAName, key);
+                const valB = getSingleTeamStat(teamBName, key);
+                const vA = parseFloat(valA) || 0;
+                const vB = parseFloat(valB) || 0;
+                const max = Math.max(vA, vB) || 1;
+                return `
+                    <div class="tc-row-hz">
+                        <div class="tc-side left">
+                            <div class="tc-val-hz left ${vA >= vB ? 'winner' : ''}">${valA}</div>
+                            <div class="tc-bar-bg-hz left"><div class="tc-fill-hz ${vA >= vB ? 'winner' : ''}" style="width:${(vA/max)*100}%"></div></div>
+                        </div>
+                        <div class="tc-label-center">${label}</div>
+                        <div class="tc-side right">
+                            <div class="tc-bar-bg-hz right"><div class="tc-fill-hz ${vB >= vA ? 'winner' : ''}" style="width:${(vB/max)*100}%"></div></div>
+                            <div class="tc-val-hz right ${vB >= vA ? 'winner' : ''}">${valB}</div>
+                        </div>
+                    </div>`;
+            };
+
+            // 渲染 Body (動態插入比賽場次資料)
+            body.innerHTML = `
+                <div class="detail-card">
+                    <div class="detail-card-header"><i data-lucide="bar-chart-2" width="16"></i> 兩隊例行賽場均數據</div>
+                    <div class="tc-header-logos" style="padding: 16px 30px 4px;">
+                        <img src="${logoA}" width="40"><div class="tc-header-vs">VS</div><img src="${logoB}" width="40">
+                    </div>
+                    <div style="padding-bottom: 10px;">
+                        ${buildStatRow('得分', 'won_score_per_match')}
+                        ${buildStatRow('籃板', 'rebounds_per_match')}
+                        ${buildStatRow('助攻', 'assists_per_match')}
+                        ${buildStatRow('抄截', 'steals_per_match')}
+                        ${buildStatRow('阻攻', 'blocks_per_match')}
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <div class="detail-card-header"><i data-lucide="calendar" width="16"></i> 系列賽賽程 (BO3)</div>
+                    ${renderSeriesSchedule(playinGames, teamAName, teamBName, logoA, logoB, shortA, shortB, true)}
+                </div>
+            `;
+            
+            modal.classList.add('active');
+            lucide.createIcons();
+        };
     </script>
 </body>
 </html>
