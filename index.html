@@ -273,6 +273,30 @@
         .sub-page-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px var(--page-padding) 40px var(--page-padding); }
 
         /* --- Components --- */
+        /* 季後賽 Group A (深藍) - 只改 Header */
+        .match-card.group-a-card .match-status-bar {
+            background: linear-gradient(135deg, #0F2848 0%, #1A3A68 100%);
+            color: #fff;
+            border-bottom: none;
+        }
+        .match-card.group-a-card .match-status-bar .venue-info { color: rgba(255,255,255,0.9); }
+        .match-card.group-a-card .match-status-bar .badge.date { background: rgba(255,255,255,0.2); color: #fff; }
+        
+        /* 季後賽 Group B (香檳金) - 只改 Header */
+        .match-card.group-b-card .match-status-bar {
+            background: linear-gradient(135deg, #FFFDF8 0%, #F3E5C8 100%);
+            border-bottom: 1px solid #D4B07D;
+        }
+        .match-card.group-b-card .match-status-bar .venue-info { color: #A05E28; font-weight: 700; }
+        .match-card.group-b-card .match-status-bar .badge.date { background: rgba(160,94,40,0.1); color: #A05E28; }
+
+        /* 戰績小標籤 */
+        .series-record-badge {
+            font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-right: 6px;
+            font-family: -apple-system, sans-serif; letter-spacing: 0.5px;
+        }
+        .match-card.group-a-card .series-record-badge { background: var(--tpbl-gold); color: var(--tpbl-blue); }
+        .match-card.group-b-card .series-record-badge { background: #A05E28; color: #FFF; }
         .container { padding: var(--page-padding); max-width: 600px; margin: 0 auto; min-height: 80vh; }
         .section-header { display: flex; align-items: center; justify-content: space-between; margin: 24px 0 12px 0; color: var(--tpbl-blue); }
         .section-title { font-size: 18px; font-weight: 800; display: flex; align-items: center; letter-spacing: -0.5px; }
@@ -2146,34 +2170,23 @@ if (sList.length >= 5) {
     const seed1 = sortedList[0], seed2 = sortedList[1], seed3 = sortedList[2], seed4 = sortedList[3], seed5 = sortedList[4];
     const getT = (s) => ({ name: getShortName(s.team.name), logo: getLogo(s.team.name, s.team.meta?.logo), fullName: s.team.name });
     const t1 = getT(seed1), t2 = getT(seed2), t3 = getT(seed3), t4 = getT(seed4), t5 = getT(seed5);
-// --- 區塊 1：季後挑戰賽 (4 vs 5) ---
-wrapper.innerHTML += `
-<div class="section-header" style="margin-top:16px">
-    <div class="section-title"><i data-lucide="swords" width="18"></i> 季後挑戰賽</div>
-    <div class="section-date">PLAY-IN</div>
-</div>
-<div class="playoffs-container" style="margin-bottom:24px;">
-    <div class="po-card group-playin" onclick="window.openPlayInDetail('${t4.fullName}', '${t5.fullName}')">
-        <div class="po-header-line">
-            <div class="po-round"><span class="po-indicator"></span>挑戰賽 (第4名 vs 第5名)</div>
-            <div class="po-format">BO3</div>
-        </div>
-        <div class="po-matchup-list">
-            <div class="po-team-row leader">
-                <div class="po-team-info"><div class="po-seed">4</div><img src="${t4.logo}" class="po-logo"><div class="po-name">${t4.name}</div></div>
-                <div class="po-score">1</div>
-            </div>
-            <div class="po-team-row">
-                <div class="po-team-info"><div class="po-seed">5</div><img src="${t5.logo}" class="po-logo"><div class="po-name">${t5.name}</div></div>
-                <div class="po-score">0</div>
-            </div>
-        </div>
-        <div class="po-footer">
-            <div class="po-status-text"><i data-lucide="info" width="13"></i> 第四名先拿一勝，勝者晉級 A 組</div>
-            <div><i data-lucide="chevron-right" width="14"></i></div>
-        </div>
-    </div>
-</div>`;
+    // --- 計算季後賽真實比分 ---
+    const getSeriesWins = (groupId, teamA, teamB) => {
+        let winsA = 0, winsB = 0;
+        const games = globalGames.filter(g => g.division_id === 12 && g.code.startsWith(`${groupId}G`) && g.status === 'COMPLETED');
+        games.forEach(g => {
+            const hs = parseInt(g.home_team.score ?? g.home_team.won_score ?? 0);
+            const as = parseInt(g.away_team.score ?? g.away_team.won_score ?? 0);
+            if (g.home_team.name === teamA.fullName) { if (hs > as) winsA++; else winsB++; }
+            else if (g.away_team.name === teamA.fullName) { if (as > hs) winsA++; else winsB++; }
+        });
+        return { winsA, winsB };
+    };
+    
+    // 這裡把 t4 改成 t5，抓取第五名國王隊的戰績
+    const aWins = getSeriesWins('A', t1, t5);
+    const bWins = getSeriesWins('B', t2, t3);
+
     // --- 區塊 2：季後賽首輪 (Group A & B) ---
     wrapper.innerHTML += `
     <div class="section-header" style="margin-top:10px">
@@ -2181,44 +2194,43 @@ wrapper.innerHTML += `
         <div class="section-date">PLAYOFFS</div>
     </div>
     <div class="playoffs-container">
-        <div class="po-card group-a" onclick="openSeriesDetail('A', '${t1.fullName}', '待定', 1, 4)">
+        <!-- Group A: 第一名 vs 第五名 (國王以下克上) -->
+        <div class="po-card group-a" onclick="openSeriesDetail('A', '${t1.fullName}', '${t5.fullName}', 1, 5)">
             <div class="po-header-line">
                 <div class="po-round"><span class="po-indicator"></span>首輪 - Group A</div>
                 <div class="po-format">BO5</div>
             </div>
             <div class="po-matchup-list">
-                <div class="po-team-row leader">
+                <div class="po-team-row ${aWins.winsA >= aWins.winsB ? 'leader' : ''}">
                     <div class="po-team-info"><div class="po-seed">1</div><img src="${t1.logo}" class="po-logo"><div class="po-name">${t1.name}</div></div>
-                    <div class="po-score">0</div>
+                    <div class="po-score">${aWins.winsA}</div>
                 </div>
-                <div class="po-team-row">
-                    <div class="po-team-info">
-                        <div class="po-seed">4/5</div>
-                        <div class="po-logo" style="display:flex;align-items:center;justify-content:center;background:#f0f0f0;border-radius:50%;font-size:10px;font-weight:800;color:#999;width:32px;height:32px;">?</div>
-                        <div class="po-name" style="color:#8E8E93">待定</div>
-                    </div>
-                    <div class="po-score">0</div>
+                <div class="po-team-row ${aWins.winsB >= aWins.winsA ? 'leader' : ''}">
+                    <!-- 這裡把種子序 4 改成 5，並帶入 t5 的資料 -->
+                    <div class="po-team-info"><div class="po-seed">5</div><img src="${t5.logo}" class="po-logo"><div class="po-name">${t5.name}</div></div>
+                    <div class="po-score">${aWins.winsB}</div>
                 </div>
             </div>
-            <div class="po-footer"><div class="po-status-text">等待挑戰賽結果</div><div><i data-lucide="chevron-right" width="14"></i></div></div>
+            <div class="po-footer"><div class="po-status-text">點擊查看詳情</div><div><i data-lucide="chevron-right" width="14"></i></div></div>
         </div>
 
+        <!-- Group B: 第二名 vs 第三名 -->
         <div class="po-card group-b" onclick="openSeriesDetail('B', '${t2.fullName}', '${t3.fullName}', 2, 3)">
             <div class="po-header-line">
                 <div class="po-round"><span class="po-indicator"></span>首輪 - Group B</div>
                 <div class="po-format">BO5</div>
             </div>
             <div class="po-matchup-list">
-                <div class="po-team-row leader">
+                <div class="po-team-row ${bWins.winsA >= bWins.winsB ? 'leader' : ''}">
                     <div class="po-team-info"><div class="po-seed">2</div><img src="${t2.logo}" class="po-logo"><div class="po-name">${t2.name}</div></div>
-                    <div class="po-score">0</div>
+                    <div class="po-score">${bWins.winsA}</div>
                 </div>
-                <div class="po-team-row">
+                <div class="po-team-row ${bWins.winsB >= bWins.winsA ? 'leader' : ''}">
                     <div class="po-team-info"><div class="po-seed">3</div><img src="${t3.logo}" class="po-logo"><div class="po-name">${t3.name}</div></div>
-                    <div class="po-score">0</div>
+                    <div class="po-score">${bWins.winsB}</div>
                 </div>
             </div>
-            <div class="po-footer"><div class="po-status-text">即將開打</div><div><i data-lucide="chevron-right" width="14"></i></div></div>
+            <div class="po-footer"><div class="po-status-text">點擊查看詳情</div><div><i data-lucide="chevron-right" width="14"></i></div></div>
         </div>
     </div>`;
 
@@ -4056,8 +4068,13 @@ function renderSeriesSchedule(games, teamAName, teamBName, logoA, logoB, shortA,
                 if (isDone && hScore !== '-' && aScore !== '-') {
                     const hs = parseInt(hScore);
                     const as = parseInt(aScore);
-                    if (hs > as) winClassH = 'winner';
-                    else if (as > hs) winClassA = 'winner';
+                    if (hs > as) {
+                        winClassH = 'winner';
+                        winClassA = 'loser';
+                    } else if (as > hs) {
+                        winClassA = 'winner';
+                        winClassH = 'loser';
+                    }
                 }
 
                 let gameNumStr = g.code;
