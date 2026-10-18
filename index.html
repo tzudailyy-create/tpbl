@@ -2,20 +2,16 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <!-- 加入 viewport-fit=cover 讓全螢幕模式支援 iPhone 瀏海與動態島 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>TPBL</title>
 
-    <!-- ================= PWA / 加入主畫面 (App化) 專屬設定 ================= -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="TPBL">
     <meta name="theme-color" content="#0F3B66">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/VLRMcmCQ/843434575-17954308326268064-7956675674473568303-n.jpg">
     <link rel="shortcut icon" href="https://i.postimg.cc/VLRMcmCQ/843434575-17954308326268064-7956675674473568303-n.jpg">
-    <!-- Android Manifest 內嵌設定 -->
     <link rel="manifest" href='data:application/manifest+json,{"name":"TPBL","short_name":"TPBL","start_url":".","display":"standalone","theme_color":"#0F3B66","background_color":"#FFFFFF","icons":[{"src":"https://i.postimg.cc/VLRMcmCQ/843434575-17954308326268064-7956675674473568303-n.jpg","sizes":"512x512","type":"image/jpeg"}]}'>
-    <!-- ================================================================= -->
 
     <style>
         :root {
@@ -37,7 +33,6 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        /* ================= 開場 Loading 與檢查點 ================= */
         #splash-screen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background-color: var(--primary); z-index: 9999;
@@ -54,7 +49,6 @@
         .chk-done { color: #34C759; }
         .chk-err { color: #FF3B30; }
 
-        /* ================= 頂部 Toast 提示 ================= */
         #toast {
             position: fixed; top: calc(64px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-150%);
             background: rgba(28, 28, 30, 0.95); color: #fff; padding: 12px 24px; border-radius: 20px;
@@ -67,7 +61,6 @@
         @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-35px); } }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* --- 頂部標題列 (Fixed) --- */
         header {
             background-color: var(--primary); position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;
             display: flex; justify-content: center; align-items: center; box-shadow: 0 1px 8px rgba(0,0,0,0.1); 
@@ -84,7 +77,6 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .content-padding { padding: 20px; }
 
-        /* --- 頂端篩選區 --- */
         .sticky-filter-header {
             position: sticky; top: calc(54px + env(safe-area-inset-top)); z-index: 90; background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding-bottom: 12px; border-bottom: 1px solid var(--border-color);
@@ -99,7 +91,6 @@
         .filter-badge { background: var(--live-red); color:#fff; font-size:10px; padding: 2px 6px; border-radius:10px; margin-left:4px; display: none;}
         .filter-badge.show { display: inline-block; }
 
-        /* --- 輪播與卡片 --- */
         .section-title { font-size: 18px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.3px;}
         .carousel-wrapper { position: relative; margin: 0 -20px 16px -20px; }
         .carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 0 20px; gap: 12px; scrollbar-width: none; }
@@ -139,7 +130,6 @@
         .standings-team { display: flex; align-items: center; gap: 8px; text-align: left; }
         .standings-logo { width: 24px; height: 24px; object-fit: contain; }
 
-        /* --- 底部導航 --- */
         .bottom-nav {
             position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
             width: calc(100% - 40px); max-width: 350px; height: 60px;
@@ -165,7 +155,6 @@
         .bs-team-name { font-size: 13px; font-weight: 800; color: var(--text-main); text-align: center; line-height: 1.4; display: flex; flex-direction: column; align-items: center;}
         .badge-wrap { display: flex; gap: 4px; height: 16px; align-items: center; justify-content: center; margin-top: 2px;}
 
-        /* 防破圖比分設計 */
         .bs-score-col { 
             display: flex; justify-content: center; align-items: center; gap: 6px;
             font-size: clamp(26px, 7vw, 34px); font-weight: 800; color: var(--primary); 
@@ -173,7 +162,6 @@
         }
         .bs-score-divider { font-size: 18px; color: var(--text-sub); transform: translateY(-2px); }
 
-        /* 各節比分表(支援OT橫向滑動) */
         .q-table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         .q-table-wrapper::-webkit-scrollbar { display: none; }
         .q-table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; font-weight: 600; white-space: nowrap;}
@@ -212,12 +200,10 @@
         .player-name { font-weight: 700; color: var(--text-main); font-size: 13px;}
         .player-pos { font-size: 10px; color: var(--text-sub); font-weight: 600;}
 
-        /* 雙層總和列 */
         .total-header td { background: #F9F9F9 !important; padding: 6px 8px !important; border-top: 2px solid var(--border-color) !important;}
         .row-total td { background: #fafafa !important; font-weight: 800; color: var(--primary); font-size: 13px;}
         .loader { text-align: center; padding: 40px; color: var(--primary); font-weight: 600; font-size: 13px;}
 
-        /* === 篩選彈窗 === */
         .sheet-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); z-index: 2000; opacity: 0; pointer-events: none; transition: 0.3s; }
         .sheet-overlay.show { opacity: 1; pointer-events: auto; }
         .sheet-content { position: absolute; bottom: 0; left: 0; width: 100%; background: #fff; border-radius: 24px 24px 0 0; padding: 20px 20px 40px 20px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
@@ -235,10 +221,8 @@
 </head>
 <body>
 
-    <!-- 頂部 Toast 通知 -->
     <div id="toast"></div>
 
-    <!-- 開場動畫與檢查點 -->
     <div id="splash-screen">
         <div class="bounce-wrapper">
             <svg class="basketball-svg" viewBox="0 0 24 24" width="60" height="60">
@@ -248,10 +232,9 @@
         </div>
         <div class="loading-text">TPBL</div>
         
-       
+        
     </div>
 
-    <!-- Header -->
     <header>
         <button id="btn-back" class="btn-back" onclick="closeBoxScore()">
             <svg viewBox="0 0 24 24" width="26" height="26" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -307,7 +290,6 @@
         </div>
     </nav>
 
-    <!-- 篩選彈窗 -->
     <div class="sheet-overlay" id="unified-sheet" onclick="closeFilterSheet()">
         <div class="sheet-content" onclick="event.stopPropagation()">
             <div class="sheet-handler"></div>
@@ -323,9 +305,7 @@
         </div>
     </div>
 
-    <!-- ===== JS 邏輯 (完全降級 ES5 相容寫法，保證不會有語法錯誤) ===== -->
     <script>
-        // --- 檢查點 UI 更新 ---
         function updateChk(id, status, text) {
             var el = document.getElementById(id);
             if(!el) return;
@@ -341,20 +321,57 @@
             setTimeout(function() { toast.classList.remove('show'); }, t);
         }
 
-        // --- 備用資料 (以防 CORS API 被阻擋，保證執行順暢) ---
+        // --- 最新真實備用資料 ---
         var FALLBACK_STANDINGS = [{"team":{"name":"新北國王","meta":{"logo":"https://assets.tpbl.basketball/logos/kings.webp"}},"rank":1,"score_won_matches":1,"score_lost_matches":0,"games_behind":0},{"team":{"name":"臺北台新戰神","meta":{"logo":"https://assets.tpbl.basketball/logos/mars.webp"}},"rank":2,"score_won_matches":0,"score_lost_matches":0,"games_behind":0.5},{"team":{"name":"新北中信特攻","meta":{"logo":"https://assets.tpbl.basketball/logos/dea.webp"}},"rank":2,"score_won_matches":0,"score_lost_matches":0,"games_behind":0.5},{"team":{"name":"桃園台啤永豐雲豹","meta":{"logo":"https://assets.tpbl.basketball/logos/leopards.webp"}},"rank":2,"score_won_matches":0,"score_lost_matches":0,"games_behind":0.5},{"team":{"name":"新竹御嵿攻城獅","meta":{"logo":"https://assets.tpbl.basketball/logos/lioneers.webp"}},"rank":2,"score_won_matches":0,"score_lost_matches":0,"games_behind":0.5},{"team":{"name":"高雄全家海神","meta":{"logo":"https://assets.tpbl.basketball/logos/aquas.webp"}},"rank":2,"score_won_matches":0,"score_lost_matches":0,"games_behind":0.5},{"team":{"name":"福爾摩沙夢想家","meta":{"logo":"https://assets.tpbl.basketball/logos/dreamers.webp"}},"rank":7,"score_won_matches":0,"score_lost_matches":1,"games_behind":1}];
         var FALLBACK_GAMES = [
             { "id": 27538, "home_team": { "name": "高雄全家海神", "meta": { "logo": "https://assets.tpbl.basketball/logos/aquas.webp" }, "won_score": 134 }, "away_team": { "name": "新竹御嵿攻城獅", "meta": { "logo": "https://assets.tpbl.basketball/logos/lioneers.webp" }, "won_score": 110 }, "venue": "和平籃球館", "status": "COMPLETED", "is_live": false, "game_date": "2026-10-10", "game_day_of_week": "(六)", "game_time": "14:30:00" },
-            { "id": 27543, "home_team": { "name": "福爾摩沙夢想家", "meta": { "logo": "https://assets.tpbl.basketball/logos/dreamers.webp" }, "won_score": 39 }, "away_team": { "name": "高雄全家海神", "meta": { "logo": "https://assets.tpbl.basketball/logos/aquas.webp" }, "won_score": 56 }, "venue": "臺中洲際迷你蛋", "status": "IN_PROGRESS", "is_live": true, "game_date": "2026-10-18", "game_day_of_week": "(日)", "game_time": "17:00:00" },
+            { "id": 27543, "home_team": { "name": "福爾摩沙夢想家", "meta": { "logo": "https://assets.tpbl.basketball/logos/dreamers.webp" }, "won_score": 45 }, "away_team": { "name": "高雄全家海神", "meta": { "logo": "https://assets.tpbl.basketball/logos/aquas.webp" }, "won_score": 59 }, "venue": "臺中洲際迷你蛋", "status": "IN_PROGRESS", "is_live": true, "game_date": "2026-10-18", "game_day_of_week": "(日)", "game_time": "17:00:00" },
             { "id": 27544, "home_team": { "name": "新竹御嵿攻城獅", "meta": { "logo": "https://assets.tpbl.basketball/logos/lioneers.webp" } }, "away_team": { "name": "福爾摩沙夢想家", "meta": { "logo": "https://assets.tpbl.basketball/logos/dreamers.webp" } }, "venue": "新竹縣體育館", "status": "NOT_STARTED", "is_live": false, "game_date": "2026-10-24", "game_day_of_week": "(六)", "game_time": "14:30:00" },
             { "id": 27545, "home_team": { "name": "新北中信特攻", "meta": { "logo": "https://assets.tpbl.basketball/logos/dea.webp" } }, "away_team": { "name": "臺北台新戰神", "meta": { "logo": "https://assets.tpbl.basketball/logos/mars.webp" } }, "venue": "新莊體育館", "status": "NOT_STARTED", "is_live": false, "game_date": "2026-10-24", "game_day_of_week": "(六)", "game_time": "17:00:00" }
         ];
+
+        // 離線備用真實 Boxscore (福爾摩沙夢想家 vs 高雄全家海神)
+        var FALLBACK_BOXSCORE_27543 = {
+            "home_team": {
+                "name": "福爾摩沙夢想家",
+                "teams": {
+                    "rounds": { "1": { "won_score": 23 }, "2": { "won_score": 22 } },
+                    "total": { "won_score": 45, "two_pointers_percentage": "41.7", "three_pointers_percentage": "7.7", "free_throws_percentage": "63.2", "rebounds": 32, "assists": 6, "steals": 4, "blocks": 3, "turnovers": 6, "fouls": 9, "field_goals": "16/49", "three_pointers": "1/13", "free_throws": "12/19" }
+                },
+                "players": {
+                    "total": {
+                        "204116": { "name": "高柏鎧", "number": "34", "positions": "Center", "is_starting": true, "time_on_court": 782, "score": 14, "field_goals": "5/9", "three_pointers": "0/0", "free_throws": "4/5", "rebounds": 7, "assists": 0, "steals": 0, "blocks": 2, "turnovers": 0, "fouls": 2 },
+                        "204117": { "name": "張宗憲", "number": "3", "positions": "ShootingGuard", "is_starting": true, "time_on_court": 660, "score": 7, "field_goals": "3/7", "three_pointers": "0/1", "free_throws": "1/2", "rebounds": 2, "assists": 0, "steals": 1, "blocks": 0, "turnovers": 1, "fouls": 0 },
+                        "204118": { "name": "基德", "number": "10", "positions": "SmallForward", "is_starting": true, "time_on_court": 1006, "score": 9, "field_goals": "3/7", "three_pointers": "0/1", "free_throws": "3/4", "rebounds": 3, "assists": 1, "steals": 2, "blocks": 1, "turnovers": 1, "fouls": 2 },
+                        "204120": { "name": "林俊吉", "number": "11", "positions": "PointGuard", "is_starting": false, "time_on_court": 490, "score": 6, "field_goals": "1/7", "three_pointers": "1/2", "free_throws": "3/5", "rebounds": 3, "assists": 1, "steals": 0, "blocks": 0, "turnovers": 0, "fouls": 0 },
+                        "204127": { "name": "忻沃克", "number": "42", "positions": "SmallForward", "is_starting": false, "time_on_court": 574, "score": 7, "field_goals": "3/5", "three_pointers": "0/1", "free_throws": "1/1", "rebounds": 5, "assists": 1, "steals": 0, "blocks": 0, "turnovers": 1, "fouls": 1 },
+                        "204129": { "name": "馬建豪", "number": "2", "positions": "SmallForward", "is_starting": true, "time_on_court": 664, "score": 2, "field_goals": "1/5", "three_pointers": "0/2", "free_throws": "0/2", "rebounds": 4, "assists": 0, "steals": 0, "blocks": 0, "turnovers": 1, "fouls": 1 }
+                    }
+                }
+            },
+            "away_team": {
+                "name": "高雄全家海神",
+                "teams": {
+                    "rounds": { "1": { "won_score": 37 }, "2": { "won_score": 22 } },
+                    "total": { "won_score": 59, "two_pointers_percentage": "50.0", "three_pointers_percentage": "31.0", "free_throws_percentage": "90.9", "rebounds": 34, "assists": 11, "steals": 4, "blocks": 0, "turnovers": 6, "fouls": 15, "field_goals": "20/51", "three_pointers": "9/29", "free_throws": "10/11" }
+                },
+                "players": {
+                    "total": {
+                        "204130": { "name": "貝西里", "number": "00", "positions": "PowerForwardAndCenter", "is_starting": true, "time_on_court": 490, "score": 18, "field_goals": "6/13", "three_pointers": "3/8", "free_throws": "3/3", "rebounds": 7, "assists": 2, "steals": 0, "blocks": 0, "turnovers": 0, "fouls": 2 },
+                        "204131": { "name": "賀丹", "number": "3", "positions": "ShootingGuardAndSmallForward", "is_starting": true, "time_on_court": 901, "score": 14, "field_goals": "5/7", "three_pointers": "2/4", "free_throws": "2/2", "rebounds": 6, "assists": 0, "steals": 1, "blocks": 0, "turnovers": 3, "fouls": 1 },
+                        "204134": { "name": "吳曉謹", "number": "57", "positions": "SmallForward", "is_starting": false, "time_on_court": 305, "score": 0, "field_goals": "0/1", "three_pointers": "0/1", "free_throws": "0/0", "rebounds": 0, "assists": 0, "steals": 0, "blocks": 0, "turnovers": 0, "fouls": 0 },
+                        "204138": { "name": "加爾文", "number": "52", "positions": "PowerForward", "is_starting": false, "time_on_court": 339, "score": 7, "field_goals": "3/5", "three_pointers": "0/1", "free_throws": "1/2", "rebounds": 8, "assists": 2, "steals": 2, "blocks": 0, "turnovers": 2, "fouls": 1 },
+                        "204139": { "name": "洛斯柯", "number": "25", "positions": "PowerForwardAndCenter", "is_starting": true, "time_on_court": 930, "score": 14, "field_goals": "4/11", "three_pointers": "2/3", "free_throws": "4/4", "rebounds": 3, "assists": 0, "steals": 0, "blocks": 0, "turnovers": 1, "fouls": 4 },
+                        "204144": { "name": "呂威霆", "number": "21", "positions": "PowerForwardAndCenter", "is_starting": false, "time_on_court": 281, "score": 3, "field_goals": "1/1", "three_pointers": "1/1", "free_throws": "0/0", "rebounds": 3, "assists": 0, "steals": 0, "blocks": 0, "turnovers": 0, "fouls": 0 }
+                    }
+                }
+            }
+        };
 
         var LOGOS = { "海神": "https://i.postimg.cc/KYtTwqdg/aquas_CB_Rq9NB.webp", "夢想家": "https://i.postimg.cc/ZRZNSPSL/dreamers_8u_P5Ali_T.webp", "攻城獅": "https://i.postimg.cc/FRmS4b4n/lioneers_DTfku_EJZ.webp", "戰神": "https://i.postimg.cc/V61t898V/mars_Bb_DWfk_G6.webp", "特攻": "https://i.postimg.cc/Qts73g3J/dea_BEf_Nf_G39.webp", "國王": "https://i.postimg.cc/XJ35bKb2/kings_Dsun_MN_K.webp", "雲豹": "https://i.postimg.cc/XJ35bKbH/leopards_BGzl_SG8M.webp" };
         var KEYWORD_ORDER = ["攻城獅", "特攻", "國王", "戰神", "雲豹", "夢想家", "海神"];
         var DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23CCA87B' stroke='white' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E";
         
-        // --- 智慧位置縮寫轉換器 ---
         function formatPosition(pos) {
             if (!pos) return '-';
             return pos.replace(/PointGuard/g, 'PG')
@@ -498,6 +515,7 @@
             return '<div class="' + cardClass + '"><div class="game-header">' + statusHtml + '<span>' + dateStr + ' ' + timeStr + ' <span class="game-venue">@ ' + game.venue + '</span></span></div><div class="team-row"><div class="team-info"><img class="team-logo" src="' + awayLogo + '"><span>' + game.away_team.name + '</span></div><div class="score">' + scoreAway + '</div></div><div class="team-row"><div class="team-info"><img class="team-logo" src="' + homeLogo + '"><span>' + game.home_team.name + ' <span class="badge-home">H</span></span></div><div class="score">' + scoreHome + '</div></div><div class="btn-group">' + btnHtml + '</div></div>';
         }
 
+        // --- Boxscore 打開邏輯 (已徹底修復 Demo 轉向問題) ---
         async function openBoxScore(gameId, statusStr) {
             currentBoxscoreStatus = statusStr;
             switchView('boxscore');
@@ -505,13 +523,19 @@
             content.innerHTML = '<div class="loader">讀取數據中...</div>';
 
             try {
-                var fetchId = (gameId === 27538 || gameId === 27543) ? 8641 : gameId;
-                var res = await fetch('https://api.tpbl.basketball/api/games/' + fetchId + '/stats');
+                // 完全直接打真實的 API，不轉向 8641
+                var res = await fetch('https://api.tpbl.basketball/api/games/' + gameId + '/stats');
                 if(!res.ok) throw new Error('API Error');
                 boxscoreDataCache = await res.json();
                 renderBoxScore('away'); 
             } catch(e) { 
-                content.innerHTML = '<div class="loader" style="color:var(--text-sub);">無法連線或此賽事目前無公開數據。</div>'; 
+                console.warn('API 讀取失敗，檢查是否有此賽事的本地資料');
+                if (gameId === 27543) {
+                    boxscoreDataCache = FALLBACK_BOXSCORE_27543;
+                    renderBoxScore('away');
+                } else {
+                    content.innerHTML = '<div class="loader" style="color:var(--text-sub);">此賽事尚未開打或目前無公開數據。</div>'; 
+                }
             }
         }
 
@@ -640,7 +664,6 @@
                     ]);
                 };
 
-                // 為了防呆被阻擋，設定 3000ms Timeout
                 var res = await Promise.all([
                     fetchWithTimeout('https://api.tpbl.basketball/api/seasons/3/games', 3000),
                     fetchWithTimeout('https://api.tpbl.basketball/api/divisions/656/games/standings', 3000),
@@ -669,7 +692,7 @@
                 updateChk('chk-render', 'done', '畫面渲染完成');
 
             } catch (error) { 
-                console.warn('API 阻擋 (請使用 Live Server 開啟 HTML)，已自動載入備用資料');
+                console.warn('API 阻擋，自動載入備用資料');
                 updateChk('chk-api', 'err', '連線異常，啟動離線備用模式');
                 showToast("⚠️ 網路阻擋或逾時，已自動切換為本機備用資料", 4500);
                 
@@ -727,7 +750,6 @@
             extractAvailableDataAndRender();
         }
 
-        // 啟動應用
         initApp();
     </script>
 </body>
