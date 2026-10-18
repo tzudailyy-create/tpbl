@@ -16,17 +16,11 @@
             --border-color: rgba(0,0,0,0.08);
         }
 
-        *, *::before, *::after {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+        *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         html, body {
-            min-width: 390px;
-            max-width: 100vw;
-            overflow-x: hidden; 
-            margin: 0; padding: 0;
-            background-color: var(--bg-color); color: var(--text-main);
+            min-width: 390px; max-width: 100vw; overflow-x: hidden; 
+            margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-main);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
@@ -62,12 +56,9 @@
 
         /* --- 頂部標題列 (Fixed) --- */
         header {
-            background-color: var(--primary); 
-            position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;
-            display: flex; justify-content: center; align-items: center;
-            box-shadow: 0 1px 8px rgba(0,0,0,0.1); 
-            padding-top: env(safe-area-inset-top);
-            height: calc(54px + env(safe-area-inset-top));
+            background-color: var(--primary); position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;
+            display: flex; justify-content: center; align-items: center; box-shadow: 0 1px 8px rgba(0,0,0,0.1); 
+            padding-top: env(safe-area-inset-top); height: calc(54px + env(safe-area-inset-top));
         }
         header img { height: 26px; object-fit: contain; display: block; }
         .btn-back { position: absolute; left: 12px; bottom: 10px; color: #fff; background: none; border: none; display: none; align-items: center; cursor: pointer; padding: 4px; }
@@ -82,9 +73,8 @@
 
         /* --- 頂端篩選區 --- */
         .sticky-filter-header {
-            position: sticky; top: calc(54px + env(safe-area-inset-top)); z-index: 90;
-            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            padding-bottom: 12px; border-bottom: 1px solid var(--border-color);
+            position: sticky; top: calc(54px + env(safe-area-inset-top)); z-index: 90; background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding-bottom: 12px; border-bottom: 1px solid var(--border-color);
         }
         .segmented-control { display: flex; background: rgba(118, 118, 128, 0.1); border-radius: 9px; padding: 3px; margin: 16px 20px 12px 20px; }
         .segment-btn { flex: 1; padding: 8px 0; text-align: center; font-size: 13px; font-weight: 600; color: var(--text-sub); border-radius: 7px; cursor: pointer; transition: 0.2s; }
@@ -118,7 +108,6 @@
         .game-header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-sub); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 12px;}
         .status-badge { font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
         .live-dot { width: 6px; height: 6px; background-color: var(--live-red); border-radius: 50%; animation: blink 1.5s infinite ease-in-out; }
-        @keyframes blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
         .game-venue { color: var(--text-main); font-weight: 600; margin-left: 6px;}
         .team-row { display: flex; align-items: center; justify-content: space-between; font-size: 15px; font-weight: 700; margin-bottom: 8px;}
         .team-row:last-of-type { margin-bottom: 0; }
@@ -163,7 +152,7 @@
         .bs-team-name { font-size: 13px; font-weight: 800; color: var(--text-main); text-align: center; line-height: 1.4; display: flex; flex-direction: column; align-items: center;}
         .badge-wrap { display: flex; gap: 4px; height: 16px; align-items: center; justify-content: center; margin-top: 2px;}
 
-        /* 防破圖 3位數大比分對齊 */
+        /* 防破圖比分設計 */
         .bs-score-col { 
             display: flex; justify-content: center; align-items: center; gap: 6px;
             font-size: clamp(26px, 7vw, 34px); font-weight: 800; color: var(--primary); 
@@ -171,11 +160,16 @@
         }
         .bs-score-divider { font-size: 18px; color: var(--text-sub); transform: translateY(-2px); }
 
-        .q-table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; font-weight: 600;}
-        .q-table th { color: var(--text-sub); padding-bottom: 8px; font-weight: 500; font-size: 11px; }
-        .q-table td { padding: 10px 0; border-top: 1px solid var(--border-color); }
-        .q-table td:first-child { text-align: left; color: var(--text-sub); font-weight: 500;}
-        .q-table td:last-child { color: var(--primary); font-weight: 800; }
+        /* 各節比分表(支援OT橫向滑動) */
+        .q-table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .q-table-wrapper::-webkit-scrollbar { display: none; }
+        .q-table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; font-weight: 600; white-space: nowrap;}
+        .q-table th { color: var(--text-sub); padding-bottom: 8px; font-weight: 500; font-size: 11px; padding: 0 8px; }
+        .q-table td { padding: 10px 8px; border-top: 1px solid var(--border-color); }
+        .q-table td:first-child { text-align: left; color: var(--text-sub); font-weight: 500; padding-left: 0; position: sticky; left: 0; background: #fff; z-index: 2; box-shadow: 4px 0 8px -4px rgba(0,0,0,0.05); }
+        .q-table th:first-child { position: sticky; left: 0; background: #fff; z-index: 2; padding-left: 0;}
+        .q-table td:last-child { color: var(--primary); font-weight: 800; padding-right: 0;}
+        .q-table th:last-child { padding-right: 0;}
 
         .bf-title { text-align: center; font-size: 13px; font-weight: 800; color: var(--primary); margin-bottom: 16px; }
         .bf-row { display: flex; align-items: center; margin-bottom: 12px; font-size: 12px; font-weight: 700; }
@@ -241,8 +235,10 @@
         </div>
         <div class="loading-text">TPBL</div>
         
+        
     </div>
 
+    <!-- Header -->
     <header>
         <button id="btn-back" class="btn-back" onclick="closeBoxScore()">
             <svg viewBox="0 0 24 24" width="26" height="26" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -314,7 +310,7 @@
         </div>
     </div>
 
-    <!-- ===== 終極邏輯與高相容性備用資料 ===== -->
+    <!-- ===== JS 邏輯 (完全降級 ES5 相容寫法) ===== -->
     <script>
         // --- 檢查點 UI 更新 ---
         function updateChk(id, status, text) {
@@ -496,8 +492,8 @@
             content.innerHTML = '<div class="loader">讀取數據中...</div>';
 
             try {
-                var fetchId = (gameId === 27538 || gameId === 27543) ? 8641 : gameId;
-                var res = await fetch('https://api.tpbl.basketball/api/games/' + fetchId + '/stats');
+                // 傳入真實 gameId
+                var res = await fetch('https://api.tpbl.basketball/api/games/' + gameId + '/stats');
                 if(!res.ok) throw new Error('API Error');
                 boxscoreDataCache = await res.json();
                 renderBoxScore('away'); 
@@ -553,35 +549,50 @@
 
         function renderBoxScore(teamType) {
             if (!boxscoreDataCache) return;
-            var home = boxscoreDataCache.home_team; var away = boxscoreDataCache.away_team;
+            var home = boxscoreDataCache.home_team || {}; var away = boxscoreDataCache.away_team || {};
             var hTotal = (home.teams && home.teams.total) ? home.teams.total : {}; 
             var aTotal = (away.teams && away.teams.total) ? away.teams.total : {};
             
             var isLive = currentBoxscoreStatus === 'IN_PROGRESS' || currentBoxscoreStatus === 'LIVE';
             var topLabel = isLive ? '<span style="color:var(--live-red); animation: blink 1.5s infinite ease-in-out;">LIVE</span>' : 'FINAL';
             var awayScore = parseInt(aTotal.won_score) || 0; var homeScore = parseInt(hTotal.won_score) || 0;
-            var awayIsWinner = awayScore > homeScore && !isLive; var homeIsWinner = homeScore > awayScore && !isLive;
+            var awayIsWinner = (awayScore > homeScore) && !isLive; var homeIsWinner = (homeScore > awayScore) && !isLive;
 
-            var awayBadges = awayIsWinner ? '<span class="badge-win">W</span>' : '<span style="visibility:hidden; height:13px; display:inline-block;"></span>';
+            var awayBadges = awayIsWinner ? '<span class="badge-win">W</span>' : '<span style="visibility:hidden; height:13px; display:inline-block; width:20px;"></span>';
             var homeBadges = '<span class="badge-home">H</span>' + (homeIsWinner ? '<span class="badge-win">W</span>' : '');
 
             var aWScore = aTotal.won_score != null ? aTotal.won_score : '-';
             var hWScore = hTotal.won_score != null ? hTotal.won_score : '-';
 
-            var topCard = '<div class="card-style bs-card-margin"><div class="bs-scoreboard-wrapper"><div class="bs-final-label">' + topLabel + '</div><div class="bs-scoreboard"><div class="bs-team-col"><img class="bs-team-logo" src="' + getLogo(away.name) + '"><div class="bs-team-name">' + away.name + ' <div class="badge-wrap">' + awayBadges + '</div></div></div><div class="bs-score-col"><div>' + aWScore + '</div><div class="bs-score-divider">:</div><div>' + hWScore + '</div></div><div class="bs-team-col"><img class="bs-team-logo" src="' + getLogo(home.name) + '"><div class="bs-team-name">' + home.name + ' <div class="badge-wrap">' + homeBadges + '</div></div></div></div></div></div>';
+            var topCard = '<div class="card-style bs-card-margin"><div class="bs-scoreboard-wrapper"><div class="bs-final-label">' + topLabel + '</div><div class="bs-scoreboard"><div class="bs-team-col"><img class="bs-team-logo" src="' + getLogo(away.name) + '"><div class="bs-team-name">' + (away.name||'') + ' <div class="badge-wrap">' + awayBadges + '</div></div></div><div class="bs-score-col"><div>' + aWScore + '</div><div class="bs-score-divider">:</div><div>' + hWScore + '</div></div><div class="bs-team-col"><img class="bs-team-logo" src="' + getLogo(home.name) + '"><div class="bs-team-name">' + (home.name||'') + ' <div class="badge-wrap">' + homeBadges + '</div></div></div></div></div></div>';
 
             var hQ = (home.teams && home.teams.rounds) ? home.teams.rounds : {}; 
             var aQ = (away.teams && away.teams.rounds) ? away.teams.rounds : {};
-            var aQ1 = aQ["1"] && aQ["1"].won_score != null ? aQ["1"].won_score : '-';
-            var aQ2 = aQ["2"] && aQ["2"].won_score != null ? aQ["2"].won_score : '-';
-            var aQ3 = aQ["3"] && aQ["3"].won_score != null ? aQ["3"].won_score : '-';
-            var aQ4 = aQ["4"] && aQ["4"].won_score != null ? aQ["4"].won_score : '-';
-            var hQ1 = hQ["1"] && hQ["1"].won_score != null ? hQ["1"].won_score : '-';
-            var hQ2 = hQ["2"] && hQ["2"].won_score != null ? hQ["2"].won_score : '-';
-            var hQ3 = hQ["3"] && hQ["3"].won_score != null ? hQ["3"].won_score : '-';
-            var hQ4 = hQ["4"] && hQ["4"].won_score != null ? hQ["4"].won_score : '-';
+            
+            // 動態處理 OT
+            var maxRounds = 4;
+            for (var key in aQ) { var r1 = parseInt(key); if (r1 > maxRounds) maxRounds = r1; }
+            for (var key2 in hQ) { var r2 = parseInt(key2); if (r2 > maxRounds) maxRounds = r2; }
 
-            var qCard = '<div class="card-style bs-card-margin"><table class="q-table"><tr><th></th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>T</th></tr><tr><td>' + away.name + '</td><td>'+aQ1+'</td><td>'+aQ2+'</td><td>'+aQ3+'</td><td>'+aQ4+'</td><td>'+aWScore+'</td></tr><tr><td>' + home.name + '</td><td>'+hQ1+'</td><td>'+hQ2+'</td><td>'+hQ3+'</td><td>'+hQ4+'</td><td>'+hWScore+'</td></tr></table></div>';
+            var thHtml = '<th></th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th>';
+            for (var i = 5; i <= maxRounds; i++) { thHtml += '<th>OT' + (i - 4) + '</th>'; }
+            thHtml += '<th>T</th>';
+
+            var awayTd = '<td>' + (away.name||'') + '</td>';
+            for (var j = 1; j <= Math.max(4, maxRounds); j++) {
+                var asc = (aQ[j] && aQ[j].won_score != null) ? aQ[j].won_score : '-';
+                awayTd += '<td>' + asc + '</td>';
+            }
+            awayTd += '<td>' + aWScore + '</td>';
+
+            var homeTd = '<td>' + (home.name||'') + '</td>';
+            for (var k = 1; k <= Math.max(4, maxRounds); k++) {
+                var hsc = (hQ[k] && hQ[k].won_score != null) ? hQ[k].won_score : '-';
+                homeTd += '<td>' + hsc + '</td>';
+            }
+            homeTd += '<td>' + hWScore + '</td>';
+
+            var qCard = '<div class="card-style bs-card-margin"><div class="q-table-wrapper"><table class="q-table"><tr>' + thHtml + '</tr><tr>' + awayTd + '</tr><tr>' + homeTd + '</tr></table></div></div>';
 
             var bfCard = '<div class="card-style bs-card-margin"><div class="bf-title">團隊數據 TEAM STATS</div>' +
                 renderButterflyRow('二分%', aTotal.two_pointers_percentage, hTotal.two_pointers_percentage, true) +
@@ -598,7 +609,7 @@
             var tTotal = (targetData.teams && targetData.teams.total) ? targetData.teams.total : {};
             var pTotal = (targetData.players && targetData.players.total) ? targetData.players.total : null;
             
-            var playerCard = '<div class="bs-fullwidth-card"><div class="team-tabs"><div class="team-tab ' + (teamType === 'away' ? 'active' : '') + '" onclick="renderBoxScore(\'away\')">' + away.name + '</div><div class="team-tab ' + (teamType === 'home' ? 'active' : '') + '" onclick="renderBoxScore(\'home\')">' + home.name + '</div></div>' + buildPlayerTable(pTotal, tTotal) + '</div>';
+            var playerCard = '<div class="bs-fullwidth-card"><div class="team-tabs"><div class="team-tab ' + (teamType === 'away' ? 'active' : '') + '" onclick="renderBoxScore(\'away\')">' + (away.name||'') + '</div><div class="team-tab ' + (teamType === 'home' ? 'active' : '') + '" onclick="renderBoxScore(\'home\')">' + (home.name||'') + '</div></div>' + buildPlayerTable(pTotal, tTotal) + '</div>';
 
             document.getElementById('boxscore-content').innerHTML = topCard + qCard + bfCard + playerCard;
         }
@@ -616,7 +627,7 @@
                     ]);
                 };
 
-                // 為了防呆被阻擋，這裡設為超短 Timeout 3000ms
+                // 為了防呆被阻擋，設定 3000ms Timeout
                 var res = await Promise.all([
                     fetchWithTimeout('https://api.tpbl.basketball/api/seasons/3/games', 3000),
                     fetchWithTimeout('https://api.tpbl.basketball/api/divisions/656/games/standings', 3000),
