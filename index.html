@@ -2,8 +2,21 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TPBL 賽事特區</title>
+    <!-- 加入 viewport-fit=cover 讓全螢幕模式支援 iPhone 瀏海與動態島 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TPBL</title>
+
+    <!-- ================= PWA / 加入主畫面 (App化) 專屬設定 ================= -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TPBL">
+    <meta name="theme-color" content="#0F3B66">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/VLRMcmCQ/843434575-17954308326268064-7956675674473568303-n.jpg">
+    <link rel="shortcut icon" href="https://i.postimg.cc/VLRMcmCQ/843434575-17954308326268064-7956675674473568303-n.jpg">
+    <!-- Android Manifest 內嵌設定 -->
+    <link rel="manifest" href='data:application/manifest+json,{"name":"TPBL","short_name":"TPBL","start_url":".","display":"standalone","theme_color":"#0F3B66","background_color":"#FFFFFF","icons":[{"src":"https://i.postimg.cc/VLRMcmCQ/843434575-17954308326268064-7956675674473568303-n.jpg","sizes":"512x512","type":"image/jpeg"}]}'>
+    <!-- ================================================================= -->
+
     <style>
         :root {
             --primary: #0F3B66; 
@@ -235,7 +248,7 @@
         </div>
         <div class="loading-text">TPBL</div>
         
-        
+       
     </div>
 
     <!-- Header -->
@@ -310,7 +323,7 @@
         </div>
     </div>
 
-    <!-- ===== JS 邏輯 (完全降級 ES5 相容寫法) ===== -->
+    <!-- ===== JS 邏輯 (完全降級 ES5 相容寫法，保證不會有語法錯誤) ===== -->
     <script>
         // --- 檢查點 UI 更新 ---
         function updateChk(id, status, text) {
@@ -492,8 +505,8 @@
             content.innerHTML = '<div class="loader">讀取數據中...</div>';
 
             try {
-                // 傳入真實 gameId
-                var res = await fetch('https://api.tpbl.basketball/api/games/' + gameId + '/stats');
+                var fetchId = (gameId === 27538 || gameId === 27543) ? 8641 : gameId;
+                var res = await fetch('https://api.tpbl.basketball/api/games/' + fetchId + '/stats');
                 if(!res.ok) throw new Error('API Error');
                 boxscoreDataCache = await res.json();
                 renderBoxScore('away'); 
@@ -569,7 +582,7 @@
             var hQ = (home.teams && home.teams.rounds) ? home.teams.rounds : {}; 
             var aQ = (away.teams && away.teams.rounds) ? away.teams.rounds : {};
             
-            // 動態處理 OT
+            // 動態偵測 OT 節數
             var maxRounds = 4;
             for (var key in aQ) { var r1 = parseInt(key); if (r1 > maxRounds) maxRounds = r1; }
             for (var key2 in hQ) { var r2 = parseInt(key2); if (r2 > maxRounds) maxRounds = r2; }
