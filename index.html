@@ -15,9 +15,9 @@
 
     <style>
         :root {
-            --primary: #0F3B66; 
-            --secondary: #CCA87B; 
-            --bg-color: #FFFFFF; 
+            --primary: #0F3B66;
+            --secondary: #CCA87B;
+            --bg-color: #FFFFFF;
             --card-bg: #FFFFFF;
             --text-main: #1C1C1E;
             --text-sub: #8E8E93;
@@ -27,8 +27,9 @@
 
         *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+        /* [修正] 拿掉 min-width: 390px，避免 375px 手機可以左右滑 */
         html, body {
-            min-width: 390px; max-width: 100vw; overflow-x: hidden; 
+            max-width: 100vw; overflow-x: hidden;
             margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-main);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
@@ -42,17 +43,11 @@
         .bounce-wrapper { animation: bounce 0.6s infinite alternate cubic-bezier(0.5, 0.05, 1, 0.5); }
         .basketball-svg { animation: spin 1.5s linear infinite; stroke: var(--secondary); stroke-width: 2; fill: none; }
         .loading-text { margin-top: 20px; color: var(--secondary); font-size: 16px; font-weight: 900; letter-spacing: 3px; }
-        
-        .checkpoint-box { margin-top: 24px; background: rgba(0,0,0,0.2); padding: 16px 20px; border-radius: 12px; width: 280px; text-align: left; }
-        .chk-item { color: #fff; font-size: 13px; font-weight: 600; margin-bottom: 10px; transition: 0.3s; display: flex; align-items: center; gap: 8px;}
-        .chk-item:last-child { margin-bottom: 0; }
-        .chk-done { color: #34C759; }
-        .chk-err { color: #FF3B30; }
 
         #toast {
             position: fixed; top: calc(64px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-150%);
             background: rgba(28, 28, 30, 0.95); color: #fff; padding: 12px 24px; border-radius: 20px;
-            font-size: 13px; font-weight: 600; z-index: 10000; opacity: 0; 
+            font-size: 13px; font-weight: 600; z-index: 10000; opacity: 0;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: 0 8px 24px rgba(0,0,0,0.15); white-space: nowrap; backdrop-filter: blur(10px);
         }
@@ -60,10 +55,11 @@
 
         @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-35px); } }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
         header {
             background-color: var(--primary); position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;
-            display: flex; justify-content: center; align-items: center; box-shadow: 0 1px 8px rgba(0,0,0,0.1); 
+            display: flex; justify-content: center; align-items: center; box-shadow: 0 1px 8px rgba(0,0,0,0.1);
             padding-top: env(safe-area-inset-top); height: calc(54px + env(safe-area-inset-top));
         }
         header img { height: 26px; object-fit: contain; display: block; }
@@ -72,8 +68,8 @@
         main { padding-top: calc(54px + env(safe-area-inset-top)); }
         .view-content { display: none; animation: fadeIn 0.3s ease; }
         .view-content.active { display: block; }
-        .has-bottom-nav { padding-bottom: 110px; } 
-        #view-boxscore { padding-bottom: 24px; } 
+        .has-bottom-nav { padding-bottom: 110px; }
+        #view-boxscore { padding-bottom: 24px; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .content-padding { padding: 20px; }
 
@@ -118,8 +114,9 @@
         .team-info { display: flex; align-items: center; gap: 10px; }
         .team-logo { width: 32px; height: 32px; object-fit: contain; }
         .badge-home { background-color: var(--primary); color: #fff; font-size: 9px; font-weight: 800; padding: 2px 5px; border-radius: 4px; margin-left: 6px; }
-        .badge-win { background-color: var(--text-sub); color: #fff; font-size: 9px; font-weight: 800; padding: 2px 5px; border-radius: 4px; margin-left: 6px; }
         .score { font-size: 22px; font-weight: 800; color: var(--text-main); font-variant-numeric: tabular-nums; }
+        /* [新增] 輸的一方比分變淡 */
+        .is-loser { color: var(--text-sub) !important; opacity: 0.55; font-weight: 600 !important; }
         .btn-group { display: flex; gap: 10px; margin-top: 12px; }
         .btn { flex: 1; padding: 10px 0; border-radius: 8px; font-size: 13px; font-weight: 700; text-align: center; cursor: pointer; border: none; }
 
@@ -138,7 +135,7 @@
             display: flex; justify-content: space-around; align-items: center; padding: 0 16px; z-index: 1000; transition: transform 0.4s;
         }
         .bottom-nav.hidden { transform: translate(-50%, 150%); }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-sub); cursor: pointer; width: 50%; transition: color 0.2s; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-sub); cursor: pointer; width: 33.33%; transition: color 0.2s; }
         .nav-item.active { color: var(--primary); }
         .nav-item svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
         .nav-item.active .icon-home path { fill: currentColor; }
@@ -148,17 +145,24 @@
         .bs-container { padding: 20px; display: flex; flex-direction: column; gap: 16px; width: 100%;}
         .bs-scoreboard-wrapper { padding: 4px 0; display: flex; flex-direction: column; align-items: center;}
         .bs-final-label { font-size: 11px; color: var(--text-sub); font-weight: 800; margin-bottom: 12px; letter-spacing: 0.5px;}
-        .bs-scoreboard { display: grid; grid-template-columns: 1fr auto 1fr; width: 100%; align-items: start; gap: 8px;}
-        
-        .bs-team-col { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; max-width: 90px; margin: 0 auto; }
-        .bs-team-logo { width: 56px; height: 56px; object-fit: contain; }
-        .bs-team-name { font-size: 13px; font-weight: 800; color: var(--text-main); text-align: center; line-height: 1.4; display: flex; flex-direction: column; align-items: center;}
-        .badge-wrap { display: flex; gap: 4px; height: 16px; align-items: center; justify-content: center; margin-top: 2px;}
+        /* [修正] minmax(0,1fr) 讓兩側欄位可以縮，隊名不跳行 */
+        .bs-scoreboard { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); width: 100%; align-items: start; gap: 8px;}
 
-        .bs-score-col { 
+        .bs-team-col { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; min-width: 0; margin: 0 auto; }
+        .bs-team-logo { width: 56px; height: 56px; object-fit: contain; }
+        /* [修正] 隊名不換行，字級依螢幕寬度微縮，真的放不下才出現 … */
+        .bs-team-name {
+            font-size: clamp(11px, 3.1vw, 13px); font-weight: 800; color: var(--text-main); text-align: center; line-height: 1.4;
+            display: flex; flex-direction: column; align-items: center; width: 100%;
+        }
+        .bs-team-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .badge-wrap { display: flex; gap: 4px; height: 16px; align-items: center; justify-content: center; margin-top: 2px;}
+        .badge-wrap .badge-home { margin-left: 0; }
+
+        .bs-score-col {
             display: flex; justify-content: center; align-items: center; gap: 6px;
-            font-size: clamp(26px, 7vw, 34px); font-weight: 800; color: var(--primary); 
-            letter-spacing: -1px; white-space: nowrap; margin-top: 8px;
+            font-size: clamp(26px, 7vw, 34px); font-weight: 800; color: var(--primary);
+            letter-spacing: -1px; white-space: nowrap; margin-top: 8px; font-variant-numeric: tabular-nums;
         }
         .bs-score-divider { font-size: 18px; color: var(--text-sub); transform: translateY(-2px); }
 
@@ -182,7 +186,7 @@
 
         .bs-fullwidth-card { background: var(--card-bg); padding: 16px 0; margin: 0 -20px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
         .team-tabs { display: flex; background: rgba(118, 118, 128, 0.08); border-radius: 8px; padding: 3px; margin: 0 20px 16px 20px; }
-        .team-tab { flex: 1; text-align: center; padding: 8px; font-weight: 600; color: var(--text-sub); font-size: 12px; border-radius: 6px; cursor: pointer;}
+        .team-tab { flex: 1; min-width: 0; text-align: center; padding: 8px; font-weight: 600; color: var(--text-sub); font-size: 12px; border-radius: 6px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
         .team-tab.active { background: var(--card-bg); color: var(--text-main); box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
 
         .stats-table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px;}
@@ -190,10 +194,10 @@
         .stats-table th { color: var(--text-sub); font-weight: 500; padding: 10px 8px; border-bottom: 1px solid var(--border-color); font-size: 11px; background: #fff;}
         .stats-table td { padding: 10px 8px; border-bottom: 1px solid var(--border-color); font-weight: 500; background: #fff;}
         .stats-table th:first-child, .stats-table td:first-child { position: sticky; left: 0; z-index: 2; text-align: left; padding-left: 20px; box-shadow: 2px 0 6px rgba(0,0,0,0.03); }
-        
+
         .section-header td { padding: 0 !important; background: #F9F9F9 !important; border-bottom: 1px solid var(--border-color) !important;}
         .sticky-label { position: sticky; left: 0; width: fit-content; padding: 8px 20px; font-size: 11px; font-weight: 700; color: var(--text-sub); background: #F9F9F9; z-index: 3;}
-        
+
         .player-info { display: flex; align-items: center; gap: 8px; }
         .player-avatar { width: 28px; height: 28px; border-radius: 50%; background: #f2f2f7; object-fit: cover; border: 1px solid var(--border-color); }
         .player-name-wrap { display: flex; flex-direction: column; gap: 2px;}
@@ -217,6 +221,270 @@
         .sheet-actions { display: flex; gap: 12px; margin-top: 32px; }
         .btn-clear { flex: 1; padding: 14px; border-radius: 12px; background: #F2F2F7; color: var(--text-main); font-size: 15px; font-weight: 700; border: none; cursor: pointer; }
         .btn-apply { flex: 2; padding: 14px; border-radius: 12px; background: var(--primary); color: #fff; font-size: 15px; font-weight: 700; border: none; cursor: pointer; }
+
+        /* ================= TPBL Fantasy（由 fantasy-demo.html 整合，全部限定在 .fx 裡） ================= */
+        .fx {
+        --primary: #0F3B66; --secondary: #CCA87B; --text-main: #1C1C1E; --text-sub: #8E8E93; --live-red: #FF3B30; --border-color: rgba(0,0,0,0.08);
+        --hh: calc(54px + env(safe-area-inset-top));
+        --team: #0F3B66; --team2: #1B5288;
+    }
+        body.lock { overflow: hidden; }
+        .fx .num { font-variant-numeric: tabular-nums; }
+        #fx-list { padding: calc(var(--hh) + 20px) 20px 40px; }
+        .fx .section-title { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+        .fx .section-sub { font-size: 12px; color: var(--text-sub); font-weight: 600; margin: 4px 0 14px; }
+        .fx .segmented-control { display: flex; background: rgba(118,118,128,0.1); border-radius: 9px; padding: 3px; margin-bottom: 12px; position: relative; }
+        .fx .segment-btn { flex: 1; padding: 8px 0; text-align: center; font-size: 13px; font-weight: 600; color: var(--text-sub); border-radius: 7px; cursor: pointer; transition: color .2s; position: relative; z-index: 1; }
+        .fx .segment-btn.active { color: var(--text-main); }
+        .fx .seg-pill { position: absolute; top: 3px; bottom: 3px; left: 3px; border-radius: 7px; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,0.08); transition: transform .35s cubic-bezier(.3,1.3,.5,1), width .35s; }
+        .fx .filter-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -20px 14px; padding: 0 20px; }
+        .fx .filter-row::-webkit-scrollbar { display: none; }
+        .fx .grid-chip { flex-shrink: 0; padding: 7px 14px; border-radius: 10px; background: rgba(118,118,128,0.08); font-size: 13px; font-weight: 600; cursor: pointer; transition: .2s; }
+        .fx .grid-chip.active { background: var(--primary); color: #fff; }
+        .fx .rank-list { background: #fff; border-radius: 14px; border: 1px solid var(--border-color); box-shadow: 0 4px 16px rgba(0,0,0,0.03); padding: 0 14px; }
+        .fx .rank-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: transform .15s;
+        animation: rowIn .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 30ms); }
+        .fx .rank-row:last-child { border-bottom: none; }
+        .fx .rank-row:active { transform: scale(.98); }
+        .fx .rank-row.dim { animation-name: rowInDim; opacity: .4; }
+        @keyframes rowIn { from { opacity: 0; transform: translateY(12px); } }
+        @keyframes rowInDim { from { opacity: 0; transform: translateY(12px); } to { opacity: .4; } }
+        .fx .rk { width: 20px; font-size: 13px; font-weight: 700; color: var(--text-sub); text-align: center; }
+        .fx .rk.top { color: var(--secondary); }
+        .fx .avatar { width: 36px; height: 36px; border-radius: 50%; background: #F2F2F7; object-fit: cover; object-position: top; border: 1px solid var(--border-color); flex-shrink: 0; }
+        .fx .rank-row .avatar { box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--ring); }
+        .fx .pinfo { flex: 1; min-width: 0; }
+        .fx .pname { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fx .pname .no { color: var(--text-sub); font-weight: 500; font-size: 12px; margin-left: 2px; }
+        .fx .pmeta { font-size: 11px; color: var(--text-sub); font-weight: 600; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fx .tag { display: inline-block; font-size: 9px; font-weight: 800; padding: 1px 4px; border-radius: 4px; margin-left: 5px; vertical-align: 2px; border: 1px solid currentColor; opacity: .75; }
+        .fx .tag-inj { color: var(--live-red); opacity: 1; }
+        .fx .tlogo { width: 14px; height: 14px; object-fit: contain; vertical-align: -3px; margin-right: 3px; }
+        .fx .pscore { text-align: right; flex-shrink: 0; }
+        .fx .pscore .big { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.15; }
+        .fx .pscore .small { font-size: 10px; color: var(--text-sub); font-weight: 600; margin-top: 2px; }
+        .fx .pscore .small.has { color: var(--primary); font-weight: 700; }
+        .fx .chev { color: #C7C7CC; flex-shrink: 0; }
+        .fx .tc { --t-soft: color-mix(in srgb, var(--team) 7%, #fff); --t-light: color-mix(in srgb, var(--team) 18%, #fff); --t-mid: color-mix(in srgb, var(--team) 45%, #fff); }
+        .fx .home-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px; }
+        .fx .home-head .section-sub { margin: 4px 0 0; white-space: nowrap; }
+        .fx .home-head { gap: 10px; }
+        .fx .lock-chip { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--primary); background: rgba(15,59,102,.07); padding: 7px 12px; border-radius: 16px; white-space: nowrap; }
+        .fx .lock-chip i { width: 6px; height: 6px; border-radius: 50%; background: var(--live-red); animation: blink 1.6s infinite ease-in-out; }
+        @keyframes blink { 50% { opacity: .25; } }
+        .fx .wk-card { background: #fff; border-radius: 14px; border: 1px solid var(--border-color); box-shadow: 0 4px 16px rgba(0,0,0,0.03); padding: 16px; margin-bottom: 24px; position: relative; overflow: hidden; }
+        .fx .wk-card::before { content: ''; position: absolute; right: -40px; top: -60px; width: 160px; height: 160px; border-radius: 50%; background: rgba(15,59,102,.04); }
+        .fx .wk-top { display: flex; justify-content: space-between; align-items: baseline; position: relative; }
+        .fx .wk-top b { font-size: 15px; font-weight: 800; }
+        .fx .wk-top span { font-size: 11px; color: var(--text-sub); font-weight: 600; }
+        .fx .wk-teams { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 14px; position: relative; }
+        .fx .wk-team { text-align: center; }
+        .fx .wk-team .lg { width: 40px; height: 40px; margin: 0 auto; border-radius: 50%; background: var(--t-soft); display: flex; align-items: center; justify-content: center; position: relative; box-shadow: inset 0 0 0 1.5px var(--t-light); }
+        .fx .wk-team .lg img { width: 28px; height: 28px; object-fit: contain; }
+        .fx .wk-team .n { position: absolute; right: -4px; top: -4px; min-width: 17px; height: 17px; border-radius: 9px; background: #AEAEB2; color: #fff; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; }
+        .fx .wk-team span { display: block; font-size: 10px; font-weight: 700; margin-top: 6px; color: var(--text-main); }
+        .fx .wk-team.off { opacity: .35; filter: grayscale(1); }
+        .fx .wk-team.off span { color: var(--text-sub); }
+        .fx .wk-note { font-size: 11px; color: var(--text-sub); font-weight: 600; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); position: relative; line-height: 1.6; }
+        .fx .wk-note b { color: var(--text-main); }
+        .fx .sec-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+        .fx .sec-row .section-title { font-size: 18px; }
+        .fx .sec-row small { font-size: 12px; color: var(--text-sub); font-weight: 600; }
+        .fx .picks { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 0 -20px 24px; padding: 2px 20px 6px; }
+        .fx .picks::-webkit-scrollbar { display: none; }
+        .fx .pick { flex: 0 0 148px; scroll-snap-align: start; background: #fff; border-radius: 14px; border: 1px solid var(--border-color); box-shadow: 0 4px 16px rgba(0,0,0,0.04); overflow: hidden; cursor: pointer; transition: transform .15s;
+        animation: rowIn .55s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 70ms); }
+        .fx .pick:active { transform: scale(.97); }
+        .fx .pick-top { height: 64px; background: linear-gradient(180deg, var(--t-light), var(--t-soft)); position: relative; }
+        .fx .pick-top .rkb { position: absolute; left: 10px; top: 8px; font-size: 11px; font-weight: 800; color: var(--text-main); background: rgba(255,255,255,.8); padding: 2px 7px; border-radius: 8px; }
+        .fx .pick-top .lg { position: absolute; right: 10px; top: 8px; width: 22px; height: 22px; object-fit: contain; }
+        .fx .pick .avatar { width: 58px; height: 58px; display: block; margin: -36px auto 0; border: 3px solid #fff; box-shadow: 0 0 0 1.5px var(--t-mid); position: relative; }
+        .fx .pick-body { padding: 8px 12px 12px; text-align: center; }
+        .fx .pick-name { font-size: 14px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fx .pick-meta { font-size: 10px; color: var(--text-sub); font-weight: 600; margin-top: 2px; }
+        .fx .pick-score { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-top: 8px; font-variant-numeric: tabular-nums; line-height: 1; }
+        .fx .pick-score small { display: block; font-size: 10px; color: var(--text-sub); font-weight: 600; letter-spacing: 0; margin-top: 4px; }
+        .fx .pick-chip { display: inline-block; margin-top: 10px; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 10px; background: #F2F2F7; color: var(--text-sub); }
+        .fx .pick-chip.hot, .fx .g-chip.hot { background: var(--primary); color: #fff; }
+        .fx .spark { width: 44px; height: 20px; flex-shrink: 0; overflow: visible; }
+        .fx .g-chip { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 8px; margin-top: 3px; background: #F2F2F7; color: var(--text-sub); }
+        .fx .g-chip.off { background: #F2F2F7; color: var(--text-sub); }
+        .fx .foot-note { font-size: 11px; color: var(--text-sub); line-height: 1.6; margin-top: 12px; text-align: center; }
+        #fx-player { position: fixed; top: var(--hh); left: 0; right: 0; bottom: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; z-index: 500; display: none; overscroll-behavior: contain;
+        
+        --t90: color-mix(in srgb, var(--team) 90%, #fff); --t70: color-mix(in srgb, var(--team) 70%, #fff); --t50: color-mix(in srgb, var(--team) 50%, #fff);
+        --t35: color-mix(in srgb, var(--team) 35%, #fff); --t20: color-mix(in srgb, var(--team) 20%, #fff); --t10: color-mix(in srgb, var(--team) 10%, #fff); --t05: color-mix(in srgb, var(--team) 5%, #fff);
+        --tdark: color-mix(in srgb, var(--team) 70%, #000); --tdeep: color-mix(in srgb, var(--team) 30%, #06080C);
+        --tlight: color-mix(in srgb, var(--team2) 45%, #fff); }
+        #fx-player.show { display: block; }
+        .fx .ver-bar { position: sticky; top: 0; z-index: 50; padding: 10px 16px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+        .fx .ver-seg { display: flex; padding: 3px; border-radius: 10px; position: relative; }
+        .fx .ver-seg div { flex: 1; text-align: center; font-size: 12px; font-weight: 700; padding: 7px 0; border-radius: 8px; cursor: pointer; position: relative; z-index: 1; transition: color .25s; }
+        .fx .ver-pill { position: absolute; top: 3px; bottom: 3px; left: 3px; border-radius: 8px; transition: transform .4s cubic-bezier(.3,1.25,.5,1); width: calc((100% - 6px) / 3); }
+        .fx .enter { animation: pgIn .45s ease both; }
+        @keyframes pgIn { from { opacity: 0; } }
+        .fx .exit { animation: pgOut .28s ease-in both; }
+        @keyframes pgOut { to { opacity: 0; transform: translateY(16px); } }
+        .fx .rv { animation: rise .65s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--d, 0) * 1ms); }
+        @keyframes rise { from { opacity: 0; transform: translateY(16px); } }
+        .fx .grow { transform-origin: bottom; animation: growY .8s cubic-bezier(.25,1,.3,1) both; animation-delay: calc(var(--d, 0) * 1ms); }
+        @keyframes growY { from { transform: scaleY(0); } }
+        .fx .growx { transform-origin: left; animation: growX .9s cubic-bezier(.25,1,.3,1) both; animation-delay: calc(var(--d, 0) * 1ms); }
+        @keyframes growX { from { transform: scaleX(0); } }
+        .fx .fadein { animation: fade .5s ease both; animation-delay: calc(var(--d, 0) * 1ms); }
+        @keyframes fade { from { opacity: 0; } }
+        .fx .slide-in { animation: slideIn .6s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--d, 0) * 1ms); }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(24px); } }
+        .fx .draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.3s cubic-bezier(.4,0,.2,1) forwards; animation-delay: calc(var(--d, 0) * 1ms); }
+        @keyframes draw { to { stroke-dashoffset: 0; } }
+        .fx .pop { transform-box: fill-box; transform-origin: center; animation: pop .5s cubic-bezier(.3,1.5,.5,1) both; animation-delay: calc(var(--d, 0) * 1ms); }
+        @keyframes pop { from { transform: scale(0); } }
+        .fx .reveal { animation: reveal .9s cubic-bezier(.7,0,.2,1) both; }
+        @keyframes reveal { from { clip-path: inset(0 0 100% 0 round 0 0 28px 28px); } to { clip-path: inset(0 0 0 0 round 0 0 28px 28px); } }
+        .flip-clone { position: fixed; z-index: 2000; border-radius: 50%; object-fit: cover; object-position: top; pointer-events: none; background: #F2F2F7; transform-origin: 0 0; }
+        .fx .grain::after { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .18; mix-blend-mode: overlay;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+        .fx .toggle { display: inline-flex; border-radius: 8px; padding: 2px; flex-shrink: 0; align-self: flex-start; }
+        .fx .toggle span { font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 6px; cursor: pointer; transition: .25s; white-space: nowrap; }
+        .fx .cap { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; }
+        .fx .ico { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -2px; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0ms !important; transition-duration: .01ms !important; } }
+        #fx-player { background: #fff;
+        --t-soft: color-mix(in srgb, var(--team) 7%, #fff);
+        --t-light: color-mix(in srgb, var(--team) 18%, #fff);
+        --t-mid: color-mix(in srgb, var(--team) 45%, #fff); }
+        .fx .ver-bar { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 12px 20px; border-bottom: 1px solid var(--border-color); }
+        .fx .ver-bar .segmented-control { margin: 0; }
+        .fx .ver-bar .segment-btn.active, .fx .segmented-control.small .segment-btn.active { color: var(--text-main); background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,0.08); }
+        .fx .pp { padding: 20px 20px 40px; display: flex; flex-direction: column; gap: 16px; }
+        .fx .card-style { background: #fff; border-radius: 14px; padding: 16px; border: 1px solid var(--border-color); box-shadow: 0 4px 16px rgba(0,0,0,0.03); width: 100%; }
+        .fx .pp .section-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; margin: 8px 0 -4px; display: flex; justify-content: space-between; align-items: baseline; }
+        .fx .pp .section-title small { font-size: 12px; color: var(--text-sub); font-weight: 600; letter-spacing: 0; }
+        .fx .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-right: 4px; background: var(--t-light); color: var(--text-main); }
+        .fx .badge.inj { background: rgba(255,59,48,.1); color: var(--live-red); }
+        #fx-player [data-hero] { border: 3px solid #fff; box-shadow: 0 0 0 1.5px var(--t-mid); }
+        .fx .metric b { display: block; font-size: 22px; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+        .fx .metric b small { font-size: 12px; font-weight: 700; margin-left: 1px; }
+        .fx .metric span { font-size: 11px; color: var(--text-sub); font-weight: 600; }
+        .fx .segmented-control.small { margin: 0 0 4px; }
+        .fx .segmented-control.small .segment-btn { padding: 6px 0; font-size: 12px; }
+        .fx .legend { display: flex; gap: 12px; font-size: 10px; color: var(--text-sub); font-weight: 600; margin-top: 10px; justify-content: center; }
+        .fx .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+        .fx .w-chart { position: relative; height: 150px; display: flex; align-items: flex-end; gap: 6px; padding-top: 24px; }
+        .fx .w-chart .col { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; z-index: 1; }
+        .fx .w-chart .bar { width: 62%; max-width: 24px; border-radius: 6px 6px 3px 3px; background: var(--t-light); }
+        .fx .w-chart .col.last .bar { background: var(--team); }
+        .fx .w-chart .col.cur .bar { background: repeating-linear-gradient(-45deg, var(--t-light) 0 3px, #fff 3px 6px); box-shadow: inset 0 0 0 1px var(--t-light); }
+        .fx .w-chart .col.empty .bar { background: #F2F2F7; }
+        .fx .w-chart .val { font-size: 10px; font-weight: 600; color: var(--text-sub); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+        .fx .w-chart .col.last .val { color: var(--text-main); font-weight: 800; font-size: 11px; }
+        .fx .w-chart .lbl { font-size: 9px; color: var(--text-sub); margin-top: 6px; font-weight: 600; white-space: nowrap; }
+        .fx .w-chart .col.last .lbl { color: var(--text-main); font-weight: 800; }
+        .fx .avg-line { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--t-mid); z-index: 0; }
+        .fx .avg-line span { position: absolute; right: 0; top: -15px; font-size: 9px; font-weight: 700; color: var(--text-sub); background: #fff; padding: 0 3px; }
+        .fx .game-header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-sub); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 12px; }
+        .fx .status-badge { font-weight: 700; color: var(--text-sub); }
+        .fx .game-venue { color: var(--text-main); font-weight: 600; margin-left: 6px; }
+        .fx .team-row { display: flex; align-items: center; justify-content: space-between; font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+        .fx .team-row:last-of-type { margin-bottom: 0; }
+        .fx .team-info { display: flex; align-items: center; gap: 10px; }
+        .fx .team-logo { width: 32px; height: 32px; object-fit: contain; }
+        .fx .me-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--team); display: inline-block; margin-left: 6px; vertical-align: 2px; }
+        .fx .badge-home { background-color: var(--primary); color: #fff; font-size: 9px; font-weight: 800; padding: 2px 5px; border-radius: 4px; margin-left: 6px; }
+        .fx .score { font-size: 22px; font-weight: 800; color: var(--text-sub); }
+        .fx .btn-group { display: flex; gap: 10px; margin-top: 12px; }
+        .fx .btn-ticket { flex: 1; padding: 10px 0; border-radius: 8px; font-size: 13px; font-weight: 700; text-align: center; border: none; background: #F2F2F7; color: var(--primary); cursor: pointer; }
+        .fx .no-game { text-align: center; padding: 22px 0 18px; font-size: 13px; color: var(--text-sub); font-weight: 600; line-height: 1.7; }
+        .fx .no-game b { color: var(--text-main); }
+        .fx .comp-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border-color); font-size: 13px; font-weight: 600; }
+        .fx .comp-row:first-of-type { border-top: none; padding-top: 2px; }
+        .fx .comp-row .k { width: 36px; color: var(--text-main); }
+        .fx .comp-row .track { flex: 1; height: 6px; border-radius: 3px; background: #F2F2F7; overflow: hidden; }
+        .fx .comp-row .track i { display: block; height: 100%; border-radius: 3px; background: var(--team); }
+        .fx .comp-row .v { width: 40px; text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .fx .comp-row.neg .track i { background: #C7C7CC; }
+        .fx .comp-row.neg .v { color: var(--text-sub); }
+        .fx .formula { font-size: 11px; color: var(--text-sub); font-weight: 600; margin-top: 10px; text-align: center; }
+        .fx .p1 { padding: 0; overflow: hidden; }
+        .fx .p1-top { display: flex; align-items: center; gap: 14px; padding: 18px 16px 16px; background: linear-gradient(180deg, var(--t-soft) 0%, #fff 100%); position: relative; }
+        .fx .p1-top::after { content: ''; position: absolute; right: -30px; top: -40px; width: 140px; height: 140px; border-radius: 50%; background: var(--t-light); opacity: .5; }
+        .fx .p1-top .avatar { width: 68px; height: 68px; position: relative; z-index: 1; }
+        .fx .p1-top .pinfo { position: relative; z-index: 1; }
+        .fx .p-name { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+        .fx .p-team { font-size: 12px; color: var(--text-sub); font-weight: 600; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+        .fx .p-team img { width: 16px; height: 16px; object-fit: contain; }
+        .fx .p-badges { margin-top: 8px; }
+        .fx .p1-metrics { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--border-color); }
+        .fx .p1-metrics > div { text-align: center; padding: 14px 4px; }
+        .fx .p1-metrics > div + div { border-left: 1px solid var(--border-color); }
+        .fx .p2-card { text-align: center; padding: 22px 16px 18px; position: relative; overflow: hidden; }
+        .fx .p2-card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 64px; background: linear-gradient(180deg, var(--t-light), transparent); opacity: .7; }
+        .fx .p2-card > * { position: relative; }
+        .fx .p2-card .avatar { width: 84px; height: 84px; display: block; margin: 0 auto; }
+        .fx .p2-card .p-name { margin-top: 10px; }
+        .fx .p2-card .p-team { justify-content: center; }
+        .fx .p2-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .fx .p2-metrics .card-style { text-align: center; padding: 14px 6px; position: relative; overflow: hidden; }
+        .fx .p2-metrics .card-style::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--t-light); }
+        .fx .wk-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border-color); font-size: 13px; font-weight: 600; }
+        .fx .wk-row:first-of-type { border-top: none; padding-top: 2px; }
+        .fx .wk-row .d { width: 86px; color: var(--text-sub); font-size: 12px; white-space: nowrap; }
+        .fx .wk-row.last .d { color: var(--text-main); font-weight: 800; }
+        .fx .wk-row .track { flex: 1; height: 8px; border-radius: 4px; background: #F2F2F7; overflow: hidden; }
+        .fx .wk-row .track i { display: block; height: 100%; border-radius: 4px; background: var(--t-mid); }
+        .fx .wk-row.last .track i { background: var(--team); }
+        .fx .wk-row.cur .track i { background: repeating-linear-gradient(-45deg, var(--t-mid) 0 3px, var(--t-light) 3px 6px); }
+        .fx .wk-row .g { width: 30px; text-align: right; color: var(--text-sub); font-size: 11px; }
+        .fx .wk-row .v { width: 38px; text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .fx .bf-row { display: flex; align-items: center; margin-bottom: 12px; font-size: 12px; font-weight: 700; }
+        .fx .bf-row:last-child { margin-bottom: 0; }
+        .fx .bf-label { width: 40px; color: var(--text-sub); font-size: 11px; font-weight: 600; }
+        .fx .bf-bar-wrap { flex: 1; height: 6px; background: #F2F2F7; border-radius: 3px; overflow: hidden; }
+        .fx .bf-fill { height: 100%; border-radius: 3px; background: var(--team); }
+        .fx .bf-val { width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+        .fx .p3-head { display: flex; align-items: center; gap: 12px; }
+        .fx .p3-head .avatar { width: 56px; height: 56px; }
+        .fx .p3-score { text-align: right; flex-shrink: 0; }
+        .fx .p3-score b { display: block; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+        .fx .p3-score span { font-size: 10px; color: var(--text-sub); font-weight: 600; }
+        .fx .p3-strip { display: flex; gap: 8px; margin-top: 14px; }
+        .fx .p3-strip div { flex: 1; background: var(--t-soft); border-radius: 10px; padding: 10px 8px; text-align: center; }
+        .fx .p3-strip b { display: block; font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .fx .p3-strip span { font-size: 10px; color: var(--text-sub); font-weight: 600; }
+        .fx .team-tabs { display: flex; background: rgba(118, 118, 128, 0.08); border-radius: 8px; padding: 3px; }
+        .fx .team-tab { flex: 1; text-align: center; padding: 8px; font-weight: 600; color: var(--text-sub); font-size: 12px; border-radius: 6px; cursor: pointer; transition: .2s; }
+        .fx .team-tab.active { background: #fff; color: var(--text-main); box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+        .fx .stack { display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px; margin: 4px 0 14px; }
+        .fx .stack i { display: block; height: 100%; }
+        .fx .chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .fx .chips div { border-radius: 10px; background: #F7F7F9; padding: 10px; }
+        .fx .chips span { font-size: 11px; color: var(--text-sub); font-weight: 600; display: flex; align-items: center; gap: 5px; }
+        .fx .chips span i { width: 8px; height: 8px; border-radius: 2px; }
+        .fx .chips b { display: block; font-size: 17px; font-weight: 800; margin-top: 3px; font-variant-numeric: tabular-nums; }
+        .fx .chips .neg b { color: var(--text-sub); }
+        #fx-list { padding: 20px; }
+        .fx .section-title { margin: 0; }
+        .fx .segmented-control { margin: 0 0 12px; }
+        .fx .pp .section-title { margin: 8px 0 -4px; }
+        /* 下半部間距放寬，不要太擠 */
+        #fx-list { padding: 20px 20px 28px; }
+        .fx .wk-card { margin-bottom: 32px; }
+        .fx .picks { margin-bottom: 32px; }
+        .fx .sec-row { margin-bottom: 18px; }
+        .fx .segmented-control { margin: 0 0 18px; }
+        .fx .filter-row { margin-bottom: 24px; gap: 10px; padding-top: 2px; padding-bottom: 2px; }
+        .fx .filter-row .grid-chip { padding: 8px 16px; }
+        .fx .rank-list { padding: 0 16px; }
+        .fx .rank-row { padding: 16px 0; gap: 12px; }
+        .fx .rank-row .pmeta { margin-top: 5px; }
+        .fx .pscore .g-chip { margin-top: 5px; }
+        .fx .foot-note { margin-top: 18px; line-height: 1.8; }
+        .fx .pp { gap: 20px; padding: 20px 20px 48px; }
+        .fx .pp .section-title { margin: 14px 0 -6px; }
+        .fx .pp .card-style { padding: 18px; }
+        .fx .pp .comp-row { padding: 12px 0; }
+        .fx .segmented-control.small { margin: 0 0 4px; }
+        .fx .grid-chip { border: none; }
     </style>
 </head>
 <body>
@@ -231,8 +499,6 @@
             </svg>
         </div>
         <div class="loading-text">TPBL</div>
-        
-        
     </div>
 
     <header>
@@ -261,8 +527,8 @@
     <main id="view-schedule" class="view-content has-bottom-nav">
         <div class="sticky-filter-header">
             <div class="segmented-control">
-                <div class="segment-btn active" onclick="switchScheduleState('upcoming')">即將到來</div>
-                <div class="segment-btn" onclick="switchScheduleState('completed')">已完成</div>
+                <div class="segment-btn active" onclick="switchScheduleState('upcoming', this)">即將到來</div>
+                <div class="segment-btn" onclick="switchScheduleState('completed', this)">已完成</div>
             </div>
             <div class="unified-filter-bar">
                 <div class="filter-status-text" id="filter-status-label">所有隊伍・所有月份</div>
@@ -274,6 +540,29 @@
         </div>
         <div id="schedule-list-container" class="schedule-list"></div>
     </main>
+
+
+    <main id="view-fantasy" class="view-content has-bottom-nav"><div class="fx">
+    <div id="fx-list">
+    <div class="home-head">
+        <div><div class="section-title">TPBL Fantasy</div><div class="section-sub" id="fx-week-sub"></div></div>
+        <div class="lock-chip"><i></i><span id="fx-lock-left"></span></div>
+    </div>
+    <div class="wk-card" id="fx-wk-card"></div>
+    <div class="sec-row"><div class="section-title">焦點推薦</div><small id="fx-pick-sub"></small></div>
+    <div class="picks" id="fx-picks"></div>
+    <div class="sec-row"><div class="section-title">球員排行</div><small>點球員看詳細</small></div>
+    <div class="segmented-control" id="fx-mode-seg">
+        <div class="seg-pill"></div>
+        <div class="segment-btn active" onclick="FX.setMode('season', this)">綜合表現</div>
+        <div class="segment-btn" onclick="FX.setMode('last', this)">上週表現</div>
+    </div>
+    <div class="filter-row" id="fx-filters"></div>
+    <div class="rank-list" id="fx-list-rows"></div>
+    <div class="foot-note" id="fx-list-note"></div>
+</div>
+    <section id="fx-player"><div id="fx-page"></div></section>
+    </div></main>
 
     <main id="view-boxscore" class="view-content">
         <div id="boxscore-content" class="bs-container"></div>
@@ -287,6 +576,10 @@
         <div class="nav-item" onclick="switchView('schedule', this)">
             <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
             <div class="nav-label">賽程</div>
+        </div>
+            <div class="nav-item" onclick="switchView('fantasy', this)">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            <div class="nav-label">Fantasy</div>
         </div>
     </nav>
 
@@ -306,13 +599,8 @@
     </div>
 
     <script>
-        function updateChk(id, status, text) {
-            var el = document.getElementById(id);
-            if(!el) return;
-            el.innerHTML = (status === 'done' ? '<span style="font-size:16px;">✅</span>' : status === 'err' ? '<span style="font-size:16px;">❌</span>' : '<span style="font-size:16px;">⏳</span>') + ' <span>' + text + '</span>';
-            if(status === 'done') el.className = 'chk-item chk-done';
-            if(status === 'err') el.className = 'chk-item chk-err';
-        }
+        var API_BASE = 'https://api.tpbl.basketball/api';
+        var LIVE_REFRESH_MS = 30000; // 有比賽進行中時，每 30 秒自動更新比分
 
         function showToast(msg, duration) {
             var t = duration || 3000;
@@ -321,16 +609,24 @@
             setTimeout(function() { toast.classList.remove('show'); }, t);
         }
 
-        // --- 最新真實備用資料 ---
+        function fetchWithTimeout(url, timeout) {
+            return Promise.race([
+                fetch(url).then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
+                new Promise(function(_, reject){ setTimeout(function(){ reject(new Error('Timeout')); }, timeout); })
+            ]);
+        }
+
+        // --- 離線備用資料 ---
+        // [修正] 原本 27543 是 IN_PROGRESS，離線時會永遠顯示一場假的直播，改成 COMPLETED
         var FALLBACK_STANDINGS = [{"team":{"name":"新北國王","meta":{"logo":"https://assets.tpbl.basketball/logos/kings.webp"}},"rank":1,"score_won_matches":1,"score_lost_matches":0,"games_behind":0},{"team":{"name":"臺北台新戰神","meta":{"logo":"https://assets.tpbl.basketball/logos/mars.webp"}},"rank":2,"score_won_matches":0,"score_lost_matches":0,"games_behind":0.5},{"team":{"name":"新北中信特攻","meta":{"logo":"https://assets.tpbl.basketball/logos/dea.webp"}},"rank":2,"score_won_matches":0,"score_lost_matches":0,"games_behind":0.5},{"team":{"name":"桃園台啤永豐雲豹","meta":{"logo":"https://assets.tpbl.basketball/logos/leopards.webp"}},"rank":2,"score_won_matches":0,"score_lost_matches":0,"games_behind":0.5},{"team":{"name":"新竹御嵿攻城獅","meta":{"logo":"https://assets.tpbl.basketball/logos/lioneers.webp"}},"rank":2,"score_won_matches":0,"score_lost_matches":0,"games_behind":0.5},{"team":{"name":"高雄全家海神","meta":{"logo":"https://assets.tpbl.basketball/logos/aquas.webp"}},"rank":2,"score_won_matches":0,"score_lost_matches":0,"games_behind":0.5},{"team":{"name":"福爾摩沙夢想家","meta":{"logo":"https://assets.tpbl.basketball/logos/dreamers.webp"}},"rank":7,"score_won_matches":0,"score_lost_matches":1,"games_behind":1}];
         var FALLBACK_GAMES = [
             { "id": 27538, "home_team": { "name": "高雄全家海神", "meta": { "logo": "https://assets.tpbl.basketball/logos/aquas.webp" }, "won_score": 134 }, "away_team": { "name": "新竹御嵿攻城獅", "meta": { "logo": "https://assets.tpbl.basketball/logos/lioneers.webp" }, "won_score": 110 }, "venue": "和平籃球館", "status": "COMPLETED", "is_live": false, "game_date": "2026-10-10", "game_day_of_week": "(六)", "game_time": "14:30:00" },
-            { "id": 27543, "home_team": { "name": "福爾摩沙夢想家", "meta": { "logo": "https://assets.tpbl.basketball/logos/dreamers.webp" }, "won_score": 45 }, "away_team": { "name": "高雄全家海神", "meta": { "logo": "https://assets.tpbl.basketball/logos/aquas.webp" }, "won_score": 59 }, "venue": "臺中洲際迷你蛋", "status": "IN_PROGRESS", "is_live": true, "game_date": "2026-10-18", "game_day_of_week": "(日)", "game_time": "17:00:00" },
+            { "id": 27543, "home_team": { "name": "福爾摩沙夢想家", "meta": { "logo": "https://assets.tpbl.basketball/logos/dreamers.webp" }, "won_score": 45 }, "away_team": { "name": "高雄全家海神", "meta": { "logo": "https://assets.tpbl.basketball/logos/aquas.webp" }, "won_score": 59 }, "venue": "臺中洲際迷你蛋", "status": "COMPLETED", "is_live": false, "game_date": "2026-10-18", "game_day_of_week": "(日)", "game_time": "17:00:00" },
             { "id": 27544, "home_team": { "name": "新竹御嵿攻城獅", "meta": { "logo": "https://assets.tpbl.basketball/logos/lioneers.webp" } }, "away_team": { "name": "福爾摩沙夢想家", "meta": { "logo": "https://assets.tpbl.basketball/logos/dreamers.webp" } }, "venue": "新竹縣體育館", "status": "NOT_STARTED", "is_live": false, "game_date": "2026-10-24", "game_day_of_week": "(六)", "game_time": "14:30:00" },
             { "id": 27545, "home_team": { "name": "新北中信特攻", "meta": { "logo": "https://assets.tpbl.basketball/logos/dea.webp" } }, "away_team": { "name": "臺北台新戰神", "meta": { "logo": "https://assets.tpbl.basketball/logos/mars.webp" } }, "venue": "新莊體育館", "status": "NOT_STARTED", "is_live": false, "game_date": "2026-10-24", "game_day_of_week": "(六)", "game_time": "17:00:00" }
         ];
 
-        // 離線備用真實 Boxscore (福爾摩沙夢想家 vs 高雄全家海神)
+        // 離線備用 Boxscore (福爾摩沙夢想家 vs 高雄全家海神)
         var FALLBACK_BOXSCORE_27543 = {
             "home_team": {
                 "name": "福爾摩沙夢想家",
@@ -371,7 +667,7 @@
         var LOGOS = { "海神": "https://i.postimg.cc/KYtTwqdg/aquas_CB_Rq9NB.webp", "夢想家": "https://i.postimg.cc/ZRZNSPSL/dreamers_8u_P5Ali_T.webp", "攻城獅": "https://i.postimg.cc/FRmS4b4n/lioneers_DTfku_EJZ.webp", "戰神": "https://i.postimg.cc/V61t898V/mars_Bb_DWfk_G6.webp", "特攻": "https://i.postimg.cc/Qts73g3J/dea_BEf_Nf_G39.webp", "國王": "https://i.postimg.cc/XJ35bKb2/kings_Dsun_MN_K.webp", "雲豹": "https://i.postimg.cc/XJ35bKbH/leopards_BGzl_SG8M.webp" };
         var KEYWORD_ORDER = ["攻城獅", "特攻", "國王", "戰神", "雲豹", "夢想家", "海神"];
         var DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23CCA87B' stroke='white' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E";
-        
+
         function formatPosition(pos) {
             if (!pos) return '-';
             return pos.replace(/PointGuard/g, 'PG')
@@ -382,21 +678,28 @@
                       .replace(/And/g, '/');
         }
 
+        // ⚠️ 戰神和海神目前是同一個連結（原檔就是這樣），請換成正確的戰神購票頁
         var TEAM_TICKET_URLS = { "攻城獅": "https://tixcraft.com/activity/detail/25_lioneers", "特攻": "https://tix.ctbcsports.com/DEA", "國王": "https://newtaipeikings.kktix.cc/events/lojke", "戰神": "https://www.famiticket.com.tw/Home/Activity/Info/bgBRAG0AcABKAE0AMQB5AGgAWQBVAGgANQBEAEwARwBMAEcAYwBvAG8AMQAvAGkATgBqAC8AcQBtAEYAcQBMAEkAdABXAHAANABqAEMAYwB2AEYAUQA9AA2", "雲豹": "https://leopards.kktix.cc/events/afrehwe", "夢想家": "https://ticket.ibon.com.tw/ActivityInfo/Details/39190", "海神": "https://www.famiticket.com.tw/Home/Activity/Info/bgBRAG0AcABKAE0AMQB5AGgAWQBVAGgANQBEAEwARwBMAEcAYwBvAG8AMQAvAGkATgBqAC8AcQBtAEYAcQBMAEkAdABXAHAANABqAEMAYwB2AEYAUQA9AA2" };
 
-        var allGames = []; var availableMonths = []; var currentScheduleState = 'upcoming'; 
+        var allGames = []; var availableMonths = []; var currentScheduleState = 'upcoming';
         var selectedTeams = []; var selectedMonths = []; var tempTeams = []; var tempMonths = [];
-        var boxscoreDataCache = null; var playerAvatars = {}; 
-        var currentTab = 'home'; var currentBoxscoreStatus = '';
+        var boxscoreDataCache = null; var playerAvatars = {};
+        var currentTab = 'home'; var currentBoxscoreStatus = ''; var currentBoxscoreGameId = null; var currentBoxscoreTeam = 'away';
+        var isOffline = false;
 
         function getTeamKeyword(fullName) { for (var i=0; i<KEYWORD_ORDER.length; i++) { if (fullName.indexOf(KEYWORD_ORDER[i]) > -1) return KEYWORD_ORDER[i]; } return fullName; }
         function formatMMSS(sec) { if(sec == null) return '-'; return Math.floor(sec / 60) + ':' + (sec % 60).toString().padStart(2, '0'); }
-        function getMonthStr(dateStr) { var d = new Date(dateStr); return d.getFullYear() + '年' + (d.getMonth() + 1) + '月'; }
-        function getLogo(teamName) { return LOGOS[getTeamKeyword(teamName)] || ""; }
+        // [修正] 直接切字串，不用 new Date('YYYY-MM-DD')（那會被當成 UTC，在某些時區會差一天）
+        function getMonthStr(dateStr) { var p = dateStr.split('-'); return p[0] + '年' + parseInt(p[1], 10) + '月'; }
+        function getLogo(teamName) { return LOGOS[getTeamKeyword(teamName || '')] || ""; }
         function parseDateTime(dateStr, timeStr) { return new Date(dateStr + 'T' + timeStr); }
+        function byTimeAsc(a, b) { return parseDateTime(a.game_date, a.game_time) - parseDateTime(b.game_date, b.game_time); }
+        function byTimeDesc(a, b) { return byTimeAsc(b, a); }
+        function isGameLive(g) { return g.status === 'IN_PROGRESS' || g.is_live; }
 
         function switchView(viewName, element) {
-            if (viewName === 'home' || viewName === 'schedule') currentTab = viewName;
+            if (viewName === 'home' || viewName === 'schedule' || viewName === 'fantasy') currentTab = viewName;
+            if (viewName === 'fantasy' && window.FX) FX.show();
             document.querySelectorAll('.view-content').forEach(function(el) { el.classList.remove('active'); });
             document.getElementById('view-' + viewName).classList.add('active');
             window.scrollTo(0, 0);
@@ -407,37 +710,42 @@
             }
 
             document.getElementById('btn-back').style.display = viewName === 'boxscore' ? 'flex' : 'none';
-            document.getElementById('logo-img').style.display = 'block';
-            
+
             var bottomNav = document.getElementById('bottom-nav');
             if (viewName === 'boxscore') bottomNav.classList.add('hidden');
             else bottomNav.classList.remove('hidden');
         }
 
-        function switchScheduleState(state) {
+        // [修正] 改成把按鈕本身 (this) 傳進來，不靠全域 event
+        function switchScheduleState(state, el) {
             currentScheduleState = state;
             selectedTeams = []; selectedMonths = [];
-            document.querySelectorAll('.segment-btn').forEach(function(btn){ btn.classList.remove('active'); });
-            event.target.classList.add('active');
-            extractAvailableDataAndRender();
+            document.querySelectorAll('#view-schedule .segment-btn').forEach(function(btn){ btn.classList.remove('active'); });
+            el.classList.add('active');
+            refreshSchedule();
         }
 
-        function extractAvailableDataAndRender() {
-            var baseGames = currentScheduleState === 'upcoming' 
+        // 依「即將到來／已完成」取出並排序
+        function getBaseGames() {
+            var base = currentScheduleState === 'upcoming'
                 ? allGames.filter(function(g){ return g.status !== 'COMPLETED'; })
                 : allGames.filter(function(g){ return g.status === 'COMPLETED'; });
+            return base.sort(currentScheduleState === 'upcoming' ? byTimeAsc : byTimeDesc);
+        }
 
-            baseGames.sort(function(a, b) {
-                var dateA = parseDateTime(a.game_date, a.game_time);
-                var dateB = parseDateTime(b.game_date, b.game_time);
-                return currentScheduleState === 'upcoming' ? dateA - dateB : dateB - dateA;
-            });
-
-            var rawMonths = baseGames.map(function(g){ return getMonthStr(g.game_date); });
+        // [修正] 統一一個函式重畫賽程（會套用目前的篩選），自動更新時才不會把篩選洗掉
+        function refreshSchedule() {
+            var baseGames = getBaseGames();
             availableMonths = [];
-            for(var i=0; i<rawMonths.length; i++){ if(availableMonths.indexOf(rawMonths[i]) === -1) availableMonths.push(rawMonths[i]); }
-            
-            updateFilterLabel(); renderScheduleList(baseGames);
+            baseGames.forEach(function(g){ var m = getMonthStr(g.game_date); if(availableMonths.indexOf(m) === -1) availableMonths.push(m); });
+
+            var finalGames = baseGames.filter(function(g) {
+                var matchMonth = selectedMonths.length === 0 || selectedMonths.indexOf(getMonthStr(g.game_date)) > -1;
+                var matchTeam = selectedTeams.length === 0 || selectedTeams.indexOf(getTeamKeyword(g.home_team.name)) > -1 || selectedTeams.indexOf(getTeamKeyword(g.away_team.name)) > -1;
+                return matchMonth && matchTeam;
+            });
+            updateFilterLabel();
+            renderScheduleList(finalGames);
         }
 
         function openFilterSheet() { tempTeams = selectedTeams.slice(); tempMonths = selectedMonths.slice(); renderSheetUI(); document.getElementById('unified-sheet').classList.add('show'); }
@@ -447,33 +755,21 @@
             document.getElementById('sheet-months').innerHTML = availableMonths.map(function(m){ return '<div class="grid-chip ' + (tempMonths.indexOf(m)>-1?'active':'') + '" onclick="toggleTempFilter(\'month\', \''+m+'\')">' + m.split('年')[1] + '</div>'; }).join('');
         }
         function toggleTempFilter(type, val) {
-            if(type === 'team') { if(tempTeams.indexOf(val) > -1) tempTeams = tempTeams.filter(function(v){return v !== val;}); else tempTeams.push(val); } 
+            if(type === 'team') { if(tempTeams.indexOf(val) > -1) tempTeams = tempTeams.filter(function(v){return v !== val;}); else tempTeams.push(val); }
             else { if(tempMonths.indexOf(val) > -1) tempMonths = tempMonths.filter(function(v){return v !== val;}); else tempMonths.push(val); }
-            renderSheetUI(); 
+            renderSheetUI();
         }
         function clearFilters() { tempTeams = []; tempMonths = []; renderSheetUI(); }
         function applyFilters() {
             selectedTeams = tempTeams.slice(); selectedMonths = tempMonths.slice();
-            closeFilterSheet(); updateFilterLabel();
-
-            var baseGames = currentScheduleState === 'upcoming' ? allGames.filter(function(g){return g.status !== 'COMPLETED';}) : allGames.filter(function(g){return g.status === 'COMPLETED';});
-            baseGames.sort(function(a, b) {
-                var dateA = parseDateTime(a.game_date, a.game_time); var dateB = parseDateTime(b.game_date, b.game_time);
-                return currentScheduleState === 'upcoming' ? dateA - dateB : dateB - dateA;
-            });
-
-            var finalGames = baseGames.filter(function(g) {
-                var matchMonth = selectedMonths.length === 0 || selectedMonths.indexOf(getMonthStr(g.game_date)) > -1;
-                var matchTeam = selectedTeams.length === 0 || selectedTeams.indexOf(getTeamKeyword(g.home_team.name)) > -1 || selectedTeams.indexOf(getTeamKeyword(g.away_team.name)) > -1;
-                return matchMonth && matchTeam;
-            });
-            renderScheduleList(finalGames);
+            closeFilterSheet();
+            refreshSchedule();
         }
         function updateFilterLabel() {
             var teamText = selectedTeams.length === 0 ? '所有隊伍' : selectedTeams.join(', ');
             var monthText = selectedMonths.length === 0 ? '所有月份' : selectedMonths.map(function(m){return m.split('年')[1];}).join(', ');
             document.getElementById('filter-status-label').innerText = teamText + '・' + monthText;
-            
+
             var count = selectedTeams.length + selectedMonths.length;
             var badge = document.getElementById('filter-badge');
             if(count > 0) { badge.innerText = count; badge.classList.add('show'); } else { badge.classList.remove('show'); }
@@ -489,21 +785,27 @@
             var scoreHome = '-'; var scoreAway = '-'; var statusHtml = ''; var btnHtml = '';
             var dateStr = game.game_date.slice(5) + ' ' + game.game_day_of_week;
             var timeStr = game.game_time.slice(0,5);
-            
+
             var homeKw = getTeamKeyword(game.home_team.name);
             var ticketUrl = (game.meta && game.meta.ticket_url) ? game.meta.ticket_url : (TEAM_TICKET_URLS[homeKw] || '#');
             var homeLogo = getLogo(game.home_team.name) || (game.home_team && game.home_team.meta ? game.home_team.meta.logo : '');
             var awayLogo = getLogo(game.away_team.name) || (game.away_team && game.away_team.meta ? game.away_team.meta.logo : '');
 
             var isCompleted = game.status === 'COMPLETED';
-            var isLive = game.status === 'IN_PROGRESS' || game.is_live;
-            
+            var isLive = isGameLive(game);
+
             var cardClass = "game-card card-style";
             if (isLive) cardClass += " live-card"; else if (isCompleted) cardClass += " completed-card"; else cardClass += " upcoming-card";
 
+            var awayScoreClass = 'score'; var homeScoreClass = 'score';
             if (isLive || isCompleted) {
-                scoreHome = game.home_team.won_score != null ? game.home_team.won_score : '-'; 
+                scoreHome = game.home_team.won_score != null ? game.home_team.won_score : '-';
                 scoreAway = game.away_team.won_score != null ? game.away_team.won_score : '-';
+                // [新增] 已結束的比賽，輸的一方比分變淡
+                if (isCompleted && scoreHome !== '-' && scoreAway !== '-') {
+                    if (+scoreAway < +scoreHome) awayScoreClass += ' is-loser';
+                    else if (+scoreHome < +scoreAway) homeScoreClass += ' is-loser';
+                }
                 if(isLive) statusHtml = '<div class="status-badge status-live"><div class="live-dot"></div>進行中</div>';
                 else statusHtml = '<div class="status-badge">已結束</div>';
                 btnHtml = '<button type="button" class="btn btn-boxscore" onclick="openBoxScore(' + game.id + ', \'' + game.status + '\')">Boxscore</button>';
@@ -512,45 +814,53 @@
                 btnHtml = '<button type="button" class="btn btn-ticket" onclick="window.open(\'' + ticketUrl + '\', \'_blank\')">Ticket</button>';
             }
 
-            return '<div class="' + cardClass + '"><div class="game-header">' + statusHtml + '<span>' + dateStr + ' ' + timeStr + ' <span class="game-venue">@ ' + game.venue + '</span></span></div><div class="team-row"><div class="team-info"><img class="team-logo" src="' + awayLogo + '"><span>' + game.away_team.name + '</span></div><div class="score">' + scoreAway + '</div></div><div class="team-row"><div class="team-info"><img class="team-logo" src="' + homeLogo + '"><span>' + game.home_team.name + ' <span class="badge-home">H</span></span></div><div class="score">' + scoreHome + '</div></div><div class="btn-group">' + btnHtml + '</div></div>';
+            return '<div class="' + cardClass + '"><div class="game-header">' + statusHtml + '<span>' + dateStr + ' ' + timeStr + ' <span class="game-venue">@ ' + game.venue + '</span></span></div><div class="team-row"><div class="team-info"><img class="team-logo" src="' + awayLogo + '"><span>' + game.away_team.name + '</span></div><div class="' + awayScoreClass + '">' + scoreAway + '</div></div><div class="team-row"><div class="team-info"><img class="team-logo" src="' + homeLogo + '"><span>' + game.home_team.name + ' <span class="badge-home">H</span></span></div><div class="' + homeScoreClass + '">' + scoreHome + '</div></div><div class="btn-group">' + btnHtml + '</div></div>';
         }
 
-        // --- Boxscore 打開邏輯 (已徹底修復 Demo 轉向問題) ---
+        // --- Boxscore ---
         async function openBoxScore(gameId, statusStr) {
             currentBoxscoreStatus = statusStr;
+            currentBoxscoreGameId = gameId;
+            currentBoxscoreTeam = 'away';
             switchView('boxscore');
             var content = document.getElementById('boxscore-content');
             content.innerHTML = '<div class="loader">讀取數據中...</div>';
 
             try {
-                // 完全直接打真實的 API，不轉向 8641
-                var res = await fetch('https://api.tpbl.basketball/api/games/' + gameId + '/stats');
-                if(!res.ok) throw new Error('API Error');
-                boxscoreDataCache = await res.json();
-                renderBoxScore('away'); 
-            } catch(e) { 
-                console.warn('API 讀取失敗，檢查是否有此賽事的本地資料');
+                // [修正] 加上 5 秒逾時，網路差時不會一直卡在讀取中
+                boxscoreDataCache = await fetchWithTimeout(API_BASE + '/games/' + gameId + '/stats', 5000);
+                renderBoxScore('away');
+            } catch(e) {
+                console.warn('Boxscore API 讀取失敗', e);
                 if (gameId === 27543) {
                     boxscoreDataCache = FALLBACK_BOXSCORE_27543;
                     renderBoxScore('away');
                 } else {
-                    content.innerHTML = '<div class="loader" style="color:var(--text-sub);">此賽事尚未開打或目前無公開數據。</div>'; 
+                    content.innerHTML = '<div class="loader" style="color:var(--text-sub);">此賽事尚未開打或目前無公開數據。</div>';
                 }
             }
         }
 
-        function closeBoxScore() { 
-            var targetIndex = currentTab === 'home' ? 0 : 1;
-            switchView(currentTab, document.querySelectorAll('.nav-item')[targetIndex]); 
+        function closeBoxScore() {
+            currentBoxscoreGameId = null;
+            if (window.FX && FX.isOpen()) { FX.closePlayer(); return; }
+            var targetIndex = { home: 0, schedule: 1, fantasy: 2 }[currentTab] || 0;
+            switchView(currentTab, document.querySelectorAll('.nav-item')[targetIndex]);
         }
 
-        function renderButterflyRow(label, awayVal, homeVal, isPct) {
+        // [修正] lowerIsBetter：失誤這種越少越好的項目，改成數字小的那邊亮金色
+        function renderButterflyRow(label, awayVal, homeVal, isPct, lowerIsBetter) {
+            if (awayVal == null) awayVal = '-'; if (homeVal == null) homeVal = '-';
             var aNum = parseFloat(awayVal) || 0; var hNum = parseFloat(homeVal) || 0;
             var total = aNum + hNum || 1;
             var aPct = (aNum / total) * 100; var hPct = (hNum / total) * 100;
-            var aColor = aNum >= hNum && aNum > 0 ? 'var(--secondary)' : '#E5E5EA';
-            var hColor = hNum >= aNum && hNum > 0 ? 'var(--secondary)' : '#E5E5EA';
-            return '<div class="bf-row"><div class="bf-val">' + awayVal + (isPct?'%':'') + '</div><div class="bf-bar-wrap bf-bar-left"><div class="bf-fill" style="width:' + aPct + '%; background:' + aColor + ';"></div></div><div class="bf-label">' + label + '</div><div class="bf-bar-wrap"><div class="bf-fill" style="width:' + hPct + '%; background:' + hColor + ';"></div></div><div class="bf-val">' + homeVal + (isPct?'%':'') + '</div></div>';
+            var aBetter = lowerIsBetter ? aNum <= hNum : aNum >= hNum;
+            var hBetter = lowerIsBetter ? hNum <= aNum : hNum >= aNum;
+            var aColor = aBetter && aNum > 0 ? 'var(--secondary)' : '#E5E5EA';
+            var hColor = hBetter && hNum > 0 ? 'var(--secondary)' : '#E5E5EA';
+            var suffix = isPct && awayVal !== '-' ? '%' : '';
+            var suffixH = isPct && homeVal !== '-' ? '%' : '';
+            return '<div class="bf-row"><div class="bf-val">' + awayVal + suffix + '</div><div class="bf-bar-wrap bf-bar-left"><div class="bf-fill" style="width:' + aPct + '%; background:' + aColor + ';"></div></div><div class="bf-label">' + label + '</div><div class="bf-bar-wrap"><div class="bf-fill" style="width:' + hPct + '%; background:' + hColor + ';"></div></div><div class="bf-val">' + homeVal + suffixH + '</div></div>';
         }
 
         function buildPlayerTable(playersObj, totalObj) {
@@ -568,70 +878,65 @@
             if(starters.length > 0) { html += '<tr class="section-header"><td colspan="12"><div class="sticky-label">先發 STARTERS</div></td></tr>' + starters.map(genRow).join(''); }
             if(bench.length > 0) { html += '<tr class="section-header"><td colspan="12"><div class="sticky-label">替補 BENCH</div></td></tr>' + bench.map(genRow).join(''); }
 
-            var wscore = totalObj.won_score != null ? totalObj.won_score : '-';
-            var fg = totalObj.field_goals != null ? totalObj.field_goals : '-';
-            var tp = totalObj.three_pointers != null ? totalObj.three_pointers : '-';
-            var ft = totalObj.free_throws != null ? totalObj.free_throws : '-';
-            var reb = totalObj.rebounds != null ? totalObj.rebounds : '-';
-            var ast = totalObj.assists != null ? totalObj.assists : '-';
-            var stl = totalObj.steals != null ? totalObj.steals : '-';
-            var blk = totalObj.blocks != null ? totalObj.blocks : '-';
-            var to = totalObj.turnovers != null ? totalObj.turnovers : '-';
-            var pf = totalObj.fouls != null ? totalObj.fouls : '-';
-
-            html += '<tr class="section-header total-header"><td style="position:sticky; left:0; z-index:3; text-align:left; padding-left:20px; color:var(--text-main); font-weight:800;">總計 TOTAL</td><td style="font-size:11px; color:var(--text-sub);">MIN</td><td style="font-size:11px; color:var(--text-sub);">PTS</td><td style="font-size:11px; color:var(--text-sub);">FG</td><td style="font-size:11px; color:var(--text-sub);">3PT</td><td style="font-size:11px; color:var(--text-sub);">FT</td><td style="font-size:11px; color:var(--text-sub);">REB</td><td style="font-size:11px; color:var(--text-sub);">AST</td><td style="font-size:11px; color:var(--text-sub);">STL</td><td style="font-size:11px; color:var(--text-sub);">BLK</td><td style="font-size:11px; color:var(--text-sub);">TO</td><td style="font-size:11px; color:var(--text-sub);">PF</td></tr><tr class="row-total"><td style="position:sticky; left:0; z-index:3; text-align:left; padding-left:20px; background:#fafafa !important;">TEAM</td><td>-</td><td>'+wscore+'</td><td>'+fg+'</td><td>'+tp+'</td><td>'+ft+'</td><td>'+reb+'</td><td>'+ast+'</td><td>'+stl+'</td><td>'+blk+'</td><td>'+to+'</td><td>'+pf+'</td></tr>';
+            var v = function(x){ return x != null ? x : '-'; };
+            html += '<tr class="section-header total-header"><td style="position:sticky; left:0; z-index:3; text-align:left; padding-left:20px; color:var(--text-main); font-weight:800;">總計 TOTAL</td><td style="font-size:11px; color:var(--text-sub);">MIN</td><td style="font-size:11px; color:var(--text-sub);">PTS</td><td style="font-size:11px; color:var(--text-sub);">FG</td><td style="font-size:11px; color:var(--text-sub);">3PT</td><td style="font-size:11px; color:var(--text-sub);">FT</td><td style="font-size:11px; color:var(--text-sub);">REB</td><td style="font-size:11px; color:var(--text-sub);">AST</td><td style="font-size:11px; color:var(--text-sub);">STL</td><td style="font-size:11px; color:var(--text-sub);">BLK</td><td style="font-size:11px; color:var(--text-sub);">TO</td><td style="font-size:11px; color:var(--text-sub);">PF</td></tr><tr class="row-total"><td style="position:sticky; left:0; z-index:3; text-align:left; padding-left:20px; background:#fafafa !important;">TEAM</td><td>-</td><td>'+v(totalObj.won_score)+'</td><td>'+v(totalObj.field_goals)+'</td><td>'+v(totalObj.three_pointers)+'</td><td>'+v(totalObj.free_throws)+'</td><td>'+v(totalObj.rebounds)+'</td><td>'+v(totalObj.assists)+'</td><td>'+v(totalObj.steals)+'</td><td>'+v(totalObj.blocks)+'</td><td>'+v(totalObj.turnovers)+'</td><td>'+v(totalObj.fouls)+'</td></tr>';
 
             return html + '</tbody></table></div>';
         }
 
         function renderBoxScore(teamType) {
             if (!boxscoreDataCache) return;
+            currentBoxscoreTeam = teamType;
             var home = boxscoreDataCache.home_team || {}; var away = boxscoreDataCache.away_team || {};
-            var hTotal = (home.teams && home.teams.total) ? home.teams.total : {}; 
+            var hTotal = (home.teams && home.teams.total) ? home.teams.total : {};
             var aTotal = (away.teams && away.teams.total) ? away.teams.total : {};
-            
+
             var isLive = currentBoxscoreStatus === 'IN_PROGRESS' || currentBoxscoreStatus === 'LIVE';
             var topLabel = isLive ? '<span style="color:var(--live-red); animation: blink 1.5s infinite ease-in-out;">LIVE</span>' : 'FINAL';
             var awayScore = parseInt(aTotal.won_score) || 0; var homeScore = parseInt(hTotal.won_score) || 0;
-            var awayIsWinner = (awayScore > homeScore) && !isLive; var homeIsWinner = (homeScore > awayScore) && !isLive;
 
-            var awayBadges = awayIsWinner ? '<span class="badge-win">W</span>' : '<span style="visibility:hidden; height:13px; display:inline-block; width:20px;"></span>';
-            var homeBadges = '<span class="badge-home">H</span>' + (homeIsWinner ? '<span class="badge-win">W</span>' : '');
+            // [修正] 拿掉 W 標籤（原本主隊贏會同時出現 H 跟 W），改成「輸的那一方比分變淡」
+            var awayLoser = !isLive && awayScore < homeScore;
+            var homeLoser = !isLive && homeScore < awayScore;
+
+            var awayBadges = '<span style="visibility:hidden;" class="badge-home">H</span>';
+            var homeBadges = '<span class="badge-home">H</span>';
 
             var aWScore = aTotal.won_score != null ? aTotal.won_score : '-';
             var hWScore = hTotal.won_score != null ? hTotal.won_score : '-';
 
-            var topCard = '<div class="card-style bs-card-margin"><div class="bs-scoreboard-wrapper"><div class="bs-final-label">' + topLabel + '</div><div class="bs-scoreboard"><div class="bs-team-col"><img class="bs-team-logo" src="' + getLogo(away.name) + '"><div class="bs-team-name">' + (away.name||'') + ' <div class="badge-wrap">' + awayBadges + '</div></div></div><div class="bs-score-col"><div>' + aWScore + '</div><div class="bs-score-divider">:</div><div>' + hWScore + '</div></div><div class="bs-team-col"><img class="bs-team-logo" src="' + getLogo(home.name) + '"><div class="bs-team-name">' + (home.name||'') + ' <div class="badge-wrap">' + homeBadges + '</div></div></div></div></div></div>';
+            var teamCol = function(t, badges) {
+                return '<div class="bs-team-col"><img class="bs-team-logo" src="' + getLogo(t.name) + '"><div class="bs-team-name"><span class="bs-team-name-text">' + (t.name||'') + '</span><div class="badge-wrap">' + badges + '</div></div></div>';
+            };
 
-            var hQ = (home.teams && home.teams.rounds) ? home.teams.rounds : {}; 
+            var topCard = '<div class="card-style"><div class="bs-scoreboard-wrapper"><div class="bs-final-label">' + topLabel + '</div><div class="bs-scoreboard">' +
+                teamCol(away, awayBadges) +
+                '<div class="bs-score-col"><div class="' + (awayLoser ? 'is-loser' : '') + '">' + aWScore + '</div><div class="bs-score-divider">:</div><div class="' + (homeLoser ? 'is-loser' : '') + '">' + hWScore + '</div></div>' +
+                teamCol(home, homeBadges) +
+                '</div></div></div>';
+
+            var hQ = (home.teams && home.teams.rounds) ? home.teams.rounds : {};
             var aQ = (away.teams && away.teams.rounds) ? away.teams.rounds : {};
-            
+
             // 動態偵測 OT 節數
             var maxRounds = 4;
-            for (var key in aQ) { var r1 = parseInt(key); if (r1 > maxRounds) maxRounds = r1; }
-            for (var key2 in hQ) { var r2 = parseInt(key2); if (r2 > maxRounds) maxRounds = r2; }
+            Object.keys(aQ).concat(Object.keys(hQ)).forEach(function(k){ var r = parseInt(k); if (r > maxRounds) maxRounds = r; });
 
             var thHtml = '<th></th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th>';
             for (var i = 5; i <= maxRounds; i++) { thHtml += '<th>OT' + (i - 4) + '</th>'; }
             thHtml += '<th>T</th>';
 
-            var awayTd = '<td>' + (away.name||'') + '</td>';
-            for (var j = 1; j <= Math.max(4, maxRounds); j++) {
-                var asc = (aQ[j] && aQ[j].won_score != null) ? aQ[j].won_score : '-';
-                awayTd += '<td>' + asc + '</td>';
-            }
-            awayTd += '<td>' + aWScore + '</td>';
+            var qRow = function(t, q, total, loser) {
+                var row = '<td>' + (t.name||'') + '</td>';
+                for (var j = 1; j <= maxRounds; j++) {
+                    row += '<td>' + ((q[j] && q[j].won_score != null) ? q[j].won_score : '-') + '</td>';
+                }
+                return row + '<td class="' + (loser ? 'is-loser' : '') + '">' + total + '</td>';
+            };
 
-            var homeTd = '<td>' + (home.name||'') + '</td>';
-            for (var k = 1; k <= Math.max(4, maxRounds); k++) {
-                var hsc = (hQ[k] && hQ[k].won_score != null) ? hQ[k].won_score : '-';
-                homeTd += '<td>' + hsc + '</td>';
-            }
-            homeTd += '<td>' + hWScore + '</td>';
+            var qCard = '<div class="card-style"><div class="q-table-wrapper"><table class="q-table"><tr>' + thHtml + '</tr><tr>' + qRow(away, aQ, aWScore, awayLoser) + '</tr><tr>' + qRow(home, hQ, hWScore, homeLoser) + '</tr></table></div></div>';
 
-            var qCard = '<div class="card-style bs-card-margin"><div class="q-table-wrapper"><table class="q-table"><tr>' + thHtml + '</tr><tr>' + awayTd + '</tr><tr>' + homeTd + '</tr></table></div></div>';
-
-            var bfCard = '<div class="card-style bs-card-margin"><div class="bf-title">團隊數據 TEAM STATS</div>' +
+            var bfCard = '<div class="card-style"><div class="bf-title">團隊數據 TEAM STATS</div>' +
                 renderButterflyRow('二分%', aTotal.two_pointers_percentage, hTotal.two_pointers_percentage, true) +
                 renderButterflyRow('三分%', aTotal.three_pointers_percentage, hTotal.three_pointers_percentage, true) +
                 renderButterflyRow('罰球%', aTotal.free_throws_percentage, hTotal.free_throws_percentage, true) +
@@ -639,118 +944,528 @@
                 renderButterflyRow('助攻', aTotal.assists, hTotal.assists) +
                 renderButterflyRow('抄截', aTotal.steals, hTotal.steals) +
                 renderButterflyRow('阻攻', aTotal.blocks, hTotal.blocks) +
-                renderButterflyRow('失誤', aTotal.turnovers, hTotal.turnovers) +
+                renderButterflyRow('失誤', aTotal.turnovers, hTotal.turnovers, false, true) +
                 '</div>';
 
             var targetData = teamType === 'home' ? home : away;
             var tTotal = (targetData.teams && targetData.teams.total) ? targetData.teams.total : {};
             var pTotal = (targetData.players && targetData.players.total) ? targetData.players.total : null;
-            
+
             var playerCard = '<div class="bs-fullwidth-card"><div class="team-tabs"><div class="team-tab ' + (teamType === 'away' ? 'active' : '') + '" onclick="renderBoxScore(\'away\')">' + (away.name||'') + '</div><div class="team-tab ' + (teamType === 'home' ? 'active' : '') + '" onclick="renderBoxScore(\'home\')">' + (home.name||'') + '</div></div>' + buildPlayerTable(pTotal, tTotal) + '</div>';
 
             document.getElementById('boxscore-content').innerHTML = topCard + qCard + bfCard + playerCard;
         }
 
-        // --- 初始化安全啟動機制 ---
-        async function initApp() {
-            try {
-                updateChk('chk-js', 'done', '核心模組初始化成功');
-                updateChk('chk-api', 'loading', '正在建立伺服器連線...');
+        // --- 首頁 ---
+        // [修正] 「本週」一律以「今天」為準（週一 00:00 ～ 週日 23:59），不再用下一場比賽的日期
+        function getThisWeekRange() {
+            var now = new Date();
+            var day = now.getDay();
+            var diffToMon = day === 0 ? -6 : 1 - day;
+            var monday = new Date(now); monday.setDate(now.getDate() + diffToMon); monday.setHours(0,0,0,0);
+            var sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); sunday.setHours(23,59,59,999);
+            return { start: monday, end: sunday };
+        }
 
-                var fetchWithTimeout = function(url, timeout) {
-                    return Promise.race([
-                        fetch(url),
-                        new Promise(function(_, reject){ setTimeout(function(){ reject(new Error('Timeout')); }, timeout); })
-                    ]);
+        function renderAppFromData(gamesData, standingsData) {
+            allGames = gamesData;
+            var carousel = document.getElementById('home-carousel');
+            var dotsContainer = document.getElementById('home-dots');
+            var prevScroll = carousel.scrollLeft;
+
+            if (gamesData.length > 0) {
+                var week = getThisWeekRange();
+                var inThisWeek = function(g) {
+                    var t = parseDateTime(g.game_date, g.game_time);
+                    return t >= week.start && t <= week.end;
                 };
 
-                var res = await Promise.all([
-                    fetchWithTimeout('https://api.tpbl.basketball/api/seasons/3/games', 3000),
-                    fetchWithTimeout('https://api.tpbl.basketball/api/divisions/656/games/standings', 3000),
-                    fetchWithTimeout('https://api.tpbl.basketball/api/divisions/656/players', 3000)
-                ]);
-                
-                updateChk('chk-api', 'done', '成功取得伺服器資料');
-                updateChk('chk-render', 'loading', '正在渲染賽事版面...');
+                var liveGames = gamesData.filter(isGameLive);
+                var upcomingThisWeek = gamesData.filter(function(g){ return g.status === 'NOT_STARTED' && inThisWeek(g); }).sort(byTimeAsc);
+                var completedThisWeek = gamesData.filter(function(g){ return g.status === 'COMPLETED' && inThisWeek(g); }).sort(byTimeDesc);
 
-                allGames = await res[0].json();
-                var standings = await res[1].json();
-                var playersList = await res[2].json();
+                var carouselGames = liveGames.concat(upcomingThisWeek).concat(completedThisWeek);
 
-                // 綁定大頭貼
-                for(var i=0; i<playersList.length; i++) {
-                    var p = playersList[i];
-                    var imgObj = null;
-                    if(p.images && p.images.length > 0) {
-                        for(var j=0; j<p.images.length; j++) { if(p.images[j].key === 'sm') imgObj = p.images[j]; }
-                        if(!imgObj) imgObj = p.images[0];
-                    }
-                    if(imgObj && imgObj.url) playerAvatars[p.gohoops_roster_id] = imgObj.url;
+                // 這週完全沒比賽（休賽週）才退而求其次，顯示接下來 3 場
+                if (carouselGames.length === 0) {
+                    carouselGames = gamesData.filter(function(g){ return g.status === 'NOT_STARTED'; }).sort(byTimeAsc).slice(0, 3);
                 }
 
-                renderAppFromData(allGames, standings);
-                updateChk('chk-render', 'done', '畫面渲染完成');
+                carousel.innerHTML = carouselGames.map(createGameCard).join('');
+                dotsContainer.innerHTML = carouselGames.map(function(_, i){ return '<div class="dot"></div>'; }).join('');
+                carousel.scrollLeft = prevScroll;
+                updateCarouselDots();
+            }
 
-            } catch (error) { 
-                console.warn('API 阻擋，自動載入備用資料');
-                updateChk('chk-api', 'err', '連線異常，啟動離線備用模式');
+            if (standingsData) {
+                document.getElementById('home-standings').innerHTML = standingsData.map(function(s) {
+                    var totalGames = s.score_won_matches + s.score_lost_matches;
+                    var pct = totalGames > 0 ? ((s.score_won_matches / totalGames) * 100).toFixed(1) + '%' : '0.0%';
+                    var logo = getLogo(s.team.name) || (s.team.meta ? s.team.meta.logo : '');
+                    return '<tr><td style="text-align:left; color:var(--text-sub);">' + s.rank + '</td><td><div class="standings-team"><img class="standings-logo" src="' + logo + '"> ' + s.team.name + '</div></td><td>' + s.score_won_matches + '-' + s.score_lost_matches + '</td><td>' + pct + '</td><td>' + s.games_behind + '</td></tr>';
+                }).join('');
+            }
+
+            refreshSchedule();
+        }
+
+        // [修正] 用卡片實際寬度 + 間距算目前在第幾張，平板/寬螢幕也準
+        function updateCarouselDots() {
+            var carousel = document.getElementById('home-carousel');
+            var card = carousel.querySelector('.game-card');
+            var dots = document.querySelectorAll('#home-dots .dot');
+            if (!card || dots.length === 0) return;
+            var step = card.offsetWidth + 12;
+            var idx = Math.min(dots.length - 1, Math.round(carousel.scrollLeft / step));
+            dots.forEach(function(d, i){ d.classList.toggle('active', i === idx); });
+        }
+
+        // --- 初始化 ---
+        async function loadPlayers() {
+            try {
+                var playersList = await fetchWithTimeout(API_BASE + '/divisions/656/players', 5000);
+                playersList.forEach(function(p) {
+                    var imgObj = null;
+                    if (p.images && p.images.length > 0) {
+                        p.images.forEach(function(img){ if (img.key === 'sm') imgObj = img; });
+                        if (!imgObj) imgObj = p.images[0];
+                    }
+                    if (imgObj && imgObj.url) playerAvatars[p.gohoops_roster_id] = imgObj.url;
+                });
+            } catch (e) {
+                console.warn('球員大頭貼讀取失敗，使用預設頭像', e);
+            }
+        }
+
+        async function initApp() {
+            // 只綁一次，避免重畫時重複疊加監聽
+            document.getElementById('home-carousel').addEventListener('scroll', updateCarouselDots);
+
+            // [修正] 大頭貼另外抓，失敗不影響賽程和戰績
+            loadPlayers();
+
+            try {
+                var res = await Promise.all([
+                    fetchWithTimeout(API_BASE + '/seasons/3/games', 5000),
+                    fetchWithTimeout(API_BASE + '/divisions/656/games/standings', 5000)
+                ]);
+                renderAppFromData(res[0], res[1]);
+            } catch (error) {
+                console.warn('API 阻擋，自動載入備用資料', error);
+                isOffline = true;
                 showToast("⚠️ 網路阻擋或逾時，已自動切換為本機備用資料", 4500);
-                
                 renderAppFromData(FALLBACK_GAMES, FALLBACK_STANDINGS);
             } finally {
                 setTimeout(function() {
                     var splash = document.getElementById('splash-screen');
                     splash.style.opacity = '0';
                     setTimeout(function(){ splash.style.display = 'none'; }, 400);
-                }, 1000);
+                }, 600);
             }
+
+            setInterval(liveRefresh, LIVE_REFRESH_MS);
         }
 
-        function renderAppFromData(gamesData, standingsData) {
-            allGames = gamesData;
-            if(gamesData.length > 0) {
-                var liveGames = gamesData.filter(function(g){ return g.status === 'IN_PROGRESS' || g.is_live; });
-                var upcomingGames = gamesData.filter(function(g){ return g.status === 'NOT_STARTED'; })
-                    .sort(function(a, b){ return parseDateTime(a.game_date, a.game_time) - parseDateTime(b.game_date, b.game_time); })
-                    .slice(0, 3);
+        // [新增] 有比賽進行中時自動更新比分；Boxscore 開著也會一起更新
+        async function liveRefresh() {
+            if (isOffline || document.hidden) return;
+            if (!allGames.some(isGameLive)) return;
+            try {
+                var res = await Promise.all([
+                    fetchWithTimeout(API_BASE + '/seasons/3/games', 5000),
+                    fetchWithTimeout(API_BASE + '/divisions/656/games/standings', 5000)
+                ]);
+                renderAppFromData(res[0], res[1]);
 
-                var refDate = new Date(); 
-                if(upcomingGames.length > 0) refDate = parseDateTime(upcomingGames[0].game_date, upcomingGames[0].game_time);
-                var day = refDate.getDay(); var diffToMon = day === 0 ? -6 : 1 - day;
-                var monday = new Date(refDate); monday.setDate(refDate.getDate() + diffToMon); monday.setHours(0,0,0,0);
-                var sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); sunday.setHours(23,59,59,999);
-
-                var completedThisWeek = gamesData.filter(function(g){
-                    if (g.status !== 'COMPLETED') return false;
-                    var gDate = parseDateTime(g.game_date, g.game_time);
-                    return gDate >= monday && gDate <= sunday;
-                }).sort(function(a, b){ return parseDateTime(b.game_date, b.game_time) - parseDateTime(a.game_date, a.game_time); });
-
-                var carouselGames = liveGames.concat(upcomingGames).concat(completedThisWeek);
-                
-                var carousel = document.getElementById('home-carousel');
-                var dotsContainer = document.getElementById('home-dots');
-                carousel.innerHTML = carouselGames.map(function(g){return createGameCard(g);}).join('');
-                dotsContainer.innerHTML = carouselGames.map(function(_, i){ return '<div class="dot '+(i===0?'active':'')+'"></div>'; }).join('');
-                
-                carousel.addEventListener('scroll', function() {
-                    var idx = Math.round(carousel.scrollLeft / (carousel.clientWidth * 0.88));
-                    dotsContainer.querySelectorAll('.dot').forEach(function(d, i){ d.classList.toggle('active', i === idx); });
-                });
+                if (currentBoxscoreGameId) {
+                    var g = allGames.filter(function(x){ return x.id === currentBoxscoreGameId; })[0];
+                    if (g) currentBoxscoreStatus = g.status;
+                    boxscoreDataCache = await fetchWithTimeout(API_BASE + '/games/' + currentBoxscoreGameId + '/stats', 5000);
+                    renderBoxScore(currentBoxscoreTeam);
+                }
+            } catch (e) {
+                console.warn('自動更新失敗，下次再試', e);
             }
-
-            var standingsContainer = document.getElementById('home-standings');
-            standingsContainer.innerHTML = standingsData.map(function(s) {
-                var totalGames = s.score_won_matches + s.score_lost_matches;
-                var pct = totalGames > 0 ? ((s.score_won_matches / totalGames) * 100).toFixed(1) + '%' : '0.0%';
-                var logo = getLogo(s.team.name) || (s.team.meta ? s.team.meta.logo : '');
-                return '<tr><td style="text-align:left; color:var(--text-sub);">' + s.rank + '</td><td><div class="standings-team"><img class="standings-logo" src="' + logo + '"> ' + s.team.name + '</div></td><td>' + s.score_won_matches + '-' + s.score_lost_matches + '</td><td>' + pct + '</td><td>' + s.games_behind + '</td></tr>';
-            }).join('');
-
-            extractAvailableDataAndRender();
         }
 
         initApp();
+    </script>
+    <script src="fantasy-data.js"></script>
+    <script>
+(function(){
+
+// ================= 規則與資料 =================
+var IMPORT_MULT = 0.7;
+var LOGOS = { "海神": "https://i.postimg.cc/KYtTwqdg/aquas_CB_Rq9NB.webp", "夢想家": "https://i.postimg.cc/ZRZNSPSL/dreamers_8u_P5Ali_T.webp", "攻城獅": "https://i.postimg.cc/FRmS4b4n/lioneers_DTfku_EJZ.webp", "戰神": "https://i.postimg.cc/V61t898V/mars_Bb_DWfk_G6.webp", "特攻": "https://i.postimg.cc/Qts73g3J/dea_BEf_Nf_G39.webp", "國王": "https://i.postimg.cc/XJ35bKb2/kings_Dsun_MN_K.webp", "雲豹": "https://i.postimg.cc/XJ35bKbH/leopards_BGzl_SG8M.webp" };
+// 各隊代表色 [主色, 亮一階]（概略色，可再依官方色票微調）
+var TEAM_COLORS = { "海神": ["#1C7CC0", "#4499D2"], "夢想家": ["#6CB33F", "#8DCB5F"], "攻城獅": ["#6A4BB0", "#8C70CC"], "戰神": ["#C0394B", "#D9606F"],
+                    "特攻": ["#C08F25", "#D4A94E"], "國王": ["#3A55A0", "#5B74BA"], "雲豹": ["#16856A", "#3AA488"] };
+var KW = ["攻城獅", "特攻", "國王", "戰神", "雲豹", "夢想家", "海神"];
+var WD = ['日','一','二','三','四','五','六'];
+// 積分組成：只用球隊色的深淺，失誤用灰
+var STATS = [['得分','pts','var(--team)'],['籃板','reb','var(--t70)'],['助攻','ast','var(--t50)'],['抄截','stl','var(--t35)'],['阻攻','blk','var(--t20)'],['失誤','to','#B8B8BE']];
+var STATS_DARK = ['var(--tlight)', 'color-mix(in srgb, var(--tlight) 75%, transparent)', 'color-mix(in srgb, var(--tlight) 55%, transparent)', 'color-mix(in srgb, var(--tlight) 38%, transparent)', 'color-mix(in srgb, var(--tlight) 24%, transparent)', 'rgba(255,255,255,.22)'];
+var DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23CCA87B' stroke='white' stroke-width='1'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E";
+var ICON_CAL = '<svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+function kw(n) { for (var i = 0; i < KW.length; i++) if (n.indexOf(KW[i]) > -1) return KW[i]; return n; }
+function posShort(p) { return p.replace(/PointGuard/g,'PG').replace(/ShootingGuard/g,'SG').replace(/SmallForward/g,'SF').replace(/PowerForward/g,'PF').replace(/Center/g,'C').replace(/And/g,'/'); }
+function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function mmdd(s) { return s.slice(5).replace('-', '/'); }
+function wd(s) { return WD[new Date(s + 'T12:00:00').getDay()]; }
+function f1(n) { return (Math.round(n * 10) / 10).toFixed(1); }
+function addDays(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function mondayOf(s) { var d = new Date(s + 'T12:00:00'); d.setHours(0,0,0,0); return addDays(d, -((d.getDay() + 6) % 7)); }
+
+var now = new Date();
+var thisMon = mondayOf(ymd(now));
+var thisLock = addDays(thisMon, 2); thisLock.setHours(12,0,0,0);
+var targetMon = now >= thisLock ? addDays(thisMon, 7) : thisMon;
+var targetLock = addDays(targetMon, 2); targetLock.setHours(12,0,0,0);
+var T = { from: ymd(targetMon), to: ymd(addDays(targetMon, 6)) };
+var L = { from: ymd(addDays(thisMon, -7)), to: ymd(addDays(thisMon, -1)) };
+
+var nextGames = {}, PLAYERS = [];
+function buildData(SRC, SCHED) {
+nextGames = {};
+SCHED.forEach(function(g){
+    if (g.d >= T.from && g.d <= T.to && g.s !== 'COMPLETED') [kw(g.h), kw(g.a)].forEach(function(t){ (nextGames[t] = nextGames[t] || []).push(g); });
+});
+PLAYERS = SRC.map(function(p){
+    var m = p.imp ? IMPORT_MULT : 1;
+    var logs = p.logs.map(function(l){ return Object.assign({}, l, { fp: Math.round(l.f * m * 10) / 10, lw: l.d >= L.from && l.d <= L.to }); });
+    var sum = logs.reduce(function(s,l){ return s + l.fp; }, 0), lw = logs.filter(function(l){ return l.lw; });
+    var lwSum = lw.reduce(function(s,l){ return s + l.fp; }, 0), t = kw(p.team);
+    return Object.assign({}, p, { logs: logs, t: t, gp: logs.length, avg: logs.length ? sum / logs.length : 0, lwGp: lw.length, lwSum: lwSum,
+        lwAvg: lw.length ? lwSum / lw.length : 0, nextList: nextGames[t] || [], next: (nextGames[t] || []).length });
+}).filter(function(p){ return p.gp > 0; });
+}
+buildData(FANTASY_PLAYERS, FANTASY_SCHEDULE);
+
+function avatar(p, extra) { return '<img class="avatar" ' + (extra || '') + ' src="' + (p.img || DEFAULT_AVATAR) + '" onerror="this.src=\'' + DEFAULT_AVATAR + '\'">'; }
+function tags(p) { return (p.imp ? '<span class="tag">洋將</span>' : '') + (p.inj ? '<span class="tag tag-inj">傷兵</span>' : ''); }
+function logo(name) { return '<img class="tlogo" src="' + (LOGOS[kw(name)] || '') + '">'; }
+function bits(p) {
+    var age = p.bd ? Math.floor((now - new Date(p.bd)) / 31557600000) : null;
+    return [posShort(p.pos), p.h ? p.h + ' cm' : '', age ? age + ' 歲' : '', p.imp ? '洋將 ×0.7' : ''].filter(Boolean)
+        .map(function(b){ return '<span style="white-space:nowrap">' + b + '</span>'; }).join(' · ');
+}
+function weeks(p) {
+    var out = [];
+    for (var m = mondayOf(p.logs[0].d); m <= thisMon; m = addDays(m, 7)) {
+        var from = ymd(m), to = ymd(addDays(m, 6)), g = p.logs.filter(function(l){ return l.d >= from && l.d <= to; });
+        out.push({ v: g.reduce(function(s,l){ return s + l.fp; }, 0), gp: g.length, lbl: mmdd(from), last: from === L.from, cur: from === ymd(thisMon) });
+    }
+    return out;
+}
+function chartItems(p) { return unit === 'week' ? weeks(p) : p.logs.slice(-10).map(function(l){ return { v: l.fp, gp: 1, lbl: mmdd(l.d), last: l.lw }; }); }
+function compVals(p) { var m = p.imp ? IMPORT_MULT : 1; return STATS.map(function(s){ return p.logs.reduce(function(a,l){ return a + l[s[1]]; }, 0) / p.gp * m; }); }
+function gameInfo(p, g) { var home = kw(g.h) === p.t; return { home: home, opp: home ? g.a : g.h }; }
+function cnt(v, delay) { return '<b class="num" data-count="' + v + '" data-delay="' + (delay || 0) + '">' + f1(v) + '</b>'; }
+function countUps(root) {
+    root.querySelectorAll('[data-count]').forEach(function(el){
+        var to = parseFloat(el.dataset.count), dur = 1000, t0 = null, delay = +(el.dataset.delay || 0);
+        el.textContent = f1(0);
+        setTimeout(function(){ requestAnimationFrame(function step(ts){
+            if (!t0) t0 = ts; var k = Math.min(1, (ts - t0) / dur), e = 1 - Math.pow(1 - k, 4);
+            el.textContent = f1(to * e); if (k < 1) requestAnimationFrame(step);
+        }); }, delay);
+    });
+}
+
+// ================= 列表 =================
+var mode = 'season', filter = 'all';
+var FILTERS = [
+    { key: 'all', label: '全部', test: function(){ return true; } },
+    { key: 'G',   label: '後衛 G', test: function(p){ return !p.imp && /PointGuard|ShootingGuard/.test(p.pos); } },
+    { key: 'CF',  label: '前鋒/中鋒 CF', test: function(p){ return !p.imp && /SmallForward|PowerForward|Center/.test(p.pos); } },
+    { key: 'LCL', label: '本土', test: function(p){ return !p.imp; } },
+    { key: 'IMP', label: '洋將', test: function(p){ return p.imp; } }
+];
+document.getElementById('fx-filters').innerHTML = FILTERS.map(function(f){ return '<div class="grid-chip' + (f.key === 'all' ? ' active' : '') + '" onclick="FX.setFilter(\'' + f.key + '\', this)">' + f.label + '</div>'; }).join('');
+document.getElementById('fx-week-sub').innerText = mmdd(T.from) + ' – ' + mmdd(T.to) + ' 週・週三 12:00 鎖定';
+function movePill(seg) { var a = seg && seg.querySelector('.segment-btn.active'), pill = seg && seg.querySelector('.seg-pill'); if (!a || !pill) return; pill.style.width = a.offsetWidth + 'px'; pill.style.transform = 'translateX(' + (a.offsetLeft - 3) + 'px)'; }
+function setMode(m, el) { mode = m; el.parentNode.querySelectorAll('.segment-btn').forEach(function(b){ b.classList.remove('active'); }); el.classList.add('active'); movePill(el.parentNode); renderList(); }
+function setFilter(k, el) { filter = k; el.parentNode.querySelectorAll('.grid-chip').forEach(function(c){ c.classList.remove('active'); }); el.classList.add('active'); renderList(); }
+function score(p) { return mode === 'season' ? p.avg : p.lwAvg; }
+function teamVars(t) { var c = TEAM_COLORS[t] || ['#0F3B66', '#1B5288']; return '--team:' + c[0] + ';--ring:' + c[0]; }
+function spark(p) {
+    var l = p.logs.slice(-5); if (l.length < 2) return '<svg class="spark"></svg>';
+    var mx = Math.max.apply(null, l.map(function(x){ return x.fp; }).concat([1]));
+    var pts = l.map(function(x, i){ return [i * 44 / (l.length - 1), 18 - x.fp / mx * 16]; });
+    var last = pts[pts.length - 1];
+    return '<svg class="spark" viewBox="0 0 44 20"><polyline points="' + pts.map(function(q){ return q[0].toFixed(1) + ',' + q[1].toFixed(1); }).join(' ') + '" fill="none" stroke="var(--t-mid)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<circle cx="' + last[0] + '" cy="' + last[1] + '" r="2.4" fill="var(--team)"/></svg>';
+}
+function renderHome() {
+    // 鎖定倒數
+    var ms = targetLock - new Date(), d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5);
+    document.getElementById('fx-lock-left').innerText = ms > 0 ? '鎖定倒數 ' + (d ? d + ' 天 ' : '') + h + ' 小時' : '已鎖定';
+    // 下週各隊出賽
+    var playing = KW.filter(function(t){ return nextGames[t]; }).length, total = Object.keys(nextGames).reduce(function(s, t){ return s + nextGames[t].length; }, 0) / 2;
+    document.getElementById('fx-wk-card').innerHTML = '<div class="wk-top"><b>下週出賽</b><span>' + mmdd(T.from) + '–' + mmdd(T.to) + '・共 ' + total + ' 場</span></div>' +
+        '<div class="wk-teams">' + KW.slice().sort(function(a, b){ return (nextGames[b] || []).length - (nextGames[a] || []).length; }).map(function(t){
+            var n = (nextGames[t] || []).length;
+            return '<div class="wk-team tc' + (n ? '' : ' off') + '" style="' + teamVars(t) + '"><div class="lg"><img src="' + LOGOS[t] + '">' + (n ? '<span class="n"' + (n >= 2 ? ' style="background:var(--primary)"' : '') + '>' + n + '</span>' : '') + '</div><span>' + t + '</span></div>';
+        }).join('') + '</div>' +
+        '<div class="wk-note">' + (playing < 7 ? '<b>' + (7 - playing) + ' 隊</b>下週休兵（灰色），選他們的球員那週會是 0 分' : '七隊下週都有比賽') + '</div>';
+    // 焦點推薦：下週有比賽、依目前模式分數最高的 5 位
+    var top = PLAYERS.filter(function(p){ return p.next > 0 && (mode === 'season' || p.lwGp > 0); }).sort(function(a, b){ return score(b) - score(a); }).slice(0, 5);
+    document.getElementById('fx-pick-sub').innerText = mode === 'season' ? '依綜合場均' : '依上週場均';
+    document.getElementById('fx-picks').innerHTML = top.map(function(p, i){
+        return '<div class="pick tc" style="' + teamVars(p.t) + ';--i:' + i + '" onclick="FX.openPlayer(' + p.id + ', this)"><div class="pick-top"><span class="rkb">' + (i + 1) + '</span><img class="lg" src="' + (LOGOS[p.t] || '') + '"></div>' +
+            avatar(p) + '<div class="pick-body"><div class="pick-name">' + p.name + '</div><div class="pick-meta">' + p.t + '・' + posShort(p.pos) + (p.imp ? '・洋將' : '') + '</div>' +
+            '<div class="pick-score">' + f1(score(p)) + '<small>' + (mode === 'season' ? '綜合場均' : '上週場均') + '</small></div><span class="pick-chip' + (p.next >= 2 ? ' hot' : '') + '">下週 ' + p.next + ' 場</span></div></div>';
+    }).join('');
+}
+function renderList() {
+    renderHome();
+    var f = FILTERS.filter(function(x){ return x.key === filter; })[0];
+    var list = PLAYERS.filter(f.test).filter(function(p){ return mode === 'season' || p.lwGp > 0; })
+        .sort(function(a, b){ return (b.next > 0) - (a.next > 0) || score(b) - score(a); });
+    document.getElementById('fx-list-rows').innerHTML = list.slice(0, 40).map(function(p, i){
+        return '<div class="rank-row tc' + (p.next ? '' : ' dim') + '" style="' + teamVars(p.t) + ';--i:' + Math.min(i, 14) + '" onclick="FX.openPlayer(' + p.id + ', this)">' +
+            '<div class="rk' + (i < 3 && p.next ? ' top' : '') + '">' + (i + 1) + '</div>' + avatar(p) +
+            '<div class="pinfo"><div class="pname">' + p.name + '<span class="no">#' + p.no + '</span>' + tags(p) + '</div>' +
+            '<div class="pmeta">' + logo(p.team) + p.t + '・' + posShort(p.pos) + '・' + (mode === 'season' ? p.gp + ' 場' : '上週 ' + p.lwGp + ' 場') + '</div></div>' +
+            '<div class="pscore"><div class="big">' + f1(score(p)) + '</div><span class="g-chip' + (p.next >= 2 ? ' hot' : p.next ? '' : ' off') + '">' + (p.next ? '下週 ' + p.next + ' 場' : '下週無賽') + '</span></div>' +
+            '<svg class="chev" width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 1 7 7 1 13"/></svg></div>';
+    }).join('');
+    document.getElementById('fx-list-note').innerHTML = (mode === 'season' ? '分數＝本季每場平均 FPTS' : '分數＝上週（' + mmdd(L.from) + '–' + mmdd(L.to) + '）每場平均 FPTS') +
+        '<br>FPTS＝得分＋籃板＋助攻＋抄截＋阻攻−失誤，洋將 ×0.7・下週沒比賽的排在後面';
+}
+
+// ================= 個人頁 =================
+var cur = null, ver = 1, unit = 'week';
+var view = document.getElementById('fx-player'), page = document.getElementById('fx-page');
+function openPlayer(id, row) {
+    cur = PLAYERS.filter(function(p){ return p.id === id; })[0]; unit = 'week';
+    var c = TEAM_COLORS[cur.t] || ['#0F3B66', '#1B5288'];
+    view.style.setProperty('--team', c[0]); view.style.setProperty('--team2', c[1]);
+    view.className = 'show enter'; view.scrollTop = 0;
+    render(); flyAvatar(row);
+    fxChrome(true);
+    document.body.classList.add('lock');
+    setTimeout(function(){ view.classList.remove('enter'); }, 500);
+}
+// 共享元素轉場：列表頭像飛到個人頁頭像位置
+function flyAvatar(row) {
+    var src = row && row.querySelector('.avatar'), dst = page.querySelector('[data-hero]');
+    if (!src || !dst) return;
+    var a = src.getBoundingClientRect(), b = dst.getBoundingClientRect();
+    var clone = document.createElement('img'); clone.src = src.src; clone.className = 'flip-clone';
+    Object.assign(clone.style, { left: a.left + 'px', top: a.top + 'px', width: a.width + 'px', height: a.height + 'px' });
+    document.body.appendChild(clone); dst.style.opacity = '0';
+    clone.animate([{ transform: 'none' }, { transform: 'translate(' + (b.left - a.left) + 'px,' + (b.top - a.top) + 'px) scale(' + (b.width / a.width) + ')' }],
+        { duration: 560, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' }).onfinish = function(){ dst.style.transition = 'opacity .2s'; dst.style.opacity = ''; clone.remove(); };
+}
+function closePlayer() {
+    view.classList.add('exit');
+    fxChrome(false);
+    document.body.classList.remove('lock');
+    setTimeout(function(){ view.className = ''; }, 280);
+}
+function setVer(v) {
+    ver = v; view.scrollTop = 0;
+    document.querySelectorAll('#ver-seg .segment-btn').forEach(function(d, i){ d.classList.toggle('active', i + 1 === v); });
+    render();
+}
+function setUnit(u) { unit = u; var y = view.scrollTop; render(); view.scrollTop = y; }
+function render() { page.innerHTML = playerPage(cur); countUps(page); }
+function toggle() { return '<div class="toggle"><span class="' + (unit === 'week' ? 'on' : '') + '" onclick="FX.setUnit(\'week\')">每週</span><span class="' + (unit === 'game' ? 'on' : '') + '" onclick="FX.setUnit(\'game\')">每場</span></div>'; }
+function barsHTML(p, cls, maxH, valDelay) {
+    var items = chartItems(p), mx = Math.max.apply(null, items.map(function(x){ return x.v; }).concat([1]));
+    var avg = unit === 'game' ? '<div class="avg-line fadein" style="--d:1000;bottom:' + (p.avg / mx * maxH + 20) + 'px"><span>場均 ' + f1(p.avg) + '</span></div>' : '';
+    return '<div class="' + cls + '">' + (cls === 'bars' ? avg : '') + items.map(function(x, i){
+        var h = x.gp ? Math.max(6, x.v / mx * maxH) : 3;
+        return '<div class="col' + (x.last ? ' last' : '') + (x.cur ? ' cur' : '') + (x.gp ? '' : ' empty') + '"><div class="val fadein num" style="--d:' + (valDelay + i * 55) + '">' + (x.gp ? f1(x.v) : '–') + '</div>' +
+            '<div class="bar grow" style="height:' + h + 'px;--d:' + (valDelay - 120 + i * 55) + '"></div><div class="lbl">' + x.lbl + '</div></div>';
+    }).join('') + '</div>';
+}
+function chartSub() { return unit === 'week' ? '深色＝上週　·　斜線＝本週進行中' : '虛線＝本季場均'; }
+
+// ================= 個人頁（原本 app 的卡片語言；球隊色只用在色塊，不用在文字） =================
+var p3Tab = 'week';
+function pBadges(p) {
+    return '<span class="badge">#' + p.no + '</span><span class="badge">' + posShort(p.pos) + '</span>' +
+        (p.h ? '<span class="badge">' + p.h + ' cm</span>' : '') + (p.imp ? '<span class="badge">洋將 ×0.7</span>' : '') + (p.inj ? '<span class="badge inj">傷兵</span>' : '');
+}
+function pTeam(p) { return '<div class="p-team"><img src="' + (LOGOS[p.t] || '') + '">' + p.team + '</div>'; }
+function m3(p, d) {
+    return [
+        '<div class="metric">' + cnt(p.avg, d) + '<span>綜合場均</span></div>',
+        '<div class="metric">' + (p.lwGp ? cnt(p.lwAvg, d + 60) : '<b>–</b>') + '<span>上週場均</span></div>',
+        '<div class="metric"><b>' + p.gp + '<small>場</small></b><span>本季出賽</span></div>'
+    ];
+}
+function unitSeg() {
+    return '<div class="segmented-control small"><div class="segment-btn' + (unit === 'week' ? ' active' : '') + '" onclick="FX.setUnit(\'week\')">每週</div><div class="segment-btn' + (unit === 'game' ? ' active' : '') + '" onclick="FX.setUnit(\'game\')">每場</div></div>';
+}
+function barChart(p) {
+    var items = chartItems(p), mx = Math.max.apply(null, items.map(function(x){ return x.v; }).concat([1])), H = 104;
+    var avg = unit === 'game' ? '<div class="avg-line fadein" style="--d:900;bottom:' + (p.avg / mx * H + 20) + 'px"></div>' : '';
+    return '<div class="w-chart">' + avg + items.map(function(x, i){
+        var h = x.gp ? Math.max(5, x.v / mx * H) : 3;
+        return '<div class="col' + (x.last ? ' last' : '') + (x.cur ? ' cur' : '') + (x.gp ? '' : ' empty') + '"><div class="val fadein" style="--d:' + (450 + i * 50) + '">' + (x.gp ? f1(x.v) : '–') + '</div>' +
+            '<div class="bar grow" style="height:' + h + 'px;--d:' + (300 + i * 50) + '"></div><div class="lbl">' + x.lbl + '</div></div>';
+    }).join('') + '</div>' +
+    '<div class="legend"><span><i style="background:var(--team)"></i>上週</span><span><i style="background:var(--t-light)"></i>其他' + (unit === 'week' ? '週' : '場') + '</span>' + (unit === 'week' ? '<span><i style="background:repeating-linear-gradient(-45deg,var(--t-light) 0 2px,#fff 2px 4px);box-shadow:inset 0 0 0 1px var(--t-light)"></i>本週進行中</span>'
+        : '<span><i style="width:12px;height:0;border-top:1.5px dashed var(--t-mid);border-radius:0;vertical-align:3px"></i>場均 ' + f1(p.avg) + '</span>') + '</div>';
+}
+function gameCards(p, d0) {
+    if (!p.next) return '<div class="card-style rv" style="--d:' + d0 + '"><div class="no-game"><b>下週沒有比賽</b><br>選他這週會是 0 分</div></div>';
+    return p.nextList.map(function(g, i){
+        var row = function(name, isHome){ var me = kw(name) === p.t;
+            return '<div class="team-row"><div class="team-info"><img class="team-logo" src="' + (LOGOS[kw(name)] || '') + '"><span>' + name + (isHome ? ' <span class="badge-home">H</span>' : '') + (me ? '<span class="me-dot"></span>' : '') + '</span></div><div class="score">-</div></div>'; };
+        return '<div class="card-style rv" style="--d:' + (d0 + i * 70) + '"><div class="game-header"><div class="status-badge">即將到來</div><span>' + mmdd(g.d) + ' (' + wd(g.d) + ') ' + g.t + ' <span class="game-venue">@ ' + (g.v || '') + '</span></span></div>' +
+            row(g.a, false) + row(g.h, true) + '<div class="btn-group"><button class="btn-ticket" type="button">Ticket</button></div></div>';
+    }).join('');
+}
+function compRows(p, d0) {
+    var vals = compVals(p), vmx = Math.max.apply(null, vals.concat([1]));
+    return STATS.map(function(s, i){ var neg = s[1] === 'to';
+        return '<div class="comp-row' + (neg ? ' neg' : '') + '"><span class="k">' + s[0] + '</span><div class="track"><i class="growx" style="width:' + (vals[i] / vmx * 100) + '%;--d:' + (d0 + i * 70) + '"></i></div><span class="v">' + (neg ? '−' : '') + f1(vals[i]) + '</span></div>';
+    }).join('') + '<div class="formula">FPTS＝得分＋籃板＋助攻＋抄截＋阻攻−失誤' + (p.imp ? '（洋將 ×0.7）' : '') + '</div>';
+}
+function title(t, small, d) { return '<div class="section-title rv" style="--d:' + d + '">' + t + '<small>' + (small || '') + '</small></div>'; }
+
+// ---------- 版型 1：球員卡 ----------
+function pv1(p) {
+    var card = '<div class="card-style p1 rv"><div class="p1-top">' + avatar(p, 'data-hero') + '<div class="pinfo"><div class="p-name">' + p.name + '</div>' + pTeam(p) + '<div class="p-badges">' + pBadges(p) + '</div></div></div>' +
+        '<div class="p1-metrics">' + m3(p, 300).join('') + '</div></div>';
+    return card + title(unit === 'week' ? '每週積分' : '近 10 場', 'FPTS', 80) + '<div class="card-style rv" style="--d:120">' + unitSeg() + barChart(p) + '</div>' +
+        title('下週賽程', mmdd(T.from) + '–' + mmdd(T.to), 160) + gameCards(p, 200) +
+        title('積分組成', '每場平均', 240) + '<div class="card-style rv" style="--d:280">' + compRows(p, 450) + '</div>';
+}
+
+// ---------- 版型 2：置中＋每週清單＋蝴蝶條 ----------
+function pv2(p) {
+    var card = '<div class="card-style p2-card rv">' + avatar(p, 'data-hero') + '<div class="p-name">' + p.name + '</div>' + pTeam(p) + '<div class="p-badges">' + pBadges(p) + '</div></div>';
+    var metrics = '<div class="p2-metrics rv" style="--d:80">' + m3(p, 300).map(function(h){ return '<div class="card-style">' + h + '</div>'; }).join('') + '</div>';
+    var list;
+    if (unit === 'week') {
+        var w = weeks(p).reverse(), mx = Math.max.apply(null, w.map(function(x){ return x.v; }).concat([1]));
+        list = w.map(function(x, i){
+            return '<div class="wk-row' + (x.last ? ' last' : '') + (x.cur ? ' cur' : '') + '"><span class="d">' + x.lbl + ' 週' + (x.last ? '・上週' : x.cur ? '・本週' : '') + '</span><div class="track"><i class="growx" style="width:' + (x.v / mx * 100) + '%;--d:' + (350 + i * 60) + '"></i></div><span class="g">' + x.gp + ' 場</span><span class="v">' + (x.gp ? f1(x.v) : '–') + '</span></div>';
+        }).join('');
+    } else {
+        var gl = p.logs.slice(-10).reverse(), mx2 = Math.max.apply(null, gl.map(function(l){ return l.fp; }).concat([1]));
+        list = gl.map(function(l, i){
+            return '<div class="wk-row' + (l.lw ? ' last' : '') + '"><span class="d">' + mmdd(l.d) + ' ' + (l.home ? 'vs ' : '@ ') + kw(l.o) + '</span><div class="track"><i class="growx" style="width:' + (l.fp / mx2 * 100) + '%;--d:' + (350 + i * 60) + '"></i></div><span class="g">' + l.m + "'" + '</span><span class="v">' + f1(l.fp) + '</span></div>';
+        }).join('');
+    }
+    var vals = compVals(p), vmx = Math.max.apply(null, vals.concat([1]));
+    var comp = '<div class="card-style rv" style="--d:280">' + STATS.map(function(s, i){ var neg = s[1] === 'to';
+        return '<div class="bf-row"><div class="bf-label">' + s[0] + '</div><div class="bf-bar-wrap"><div class="bf-fill growx" style="width:' + (vals[i] / vmx * 100) + '%;' + (neg ? 'background:#C7C7CC;' : 'opacity:' + (1 - i * 0.13) + ';') + '--d:' + (450 + i * 70) + '"></div></div><div class="bf-val"' + (neg ? ' style="color:var(--text-sub)"' : '') + '>' + (neg ? '−' : '') + f1(vals[i]) + '</div></div>';
+    }).join('') + '<div class="formula">FPTS＝得分＋籃板＋助攻＋抄截＋阻攻−失誤' + (p.imp ? '（洋將 ×0.7）' : '') + '</div></div>';
+    return card + metrics + title(unit === 'week' ? '每週積分' : '近 10 場', 'FPTS', 100) + '<div class="card-style rv" style="--d:140">' + unitSeg() + '<div style="margin-top:8px">' + list + '</div></div>' +
+        title('下週賽程', mmdd(T.from) + '–' + mmdd(T.to), 180) + gameCards(p, 220) +
+        title('積分組成', '每場平均', 240) + comp;
+}
+
+// ---------- 版型 3：精簡頭部＋分頁 ----------
+function setP3(t) { p3Tab = t; var y = view.scrollTop; render(); view.scrollTop = y; }
+function pv3(p) {
+    var head = '<div class="card-style rv"><div class="p3-head">' + avatar(p, 'data-hero') + '<div class="pinfo"><div class="p-name" style="font-size:18px">' + p.name + '</div>' + pTeam(p) + '</div>' +
+        '<div class="p3-score">' + cnt(p.avg, 300) + '<span>綜合場均</span></div></div>' +
+        '<div class="p-badges" style="margin-top:12px">' + pBadges(p) + '</div>' +
+        '<div class="p3-strip"><div>' + (p.lwGp ? cnt(p.lwAvg, 360) : '<b>–</b>') + '<span>上週場均</span></div><div><b>' + p.gp + '</b><span>本季出賽</span></div><div><b>' + p.next + '</b><span>下週場數</span></div></div></div>';
+    var tabs = '<div class="team-tabs rv" style="--d:80">' + [['week','每週積分'],['sched','下週賽程'],['comp','積分組成']].map(function(t){
+        return '<div class="team-tab' + (p3Tab === t[0] ? ' active' : '') + '" onclick="FX.setP3(\'' + t[0] + '\')">' + t[1] + '</div>'; }).join('') + '</div>';
+    var body;
+    if (p3Tab === 'week') body = '<div class="card-style rv" style="--d:120">' + unitSeg() + barChart(p) + '</div>';
+    else if (p3Tab === 'sched') body = gameCards(p, 120);
+    else {
+        var vals = compVals(p), pos = vals.slice(0, 5), tot = pos.reduce(function(a, b){ return a + b; }, 0) || 1;
+        var op = [1, .72, .52, .36, .22];
+        body = '<div class="card-style rv" style="--d:120"><div class="stack">' + pos.map(function(v, i){ return '<i class="growx" style="width:' + (v / tot * 100) + '%;background:var(--team);opacity:' + op[i] + ';--d:' + (250 + i * 60) + '"></i>'; }).join('') + '</div>' +
+            '<div class="chips">' + STATS.map(function(s, i){ var neg = s[1] === 'to';
+                return '<div class="fadein' + (neg ? ' neg' : '') + '" style="--d:' + (350 + i * 50) + '"><span><i style="background:' + (neg ? '#C7C7CC' : 'var(--team)') + ';opacity:' + (neg ? 1 : op[i]) + '"></i>' + s[0] + '</span><b>' + (neg ? '−' : '') + f1(vals[i]) + '</b></div>';
+            }).join('') + '</div><div class="formula">每場平均・FPTS＝得分＋籃板＋助攻＋抄截＋阻攻−失誤' + (p.imp ? '（×0.7）' : '') + '</div></div>';
+    }
+    return head + tabs + body;
+}
+function playerPage(p) {
+    var head = pv3(p).split('<div class="team-tabs')[0];   // 分頁版上半：精簡球員卡
+    return '<div class="pp">' + head +
+        title(unit === 'week' ? '每週積分' : '近 10 場', 'FPTS', 80) + '<div class="card-style rv" style="--d:120">' + unitSeg() + barChart(p) + '</div>' +
+        title('下週賽程', mmdd(T.from) + '–' + mmdd(T.to), 160) + gameCards(p, 200) +
+        title('積分組成', '每場平均', 240) + '<div class="card-style rv" style="--d:280">' + compRows(p, 450) + '</div></div>';
+}
+
+
+
+// ================= 即時資料（失敗就沿用 fantasy-data.js 快照） =================
+var FX_API = 'https://api.tpbl.basketball/api';
+var fxStatsCache = {};
+function fxGet(url, ms) {
+    return Promise.race([
+        fetch(FX_API + url).then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
+        new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('Timeout')); }, ms || 8000); })
+    ]);
+}
+async function loadLive() {
+    try {
+        var games = await fxGet('/seasons/3/games');
+        var plist = await fxGet('/divisions/656/players');
+        var done = games.filter(function(g){ return g.status === 'COMPLETED'; });
+        var stats = await Promise.all(done.map(function(g){
+            if (fxStatsCache[g.id]) return fxStatsCache[g.id];
+            return fxGet('/games/' + g.id + '/stats').then(function(s){ fxStatsCache[g.id] = s; return s; }).catch(function(){ return null; });
+        }));
+        // 本土／洋將：先用快照，新登錄的球員才另外查
+        var impMap = {};
+        FANTASY_PLAYERS.forEach(function(p){ impMap[p.id] = p.imp; });
+        var missing = plist.filter(function(p){ return !(p.gohoops_roster_id in impMap); });
+        await Promise.all(missing.map(function(p){
+            return fxGet('/players/' + p.id).then(function(d){ impMap[p.gohoops_roster_id] = d.meta && d.meta.national_identity === 'Imported'; }).catch(function(){ impMap[p.gohoops_roster_id] = false; });
+        }));
+        var byId = {}, logs = {}, inj = {};
+        plist.forEach(function(p){ byId[p.gohoops_roster_id] = p; });
+        done.forEach(function(g, gi){
+            var s = stats[gi]; if (!s) return;
+            ['home_team', 'away_team'].forEach(function(side){
+                var ps = s[side] && s[side].players && s[side].players.total; if (!ps) return;
+                Object.keys(ps).forEach(function(k){
+                    var p = ps[k], rid = p.gohoops_roster_id; if (!byId[rid]) return;
+                    inj[rid] = p.injury_status_label || null;
+                    if (!p.time_on_court) return;
+                    (logs[rid] = logs[rid] || []).push({ gid: g.id, o: side === 'home_team' ? g.away_team.name : g.home_team.name, home: side === 'home_team', d: g.game_date,
+                        f: p.score + p.rebounds + p.assists + p.steals + p.blocks - p.turnovers, m: Math.round(p.time_on_court / 60),
+                        pts: p.score, reb: p.rebounds, ast: p.assists, stl: p.steals, blk: p.blocks, to: p.turnovers, fg: p.field_goals, tp: p.three_pointers, ft: p.free_throws });
+                });
+            });
+        });
+        var players = plist.map(function(d){
+            var rid = d.gohoops_roster_id, img = '';
+            (d.images || []).forEach(function(i){ if (i.key === 'sm') img = i.url; });
+            return { id: rid, name: d.name, no: d.number, team: d.team.name, pos: (d.meta && d.meta.position) || '', imp: !!impMap[rid], img: img,
+                h: d.meta && d.meta.height, bd: d.meta && d.meta.birthday, inj: inj[rid] || null,
+                logs: (logs[rid] || []).sort(function(a, b){ return a.d < b.d ? -1 : 1; }) };
+        });
+        var sched = games.map(function(g){ return { d: g.game_date, t: (g.game_time || '').slice(0, 5), h: g.home_team.name, a: g.away_team.name, s: g.status, v: g.venue }; });
+        buildData(players, sched);
+        fxSource = 'live';
+    } catch (e) {
+        console.warn('Fantasy 即時資料讀取失敗，使用快照', e);
+        fxSource = 'snapshot';
+    }
+    renderList();
+}
+var fxSource = 'snapshot', fxStarted = false;
+function fxChrome(open) {
+    document.getElementById('btn-back').style.display = open ? 'flex' : 'none';
+    document.getElementById('bottom-nav').classList.toggle('hidden', open);
+}
+window.FX = {
+    show: function(){
+        if (!fxStarted) { fxStarted = true; renderList(); loadLive(); }
+        requestAnimationFrame(function(){ movePill(document.getElementById('fx-mode-seg')); });
+    },
+    isOpen: function(){ return view.classList.contains('show'); },
+    setMode: setMode, setFilter: setFilter, openPlayer: openPlayer, closePlayer: closePlayer, setUnit: setUnit
+};
+
+})();
     </script>
 </body>
 </html>
